@@ -1,0 +1,6 @@
+{
+  "name": "Social Shuffle",
+  "description": "Pune's premier board game meetup community and event management platform with dual Admin & Participant experiences, real-time attendance, game library tracking, and analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
