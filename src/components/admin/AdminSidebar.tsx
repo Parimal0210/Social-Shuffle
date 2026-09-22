@@ -11,7 +11,6 @@ import {
   HeartHandshake,
   FileSpreadsheet,
   ScrollText,
-  Database,
   ChevronRight
 } from 'lucide-react';
 import { SocialShuffleIcon } from '../SocialShuffleLogo';
@@ -27,8 +26,7 @@ export type AdminViewSection =
   | 'reports'
   | 'volunteers'
   | 'import_export'
-  | 'audit'
-  | 'backend';
+  | 'audit';
 
 interface AdminSidebarProps {
   currentSection: AdminViewSection;
@@ -50,7 +48,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'participants' as AdminViewSection, label: 'Participants CRM', icon: Users },
     { id: 'games' as AdminViewSection, label: 'Game Library', icon: Dices },
     { id: 'analytics' as AdminViewSection, label: 'Community Analytics', icon: BarChart3 },
-    { id: 'backend' as AdminViewSection, label: 'Backend & MongoDB', icon: Database, badge: 'STS Java' },
     { id: 'feedback' as AdminViewSection, label: 'Feedback Submissions', icon: MessageSquare },
     {
       id: 'reports' as AdminViewSection,

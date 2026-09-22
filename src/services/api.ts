@@ -18,7 +18,10 @@ import {
   AttendanceStatus,
   PaymentStatus,
   GuestInfo,
-  VolunteerStatus
+  VolunteerStatus,
+  LoginCredentials,
+  RegisterCredentials,
+  AuthResponse
 } from '../types';
 
 const API_STORAGE_KEY = 'social_shuffle_api_url';
@@ -90,6 +93,53 @@ class ApiService {
       }
       return null;
     } catch (e) {
+      return null;
+    }
+  }
+
+  // --- Authentication ---
+  async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
+    try {
+      const res = await this.fetchWithTimeout('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials)
+      });
+      if (res.ok) {
+        return (await res.json()) as AuthResponse;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async register(data: RegisterCredentials): Promise<AuthResponse | null> {
+    try {
+      const res = await this.fetchWithTimeout('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        return (await res.json()) as AuthResponse;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async getCurrentUser(token: string): Promise<AuthResponse | null> {
+    try {
+      const res = await this.fetchWithTimeout('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        return (await res.json()) as AuthResponse;
+      }
+      return null;
+    } catch {
       return null;
     }
   }

@@ -5,6 +5,40 @@
 
 export type UserRole = 'admin' | 'participant';
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  area: string;
+  avatar?: string;
+  bio?: string;
+  participantId?: string;
+}
+
+export interface LoginCredentials {
+  emailOrPhone: string;
+  password?: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  phone: string;
+  password?: string;
+  area: string;
+  bio?: string;
+  avatar?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  participant?: Participant;
+  message?: string;
+}
+
 export type AdminRole = 'Super Admin' | 'Event Organizer' | 'Volunteer/Staff';
 
 export type EventCategory =

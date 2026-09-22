@@ -11,12 +11,25 @@ import {
   CheckCircle2,
   Edit2,
   Save,
-  Sparkles
+  Sparkles,
+  LogIn,
+  LogOut,
+  UserPlus,
+  ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const ParticipantProfile: React.FC = () => {
-  const { currentParticipant, updateParticipant, events, games, registrations } = useApp();
+  const {
+    currentParticipant,
+    updateParticipant,
+    events,
+    games,
+    registrations,
+    currentUser,
+    logout,
+    openAuthModal
+  } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentParticipant.name);
@@ -295,6 +308,51 @@ export const ParticipantProfile: React.FC = () => {
             })}
           </div>
         )}
+      </div>
+
+      {/* Shuffler Account & Authentication Card */}
+      <div className="p-6 rounded-2xl bg-[#111C3B] border border-[#1F305E] shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[#35C8A8]" />
+              <span>Participant Account & Authentication</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Logged in as <span className="text-white font-semibold">{currentUser?.name || currentParticipant.name}</span> ({currentUser?.email || currentParticipant.email})
+            </p>
+          </div>
+
+          <span className="self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold bg-[#35C8A8]/15 border border-[#35C8A8]/40 text-[#35C8A8]">
+            Verified Participant
+          </span>
+        </div>
+
+        <div className="pt-2 flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => openAuthModal('register')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#162349] hover:bg-[#1f305e] border border-[#1F305E] text-xs font-bold text-slate-200 transition-colors"
+          >
+            <UserPlus className="w-4 h-4 text-[#35C8A8]" />
+            <span>Register Another Participant</span>
+          </button>
+
+          <button
+            onClick={() => openAuthModal('login')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#162349] hover:bg-[#1f305e] border border-[#1F305E] text-xs font-bold text-slate-200 transition-colors"
+          >
+            <LogIn className="w-4 h-4 text-[#FF6036]" />
+            <span>Switch / Sign In</span>
+          </button>
+
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-xs font-bold text-red-400 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
     </div>
   );

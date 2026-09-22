@@ -9,7 +9,9 @@ import {
   RefreshCw,
   Sparkles,
   ChevronDown,
-  Database
+  LogIn,
+  LogOut,
+  UserPlus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SocialShuffleLogo } from './SocialShuffleLogo';
@@ -22,7 +24,11 @@ export const Header: React.FC = () => {
     setCurrentParticipantId,
     participants,
     adminName,
-    backendStatus,
+    currentUser,
+    isAuthenticated,
+    isAdminUser,
+    logout,
+    openAuthModal,
     isOfflineMode,
     toggleOfflineMode,
     offlineSyncQueue,
@@ -39,64 +45,51 @@ export const Header: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0A1128]/95 backdrop-blur-md border-b border-[#1F305E] px-4 lg:px-6 py-2.5">
+    <header className="sticky top-0 z-40 bg-[#0A1128]/95 backdrop-blur-md border-b border-[#1F305E] px-3.5 sm:px-6 py-2.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <SocialShuffleLogo size="sm" showWordmark={true} showTagline={true} />
-          <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FF6036]/15 text-[#FF8566] border border-[#FF6036]/30">
+          <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FF6036]/15 text-[#FF8566] border border-[#FF6036]/30">
             Pune
           </span>
         </div>
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Spring Boot / MongoDB Status Indicator */}
-          <div
-            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-              backendStatus === 'connected'
-                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                : 'bg-[#111C3B] border-[#1F305E] text-slate-300'
-            }`}
-            title={backendStatus === 'connected' ? 'Connected to Spring Boot REST API & MongoDB' : 'Spring Boot API: Local Dynamic Fallback Active'}
-          >
-            <Database className={`w-3.5 h-3.5 ${backendStatus === 'connected' ? 'text-emerald-400' : 'text-[#35C8A8]'}`} />
-            <span className="hidden md:inline">
-              {backendStatus === 'connected' ? 'MongoDB Live' : 'Spring Boot STS'}
-            </span>
-          </div>
-
-          {/* Offline Attendance Mode Simulator */}
-          <button
-            id="btn-toggle-offline"
-            onClick={toggleOfflineMode}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-              isOfflineMode
-                ? 'bg-[#FFC226]/15 border-[#FFC226]/40 text-[#FFC226]'
-                : 'bg-[#111C3B] border-[#1F305E] text-slate-300 hover:text-white hover:border-[#35C8A8]/40'
-            }`}
-            title="Toggle offline attendance simulation mode"
-          >
-            {isOfflineMode ? (
-              <>
-                <WifiOff className="w-3.5 h-3.5 text-[#FFC226] animate-pulse" />
-                <span className="hidden md:inline">Offline Mode</span>
-                {offlineSyncQueue.length > 0 && (
-                  <span className="bg-[#FFC226] text-[#0A1128] text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                    {offlineSyncQueue.length}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <Wifi className="w-3.5 h-3.5 text-[#35C8A8]" />
-                <span className="hidden md:inline">Online</span>
-              </>
-            )}
-          </button>
+          {/* Offline Attendance Mode Simulator (Only visible to admin during event hosting) */}
+          {isAdminUser && (
+            <button
+              id="btn-toggle-offline"
+              onClick={toggleOfflineMode}
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                isOfflineMode
+                  ? 'bg-[#FFC226]/15 border-[#FFC226]/40 text-[#FFC226]'
+                  : 'bg-[#111C3B] border-[#1F305E] text-slate-300 hover:text-white hover:border-[#35C8A8]/40'
+              }`}
+              title="Toggle offline attendance simulation mode"
+            >
+              {isOfflineMode ? (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-[#FFC226] animate-pulse" />
+                  <span>Offline Mode</span>
+                  {offlineSyncQueue.length > 0 && (
+                    <span className="bg-[#FFC226] text-[#0A1128] text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                      {offlineSyncQueue.length}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-[#35C8A8]" />
+                  <span>Online</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Sync Button if offline items exist */}
-          {offlineSyncQueue.length > 0 && (
+          {isAdminUser && offlineSyncQueue.length > 0 && (
             <button
               onClick={syncOfflineQueue}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#35C8A8]/20 border border-[#35C8A8]/40 text-[#35C8A8] hover:bg-[#35C8A8]/30 transition-all"
@@ -162,136 +155,182 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* Role Switcher Pill */}
-          <div className="flex items-center p-1 rounded-xl bg-[#090F22] border border-[#1F305E]">
-            <button
-              id="role-switch-participant"
-              onClick={() => setRole('participant')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                role === 'participant'
-                  ? 'bg-[#FF6036] text-white shadow-md shadow-[#FF6036]/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Participant</span>
-            </button>
-            <button
-              id="role-switch-admin"
-              onClick={() => setRole('admin')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                role === 'admin'
-                  ? 'bg-[#35C8A8] text-[#0A1128] font-bold shadow-md shadow-[#35C8A8]/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </button>
-          </div>
+          {/* STRICT ROLE-BASED ACCESS CONTROL */}
+          {/* ONLY ADMIN USERS can see the Role Switcher. Participants NEVER see or toggle Admin! */}
+          {isAdminUser && (
+            <div className="flex items-center p-1 rounded-xl bg-[#090F22] border border-[#1F305E]">
+              <button
+                id="role-switch-admin"
+                onClick={() => setRole('admin')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  role === 'admin'
+                    ? 'bg-[#35C8A8] text-[#0A1128] font-bold shadow-md shadow-[#35C8A8]/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Admin Console</span>
+                <span className="sm:hidden">Admin</span>
+              </button>
+              <button
+                id="role-switch-participant"
+                onClick={() => setRole('participant')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  role === 'participant'
+                    ? 'bg-[#FF6036] text-white shadow-md shadow-[#FF6036]/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Participant Preview</span>
+                <span className="sm:hidden">User</span>
+              </button>
+            </div>
+          )}
 
-          {/* Demo User Switcher Dropdown */}
-          <div className="relative">
-            <button
-              id="btn-user-switch"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#FF6036]/40 transition-colors"
-            >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF6036] to-[#8F43EE] flex items-center justify-center text-[11px] font-bold text-white uppercase">
-                {role === 'admin' ? 'A' : currentParticipant.name[0]}
-              </div>
-              <div className="text-left hidden sm:block">
-                <span className="text-xs font-medium text-slate-200 block truncate max-w-[90px]">
-                  {role === 'admin' ? adminName.split(' ')[0] : currentParticipant.name.split(' ')[0]}
-                </span>
-                <span className="text-[10px] text-slate-400 block -mt-0.5">
-                  {role === 'admin' ? 'Host Admin' : currentParticipant.area}
-                </span>
-              </div>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
-            </button>
-
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-[#111C3B] border border-[#1F305E] rounded-xl shadow-2xl z-50 p-2 text-left">
-                <div className="px-2 py-1.5 mb-1 border-b border-[#1F305E]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Switch Active Persona (Demo)
+          {/* User Profile / Auth State Menu */}
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                id="btn-user-switch"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#FF6036]/40 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#FF6036] to-[#8F43EE] flex items-center justify-center text-xs font-bold text-white uppercase overflow-hidden border border-[#FF6036]/30">
+                  {currentUser?.avatar ? (
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    currentUser?.name?.[0] || 'U'
+                  )}
+                </div>
+                <div className="text-left hidden sm:block">
+                  <span className="text-xs font-semibold text-slate-200 block truncate max-w-[100px]">
+                    {currentUser?.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block -mt-0.5">
+                    {isAdminUser ? 'Admin' : currentUser?.area || 'Pune Shuffler'}
                   </span>
                 </div>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
 
-                <div className="space-y-1">
-                  {participants.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => {
-                        setCurrentParticipantId(p.id);
-                        setRole('participant');
-                        setShowUserMenu(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
-                        currentParticipant.id === p.id && role === 'participant'
-                          ? 'bg-[#FF6036]/20 text-[#FF8566] font-semibold'
-                          : 'text-slate-300 hover:bg-[#162349]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/30 flex items-center justify-center text-[10px] font-bold text-[#FF8566]">
-                          {p.name[0]}
-                        </div>
-                        <div className="text-left">
-                          <span className="block">{p.name}</span>
-                          <span className="text-[10px] text-slate-500">{p.area} • {p.totalEventsAttended} events</span>
-                        </div>
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-[#111C3B] border border-[#1F305E] rounded-xl shadow-2xl z-50 p-2 text-left animate-in fade-in duration-150">
+                  {/* User Profile Summary */}
+                  <div className="p-2.5 mb-2 bg-[#0A1128] rounded-lg border border-[#1F305E]/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/40 flex items-center justify-center font-bold text-[#FF8566]">
+                        {currentUser?.name?.[0] || 'S'}
                       </div>
-                      {currentParticipant.id === p.id && role === 'participant' && (
-                        <CheckCircle className="w-3.5 h-3.5 text-[#35C8A8]" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-2 pt-2 border-t border-[#1F305E]">
-                  <button
-                    onClick={() => {
-                      setRole('admin');
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
-                      role === 'admin'
-                        ? 'bg-[#35C8A8]/20 text-[#35C8A8] font-semibold'
-                        : 'text-slate-300 hover:bg-[#162349]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-[#35C8A8]" />
-                      <div className="text-left">
-                        <span className="block">Aman Joshi (Host)</span>
-                        <span className="text-[10px] text-slate-500">Super Admin & Organizer</span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white truncate">{currentUser?.name}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{currentUser?.email}</div>
+                        <div className="text-[10px] font-semibold text-[#35C8A8] mt-0.5 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#35C8A8]"></span>
+                          {isAdminUser ? 'Super Admin' : `Participant • ${currentUser?.area}`}
+                        </div>
                       </div>
                     </div>
-                    {role === 'admin' && <CheckCircle className="w-3.5 h-3.5 text-[#35C8A8]" />}
-                  </button>
-                </div>
+                  </div>
 
-                <div className="mt-2 pt-2 border-t border-[#1F305E] px-1">
-                  <button
-                    onClick={() => {
-                      if (confirm('Reset sample Pune meetup data back to defaults?')) {
-                        resetDatabase();
+                  {/* Switch Persona ONLY for admin testing */}
+                  {isAdminUser ? (
+                    <>
+                      <div className="px-2 py-1 mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Switch Active Participant (Admin Test)
+                        </span>
+                      </div>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {participants.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => {
+                              setCurrentParticipantId(p.id);
+                              setShowUserMenu(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
+                              currentParticipant.id === p.id
+                                ? 'bg-[#FF6036]/20 text-[#FF8566] font-semibold'
+                                : 'text-slate-300 hover:bg-[#162349]'
+                            }`}
+                          >
+                            <span className="truncate">{p.name}</span>
+                            {currentParticipant.id === p.id && (
+                              <CheckCircle className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {/* Participant actions */}
+                  <div className="mt-1 pt-1.5 border-t border-[#1F305E] space-y-1">
+                    <button
+                      onClick={() => {
+                        openAuthModal('register');
                         setShowUserMenu(false);
-                      }
-                    }}
-                    className="w-full text-center py-1 text-[11px] text-rose-400/80 hover:text-rose-300 transition-colors"
-                  >
-                    Reset Sample Database
-                  </button>
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-xs text-slate-300 hover:bg-[#162349] transition-colors"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-[#35C8A8]" />
+                      <span>Register New Participant</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out / Switch Account</span>
+                    </button>
+                  </div>
+
+                  {isAdminUser && (
+                    <div className="mt-2 pt-2 border-t border-[#1F305E] px-1">
+                      <button
+                        onClick={() => {
+                          if (confirm('Reset sample Pune meetup data back to defaults?')) {
+                            resetDatabase();
+                            setShowUserMenu(false);
+                          }
+                        }}
+                        className="w-full text-center py-1 text-[10px] text-rose-400/80 hover:text-rose-300 transition-colors"
+                      >
+                        Reset Sample Database
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openAuthModal('login')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#111C3B] border border-[#1F305E] text-slate-200 hover:border-[#FF6036]/50 transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5 text-[#FF6036]" />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => openAuthModal('register')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-[#FF6036] to-[#FF8566] text-white hover:opacity-95 shadow-md shadow-[#FF6036]/20 transition-all"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Join Community</span>
+                <span className="sm:hidden">Register</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
   );
 };
+
 

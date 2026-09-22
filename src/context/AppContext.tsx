@@ -14,7 +14,10 @@ import {
   AttendanceStatus,
   PaymentStatus,
   GuestInfo,
-  VolunteerStatus
+  VolunteerStatus,
+  AuthUser,
+  LoginCredentials,
+  RegisterCredentials
 } from '../types';
 import {
   INITIAL_GAMES,
@@ -52,6 +55,20 @@ interface AppContextType {
   setCurrentParticipantId: (id: string) => void;
   currentParticipant: Participant;
   adminName: string;
+
+  // Authentication & Session
+  currentUser: AuthUser | null;
+  isAuthenticated: boolean;
+  isAdminUser: boolean;
+  login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
+  registerParticipant: (data: RegisterCredentials) => Promise<{ success: boolean; message: string }>;
+  logout: () => void;
+  showAuthModal: boolean;
+  setShowAuthModal: (show: boolean) => void;
+  authModalMode: 'login' | 'register';
+  setAuthModalMode: (mode: 'login' | 'register') => void;
+  openAuthModal: (mode?: 'login' | 'register') => void;
+  closeAuthModal: () => void;
 
   // Spring Boot & MongoDB Integration
   backendStatus: 'connected' | 'offline' | 'checking';
@@ -135,10 +152,81 @@ const STORAGE_KEY = 'social_shuffle_v1_store';
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Role & Session State
-  const [role, setRole] = useState<UserRole>('participant');
-  const [currentParticipantId, setCurrentParticipantId] = useState<string>('p-rahul');
+  // Authentication & Session State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    // Default active participant demo profile
+    return {
+      id: 'u-rohan',
+      name: 'Rohan Kulkarni',
+      email: 'rohan.kulkarni@example.com',
+      phone: '+91 98220 12345',
+      role: 'participant',
+      area: 'Koregaon Park',
+      participantId: 'p-rahul',
+      bio: 'Board game lover, strategy nerd, Catan enthusiast.',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80'
+    };
+  });
+
+  const [role, setRoleState] = useState<UserRole>(() => {
+    return currentUser?.role || 'participant';
+  });
+
+  const [currentParticipantId, setCurrentParticipantId] = useState<string>(() => {
+    return currentUser?.participantId || 'p-rahul';
+  });
+
   const adminName = 'Aman Joshi (Host)';
+
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
+  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setShowAuthModal(true);
+  };
+
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+  };
+
+  const isAuthenticated = Boolean(currentUser);
+  const isAdminUser = currentUser?.role === 'admin';
+
+  // STRICT ACCESS CONTROL:
+  // When currentUser changes, enforce role and sync participant profile
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(currentUser));
+      if (currentUser.role === 'participant') {
+        setRoleState('participant'); // strictly participant!
+      } else if (currentUser.role === 'admin') {
+        setRoleState('admin');
+      }
+      if (currentUser.participantId) {
+        setCurrentParticipantId(currentUser.participantId);
+      }
+    } else {
+      localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+      setRoleState('participant');
+    }
+  }, [currentUser]);
+
+  // STRICT ROLE ENFORCEMENT:
+  // If the user is registered as a participant, they CANNOT switch to admin sections!
+  const setRole = (newRole: UserRole) => {
+    if (currentUser?.role === 'participant' && newRole === 'admin') {
+      // DENIED: Registered participants must only see participant sections!
+      return;
+    }
+    setRoleState(newRole);
+  };
 
   // Core Data loaded from localStorage or defaults
   const [events, setEvents] = useState<ShuffleEvent[]>(() => {
@@ -317,6 +405,162 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setBackendStatus('offline');
       return { success: false, message: e?.message || 'Sync failed' };
     }
+  };
+
+  // --- Participant & Admin Authentication ---
+  const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message: string }> => {
+    try {
+      // Connect to Spring Boot REST API
+      const backendRes = await api.login(credentials);
+      if (backendRes && backendRes.user) {
+        setCurrentUser(backendRes.user);
+        if (backendRes.participant) {
+          setCurrentParticipantId(backendRes.participant.id);
+          setParticipants(prev => {
+            if (!prev.find(p => p.id === backendRes.participant!.id)) {
+              return [backendRes.participant!, ...prev];
+            }
+            return prev;
+          });
+        }
+        setShowAuthModal(false);
+        return { success: true, message: `Welcome back, ${backendRes.user.name}!` };
+      }
+    } catch {
+      // Fallback to local authentication
+    }
+
+    const ident = credentials.emailOrPhone.trim().toLowerCase();
+
+    // Check if admin credentials
+    if (ident === 'admin@socialshuffle.com' || ident === '+91 98220 11223' || ident === 'admin') {
+      const adminUser: AuthUser = {
+        id: 'u-admin',
+        name: 'Aman Joshi',
+        email: 'admin@socialshuffle.com',
+        phone: '+91 98220 11223',
+        role: 'admin',
+        area: 'Pune',
+        bio: 'Social Shuffle Founder & Super Admin'
+      };
+      setCurrentUser(adminUser);
+      setRoleState('admin');
+      setShowAuthModal(false);
+      return { success: true, message: 'Welcome back, Admin Aman Joshi!' };
+    }
+
+    // Match participant by email or phone
+    const cleanPhone = ident.replace(/[^0-9]/g, '');
+    const matched = participants.find(p => {
+      const pEmail = p.email.trim().toLowerCase();
+      const pPhone = p.phone.replace(/[^0-9]/g, '');
+      return (pEmail && pEmail === ident) || (cleanPhone && pPhone && pPhone === cleanPhone);
+    });
+
+    if (matched) {
+      const authUser: AuthUser = {
+        id: `u-${matched.id}`,
+        name: matched.name,
+        email: matched.email,
+        phone: matched.phone,
+        role: 'participant', // STRICT PARTICIPANT ROLE
+        area: matched.area,
+        participantId: matched.id,
+        avatar: matched.avatar,
+        bio: matched.bio
+      };
+      setCurrentUser(authUser);
+      setRoleState('participant');
+      setCurrentParticipantId(matched.id);
+      setShowAuthModal(false);
+      return { success: true, message: `Welcome back, ${matched.name}!` };
+    }
+
+    return { success: false, message: 'No registered participant found with this email or phone. Please sign up.' };
+  };
+
+  const registerParticipant = async (data: RegisterCredentials): Promise<{ success: boolean; message: string }> => {
+    if (!data.name.trim() || !data.email.trim() || !data.phone.trim()) {
+      return { success: false, message: 'Please provide your full name, email, and phone number.' };
+    }
+
+    const emailClean = data.email.trim().toLowerCase();
+    const phoneClean = data.phone.trim();
+
+    if (participants.some(p => p.email.toLowerCase() === emailClean || p.phone.replace(/[^0-9]/g, '') === phoneClean.replace(/[^0-9]/g, ''))) {
+      return { success: false, message: 'An account with this email or phone already exists. Please log in.' };
+    }
+
+    const newParticipantId = `p-${Date.now().toString(36)}`;
+    const newUserId = `u-${Date.now().toString(36)}`;
+
+    const newParticipant: Participant = {
+      id: newParticipantId,
+      name: data.name.trim(),
+      email: emailClean,
+      phone: phoneClean,
+      area: data.area || 'Koregaon Park',
+      avatar: data.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.name)}`,
+      bio: data.bio || 'Board game lover eager to play!',
+      joinedDate: new Date().toISOString().slice(0, 10),
+      totalEventsAttended: 0,
+      totalRegistrations: 0,
+      gamesPlayedIds: [],
+      venuesVisited: [],
+      totalPaxBrought: 0
+    };
+
+    const newAuthUser: AuthUser = {
+      id: newUserId,
+      name: data.name.trim(),
+      email: emailClean,
+      phone: phoneClean,
+      role: 'participant', // STRICT PARTICIPANT ROLE
+      area: data.area || 'Koregaon Park',
+      participantId: newParticipantId,
+      avatar: newParticipant.avatar,
+      bio: newParticipant.bio
+    };
+
+    // Save to local participants collection
+    setParticipants(prev => [newParticipant, ...prev]);
+
+    // Send to Spring Boot REST API
+    api.register(data).catch(() => {});
+    api.createParticipant(newParticipant).catch(() => {});
+
+    // Set current active user to this new participant
+    setCurrentUser(newAuthUser);
+    setRoleState('participant'); // strictly participant view!
+    setCurrentParticipantId(newParticipantId);
+    setShowAuthModal(false);
+
+    // Welcome notification
+    const welcomeNotif: NotificationItem = {
+      id: `notif-welcome-${Date.now()}`,
+      title: `Welcome to Social Shuffle, ${data.name}! 🎲`,
+      message: 'Your Shuffler profile is ready. Check out upcoming meetups in Pune and book your first seat!',
+      type: 'system',
+      timestamp: 'Just now',
+      read: false
+    };
+    setNotifications(prev => [welcomeNotif, ...prev]);
+
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    } catch {}
+
+    return { success: true, message: `Welcome to Social Shuffle Pune, ${data.name}!` };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+    setRoleState('participant');
   };
 
   // Helper to add audit log
@@ -1137,6 +1381,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentParticipantId,
         currentParticipant,
         adminName,
+
+        // Authentication & Session
+        currentUser,
+        isAuthenticated,
+        isAdminUser,
+        login,
+        registerParticipant,
+        logout,
+        showAuthModal,
+        setShowAuthModal,
+        authModalMode,
+        setAuthModalMode,
+        openAuthModal,
+        closeAuthModal,
 
         events,
         games,

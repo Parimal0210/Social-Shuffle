@@ -20,28 +20,49 @@ public class DataSeeder implements CommandLineRunner {
     private final RegistrationRepository registrationRepository;
     private final AuditLogRepository auditLogRepository;
     private final NotificationItemRepository notificationRepository;
+    private final UserRepository userRepository;
 
     public DataSeeder(ShuffleEventRepository eventRepository,
                       GameRepository gameRepository,
                       ParticipantRepository participantRepository,
                       RegistrationRepository registrationRepository,
                       AuditLogRepository auditLogRepository,
-                      NotificationItemRepository notificationRepository) {
+                      NotificationItemRepository notificationRepository,
+                      UserRepository userRepository) {
         this.eventRepository = eventRepository;
         this.gameRepository = gameRepository;
         this.participantRepository = participantRepository;
         this.registrationRepository = registrationRepository;
         this.auditLogRepository = auditLogRepository;
         this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public void run(String... args) {
+        seedUsers();
         seedEvents();
         seedGames();
         seedParticipants();
         seedRegistrations();
         seedAuditAndNotifications();
+    }
+
+    private void seedUsers() {
+        if (userRepository.count() == 0) {
+            User admin = new User("u-admin", "Aman Joshi", "admin@socialshuffle.com", "+91 98220 11223", "admin123", "admin", "Pune");
+            userRepository.save(admin);
+
+            User p1 = new User("u-rohan", "Rohan Kulkarni", "rohan.kulkarni@example.com", "+91 98220 12345", "shuffler123", "participant", "Koregaon Park");
+            p1.setParticipantId("p-rahul");
+            p1.setBio("Board game lover, strategy nerd, Catan enthusiast.");
+            userRepository.save(p1);
+
+            User p2 = new User("u-ananya", "Ananya Deshmukh", "ananya.d@example.com", "+91 97654 32100", "shuffler123", "participant", "Baner");
+            p2.setParticipantId("p-ananya");
+            p2.setBio("Casual gamer & Azul fan. Love meeting new people in Pune!");
+            userRepository.save(p2);
+        }
     }
 
     private void seedEvents() {

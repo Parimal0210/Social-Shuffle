@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>4.0.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     
@@ -15,7 +15,7 @@
     <artifactId>social-shuffle-backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>Social Shuffle Backend</name>
-    <description>Spring Boot and MongoDB REST API for Social Shuffle Pune Board Game Community</description>
+    <description>Spring Boot 4 and MongoDB REST API for Social Shuffle Pune Board Game Community</description>
     
     <properties>
         <java.version>17</java.version>

@@ -15,7 +15,6 @@ import { AdminSafetyReports } from './components/admin/AdminSafetyReports';
 import { AdminVolunteers } from './components/admin/AdminVolunteers';
 import { AdminImportExport } from './components/admin/AdminImportExport';
 import { AdminAuditLog } from './components/admin/AdminAuditLog';
-import { AdminBackendHub } from './components/admin/AdminBackendHub';
 
 // Participant Components
 import { ParticipantNav, ParticipantTab } from './components/participant/ParticipantNav';
@@ -24,9 +23,10 @@ import { ParticipantEvents } from './components/participant/ParticipantEvents';
 import { ParticipantProgress } from './components/participant/ParticipantProgress';
 import { ParticipantCommunity } from './components/participant/ParticipantCommunity';
 import { ParticipantProfile } from './components/participant/ParticipantProfile';
+import { AuthModal } from './components/auth/AuthModal';
 
 const AppContent: React.FC = () => {
-  const { userRole, reportsList, volunteersList } = useApp();
+  const { userRole, role, isAdminUser, reportsList, volunteersList } = useApp();
 
   // Admin Navigation State
   const [adminSection, setAdminSection] = useState<AdminViewSection>('dashboard');
@@ -40,6 +40,11 @@ const AppContent: React.FC = () => {
 
   const pendingReportsCount = reportsList.filter(r => r.status === 'New').length;
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
+
+  // STRICT ACCESS RULE:
+  // Only authenticated admins can ever view the Admin Console!
+  // Any person registered as a participant strictly only sees participant sections!
+  const showAdminView = isAdminUser && (role === 'admin' || userRole === 'admin');
 
   const handleOpenAttendanceForEvent = (eventId: string) => {
     setTargetAttendanceEventId(eventId);
@@ -57,7 +62,7 @@ const AppContent: React.FC = () => {
       <Header />
 
       {/* Main App Body */}
-      {userRole === 'admin' ? (
+      {showAdminView ? (
         <div className="flex-1 flex flex-col lg:flex-row w-full max-w-7xl mx-auto">
           {/* Admin Sidebar Navigation (iPad & Desktop optimized) */}
           <AdminSidebar
@@ -115,8 +120,6 @@ const AppContent: React.FC = () => {
             {adminSection === 'import_export' && <AdminImportExport />}
 
             {adminSection === 'audit' && <AdminAuditLog />}
-
-            {adminSection === 'backend' && <AdminBackendHub />}
           </main>
         </div>
       ) : (
@@ -127,8 +130,8 @@ const AppContent: React.FC = () => {
             setActiveTab={tab => setParticipantTab(tab)}
           />
 
-          {/* Participant Screens */}
-          <main className="flex-1 p-4 sm:p-6 md:p-8">
+          {/* Participant Screens — app-based padding on mobile */}
+          <main className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8">
             {participantTab === 'home' && (
               <ParticipantHome
                 onNavigateTab={tab => setParticipantTab(tab)}
@@ -148,6 +151,9 @@ const AppContent: React.FC = () => {
           </main>
         </div>
       )}
+
+      {/* Global Participant Login & Registration Modal */}
+      <AuthModal />
     </div>
   );
 };
