@@ -27,6 +27,12 @@ import {
   INITIAL_AUDIT_LOGS,
   INITIAL_NOTIFICATIONS
 } from '../data/initialData';
+import {
+  api,
+  getStoredApiUrl,
+  setStoredApiUrl,
+  DEFAULT_API_URL
+} from '../services/api';
 
 interface OfflineSyncItem {
   id: string;
@@ -46,6 +52,13 @@ interface AppContextType {
   setCurrentParticipantId: (id: string) => void;
   currentParticipant: Participant;
   adminName: string;
+
+  // Spring Boot & MongoDB Integration
+  backendStatus: 'connected' | 'offline' | 'checking';
+  backendUrl: string;
+  setBackendUrl: (url: string) => void;
+  checkBackendConnection: () => Promise<boolean>;
+  syncWithBackend: () => Promise<{ success: boolean; message: string }>;
 
   // Data
   events: ShuffleEvent[];
@@ -216,6 +229,95 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Current participant object
   const currentParticipant = participants.find(p => p.id === currentParticipantId) || participants[0];
+
+  // Spring Boot + MongoDB Connectivity
+  const [backendStatus, setBackendStatus] = useState<'connected' | 'offline' | 'checking'>('checking');
+  const [backendUrl, setBackendUrlState] = useState<string>(() => getStoredApiUrl());
+
+  const checkBackendConnection = async (): Promise<boolean> => {
+    setBackendStatus('checking');
+    try {
+      const health = await api.checkHealth();
+      if (health && health.status === 'UP') {
+        setBackendStatus('connected');
+        return true;
+      } else {
+        setBackendStatus('offline');
+        return false;
+      }
+    } catch {
+      setBackendStatus('offline');
+      return false;
+    }
+  };
+
+  const setBackendUrl = (url: string) => {
+    setStoredApiUrl(url);
+    setBackendUrlState(url);
+    checkBackendConnection();
+  };
+
+  // On mount: check health and pull live data from MongoDB if available
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const health = await api.checkHealth();
+        if (active) {
+          if (health && health.status === 'UP') {
+            setBackendStatus('connected');
+            const [beEvents, beGames, beParticipants, beRegistrations] = await Promise.all([
+              api.getEvents(),
+              api.getGames(),
+              api.getParticipants(),
+              api.getRegistrations()
+            ]);
+            if (active) {
+              if (beEvents && beEvents.length > 0) setEvents(beEvents);
+              if (beGames && beGames.length > 0) setGames(beGames);
+              if (beParticipants && beParticipants.length > 0) setParticipants(beParticipants);
+              if (beRegistrations && beRegistrations.length > 0) setRegistrations(beRegistrations);
+            }
+          } else {
+            setBackendStatus('offline');
+          }
+        }
+      } catch {
+        if (active) setBackendStatus('offline');
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const syncWithBackend = async (): Promise<{ success: boolean; message: string }> => {
+    setBackendStatus('checking');
+    try {
+      const health = await api.checkHealth();
+      if (!health || health.status !== 'UP') {
+        setBackendStatus('offline');
+        return { success: false, message: 'Spring Boot REST API is not reachable at ' + backendUrl };
+      }
+      setBackendStatus('connected');
+      for (const ev of events) {
+        await api.createEvent(ev).catch(() => {});
+      }
+      for (const gm of games) {
+        await api.createGame(gm).catch(() => {});
+      }
+      for (const pt of participants) {
+        await api.createParticipant(pt).catch(() => {});
+      }
+      for (const rg of registrations) {
+        await api.createRegistration(rg).catch(() => {});
+      }
+      return { success: true, message: 'Successfully synced local data to MongoDB via Spring Boot!' };
+    } catch (e: any) {
+      setBackendStatus('offline');
+      return { success: false, message: e?.message || 'Sync failed' };
+    }
+  };
 
   // Helper to add audit log
   const logAudit = (action: string, target: string, details: string) => {
@@ -1045,6 +1147,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         volunteersList,
         auditLogs,
         notifications,
+
+        backendStatus,
+        backendUrl,
+        setBackendUrl,
+        checkBackendConnection,
+        syncWithBackend,
 
         isOfflineMode,
         toggleOfflineMode,

@@ -8,7 +8,8 @@ import {
   CheckCircle,
   RefreshCw,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Database
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SocialShuffleLogo } from './SocialShuffleLogo';
@@ -21,6 +22,7 @@ export const Header: React.FC = () => {
     setCurrentParticipantId,
     participants,
     adminName,
+    backendStatus,
     isOfflineMode,
     toggleOfflineMode,
     offlineSyncQueue,
@@ -49,6 +51,21 @@ export const Header: React.FC = () => {
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Spring Boot / MongoDB Status Indicator */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              backendStatus === 'connected'
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                : 'bg-[#111C3B] border-[#1F305E] text-slate-300'
+            }`}
+            title={backendStatus === 'connected' ? 'Connected to Spring Boot REST API & MongoDB' : 'Spring Boot API: Local Dynamic Fallback Active'}
+          >
+            <Database className={`w-3.5 h-3.5 ${backendStatus === 'connected' ? 'text-emerald-400' : 'text-[#35C8A8]'}`} />
+            <span className="hidden md:inline">
+              {backendStatus === 'connected' ? 'MongoDB Live' : 'Spring Boot STS'}
+            </span>
+          </div>
+
           {/* Offline Attendance Mode Simulator */}
           <button
             id="btn-toggle-offline"

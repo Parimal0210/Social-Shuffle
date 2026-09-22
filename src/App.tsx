@@ -15,6 +15,7 @@ import { AdminSafetyReports } from './components/admin/AdminSafetyReports';
 import { AdminVolunteers } from './components/admin/AdminVolunteers';
 import { AdminImportExport } from './components/admin/AdminImportExport';
 import { AdminAuditLog } from './components/admin/AdminAuditLog';
+import { AdminBackendHub } from './components/admin/AdminBackendHub';
 
 // Participant Components
 import { ParticipantNav, ParticipantTab } from './components/participant/ParticipantNav';
@@ -114,6 +115,8 @@ const AppContent: React.FC = () => {
             {adminSection === 'import_export' && <AdminImportExport />}
 
             {adminSection === 'audit' && <AdminAuditLog />}
+
+            {adminSection === 'backend' && <AdminBackendHub />}
           </main>
         </div>
       ) : (
