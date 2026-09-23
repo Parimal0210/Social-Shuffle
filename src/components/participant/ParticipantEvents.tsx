@@ -9,17 +9,31 @@ import {
   XCircle,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Mail,
+  Sparkles,
+  Ticket,
+  Eye,
+  Share2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { ShuffleEvent, GuestInfo } from '../../types';
+import { ShuffleEvent, GuestInfo, Registration } from '../../types';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
 }
 
 export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselectedEventId }) => {
-  const { events, games, registrations, currentParticipant, registerForEvent, cancelRegistration } = useApp();
+  const {
+    events,
+    games,
+    registrations,
+    currentParticipant,
+    registerForEvent,
+    cancelRegistration,
+    generateEmailPreviewHtml
+  } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'upcoming' | 'my-events'>('upcoming');
   const [selectedEvent, setSelectedEvent] = useState<ShuffleEvent | null>(() => {
@@ -36,6 +50,12 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [notes, setNotes] = useState<string>('');
   const [regFeedback, setRegFeedback] = useState<{ message: string; success: boolean } | null>(null);
+
+  // Digital Ticket Pass & Email Preview Modals
+  const [activeTicketReg, setActiveTicketReg] = useState<Registration | null>(null);
+  const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
+  const [emailPreviewRegId, setEmailPreviewRegId] = useState<string | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState<boolean>(false);
 
   // My registered events
   const myRegistrations = registrations.filter(
@@ -83,11 +103,11 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     const result = registerForEvent(registeringEvent.id, paxCount, guests, notes);
     setRegFeedback(result);
 
-    if (result.success) {
-      setTimeout(() => {
-        setShowRegisterModal(false);
-        setActiveSubTab('my-events');
-      }, 1500);
+    if (result.success && result.registration) {
+      setShowRegisterModal(false);
+      setActiveTicketReg(result.registration);
+      setShowTicketModal(true);
+      setActiveSubTab('my-events');
     }
   };
 
@@ -307,7 +327,30 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 self-start md:self-center shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
+                    <button
+                      onClick={() => {
+                        setActiveTicketReg(reg);
+                        setShowTicketModal(true);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>QR Ticket</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setEmailPreviewRegId(reg.id);
+                        setShowEmailModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-colors"
+                      title="Preview registration email"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Email</span>
+                    </button>
+
                     {reg.attendanceStatus !== 'Checked In' && (
                       <button
                         onClick={() => {
@@ -317,7 +360,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                         }}
                         className="px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs font-semibold transition-colors"
                       >
-                        Cancel Booking
+                        Cancel
                       </button>
                     )}
                   </div>
@@ -521,6 +564,186 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   Register Spot
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Digital Ticket Pass & Quirky Confirmation Modal */}
+      {showTicketModal && activeTicketReg && (() => {
+        const ticketEvent = events.find(e => e.id === activeTicketReg.eventId);
+        const qrToken = activeTicketReg.qrCodeToken || `SS-REG-${activeTicketReg.id}`;
+        const qrUrl = activeTicketReg.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=10&data=${encodeURIComponent(qrToken)}`;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#151722] border-2 border-purple-500/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
+              <button
+                onClick={() => setShowTicketModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                ✕
+              </button>
+
+              {/* Quirky Gratitude Header */}
+              <div className="text-center space-y-2 pt-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-md">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  VIP Board Gamer Pass Confirmed
+                </div>
+                <h3 className="text-2xl font-black text-white tracking-tight">
+                  Holy Meeples, {activeTicketReg.participantName}! You're In! 🎉
+                </h3>
+              </div>
+
+              {/* Quirky Fun Message Box */}
+              <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-800/40 text-xs leading-relaxed space-y-2">
+                <p className="font-bold text-purple-200 flex items-center gap-1.5 text-sm">
+                  <span>💃🕺 Prepare your victory dance!</span>
+                </p>
+                <p className="text-slate-300">
+                  We are downright stoked that you're joining the <strong>Social Shuffle Pune</strong> tribe.
+                  Whether you're looking to trade sheep for ore in Catan, bluff your closest friends into oblivion during Avalon, or roll non-stop natural 20s, a table is officially reserved for you!
+                </p>
+                <p className="text-[11px] text-amber-300/90 font-medium italic">
+                  ⚠️ Mild Warning: Side effects may include uncontrolled giggles, sudden cravings for 20 new board games, and making life-long friends in Pune!
+                </p>
+              </div>
+
+              {/* High-def Scannable QR Code Pass */}
+              <div className="p-5 rounded-2xl bg-[#0d0f18] border-2 border-dashed border-indigo-500/40 text-center space-y-3 shadow-inner">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-indigo-400">
+                  <QrCode className="w-4 h-4" />
+                  <span>Scan at Venue for Instant Check-In</span>
+                </div>
+
+                <div className="flex justify-center">
+                  <div className="p-3 bg-white rounded-2xl shadow-xl inline-block">
+                    <img
+                      src={qrUrl}
+                      alt="Attendee Ticket QR"
+                      className="w-44 h-44 rounded-lg"
+                      loading="eager"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="font-mono text-sm font-black text-purple-300 tracking-wider">
+                    {qrToken}
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Flash this pass on your phone or let Aman / Parimal scan it at the entrance.
+                  </p>
+                </div>
+              </div>
+
+              {/* Event Details Grid */}
+              <div className="space-y-2 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Meetup:</span>
+                  <span className="text-white font-bold text-right">{ticketEvent?.title || 'Social Shuffle'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">When:</span>
+                  <span className="text-white font-medium">{ticketEvent?.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Venue:</span>
+                  <span className="text-white font-medium text-right">{ticketEvent?.venue} ({ticketEvent?.area})</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Seats Reserved:</span>
+                  <span className="text-emerald-400 font-bold">{activeTicketReg.paxCount} Shuffler(s)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Payment:</span>
+                  <span className="text-amber-400 font-bold">₹{activeTicketReg.paxCount * (ticketEvent?.ticketPrice || 0)} ({activeTicketReg.paymentStatus})</span>
+                </div>
+              </div>
+
+              {/* Email Sent Confirmation Banner */}
+              <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="text-emerald-300 font-bold block">Quirky Email Dispatched!</span>
+                    <span className="text-[10px] text-slate-400">Sent to {activeTicketReg.participantEmail}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setEmailPreviewRegId(activeTicketReg.id);
+                    setShowEmailModal(true);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                >
+                  <Eye className="w-3 h-3" />
+                  <span>Preview</span>
+                </button>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-2.5 pt-1">
+                <button
+                  onClick={() => {
+                    const printUrl = qrUrl;
+                    const w = window.open(printUrl, '_blank');
+                    if (w) w.focus();
+                  }}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Save QR Pass</span>
+                </button>
+
+                <button
+                  onClick={() => setShowTicketModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs shadow-lg shadow-purple-600/30 hover:opacity-95 transition-all"
+                >
+                  Ready for Game Day! 🎲
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Email Preview Modal */}
+      {showEmailModal && emailPreviewRegId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#151722] border border-slate-700 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-purple-400" />
+                <h4 className="text-sm font-black text-white">Confirmation Email Preview</h4>
+              </div>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-400 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+              <div><strong>From:</strong> Social Shuffle Pune &lt;hello@socialshuffle.in&gt;</div>
+              <div><strong>Subject:</strong> 🎲 Holy Meeples! You're in for Social Shuffle! Ticket Pass Attached</div>
+            </div>
+
+            {/* Rendered HTML Email Preview */}
+            <div
+              className="rounded-2xl border border-slate-800 overflow-hidden shadow-inner"
+              dangerouslySetInnerHTML={{ __html: generateEmailPreviewHtml(emailPreviewRegId) }}
+            />
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 transition-colors"
+              >
+                Close Preview
+              </button>
             </div>
           </div>
         </div>

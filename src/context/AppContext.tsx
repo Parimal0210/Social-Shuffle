@@ -17,7 +17,8 @@ import {
   VolunteerStatus,
   AuthUser,
   LoginCredentials,
-  RegisterCredentials
+  RegisterCredentials,
+  GoogleUserProfile
 } from '../types';
 import {
   INITIAL_GAMES,
@@ -62,7 +63,11 @@ interface AppContextType {
   isAdminUser: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
   registerParticipant: (data: RegisterCredentials) => Promise<{ success: boolean; message: string }>;
+  loginWithGoogle: (profile?: GoogleUserProfile) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
+  lastActiveTimestamp: number;
+  sessionRemainingDays: number;
+  simulateInactivityTimeout: () => void;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
   authModalMode: 'login' | 'register';
@@ -70,7 +75,7 @@ interface AppContextType {
   openAuthModal: (mode?: 'login' | 'register') => void;
   closeAuthModal: () => void;
 
-  // Spring Boot & MongoDB Integration
+  // Spring Boot & MySQL Integration
   backendStatus: 'connected' | 'offline' | 'checking';
   backendUrl: string;
   setBackendUrl: (url: string) => void;
@@ -96,8 +101,10 @@ interface AppContextType {
   syncOfflineData: () => void;
 
   // Participant Registration workflow
-  registerForEvent: (eventId: string, paxCount: number, guests: GuestInfo[], notes?: string) => { success: boolean; message: string };
+  registerForEvent: (eventId: string, paxCount: number, guests: GuestInfo[], notes?: string) => { success: boolean; message: string; registration?: Registration };
   cancelRegistration: (registrationId: string) => void;
+  verifyAttendeeQrCode: (code: string, eventId?: string) => { success: boolean; message: string; alreadyCheckedIn?: boolean; registration?: Registration };
+  generateEmailPreviewHtml: (registrationId: string) => string;
 
   // Attendance management (Admin)
   updateAttendanceStatus: (registrationId: string, status: AttendanceStatus) => void;
@@ -148,20 +155,45 @@ interface AppContextType {
 }
 
 const STORAGE_KEY = 'social_shuffle_v1_store';
+// Inactivity timeout: 1 month (30 days in milliseconds)
+const INACTIVITY_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Authentication & Session State
+  // Authentication & Session State with 30-day inactivity check
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
+    const isLoggedOut = localStorage.getItem(`${STORAGE_KEY}_logged_out`) === 'true';
+    const lastActiveStr = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
+    const now = Date.now();
+
+    if (isLoggedOut) {
+      return null;
+    }
+
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch (e) {}
+        const user: AuthUser = JSON.parse(saved);
+        if (lastActiveStr) {
+          const lastActive = parseInt(lastActiveStr, 10);
+          if (!isNaN(lastActive) && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
+            // User inactive for over a month -> log out automatically
+            localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+            localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
+            return null;
+          }
+        }
+        // Active within the month: user remains logged in!
+        localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+        return user;
+      } catch (e) {
+        return null;
+      }
     }
-    // Default active participant demo profile
-    return {
+
+    // Default active demo participant for first-time presentation
+    const initialUser: AuthUser = {
       id: 'u-rohan',
       name: 'Rohan Kulkarni',
       email: 'rohan.kulkarni@example.com',
@@ -170,9 +202,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       area: 'Koregaon Park',
       participantId: 'p-rahul',
       bio: 'Board game lover, strategy nerd, Catan enthusiast.',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80'
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
+      authProvider: 'local',
+      loginAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
     };
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+    return initialUser;
   });
+
+  const [lastActiveTimestamp, setLastActiveTimestamp] = useState<number>(() => {
+    const saved = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
+    return saved ? parseInt(saved, 10) : Date.now();
+  });
+
+  // Calculate remaining days before inactivity expiration
+  const sessionRemainingDays = Math.max(
+    0,
+    Math.ceil((INACTIVITY_TIMEOUT_MS - (Date.now() - lastActiveTimestamp)) / (1000 * 60 * 60 * 24))
+  );
 
   const [role, setRoleState] = useState<UserRole>(() => {
     return currentUser?.role || 'participant';
@@ -216,6 +264,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
       setRoleState('participant');
     }
+  }, [currentUser]);
+
+  // AUTOMATIC 30-DAY INACTIVITY RENEWAL & EXPIRATION CHECK:
+  // As long as the user is active, their 30-day session continuously extends.
+  // If no activity occurs for 30 consecutive days, they are logged out.
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let lastThrottle = Date.now();
+
+    const recordUserActivity = () => {
+      const now = Date.now();
+      // Throttle localStorage writes to at most once per 30 seconds
+      if (now - lastThrottle > 30000) {
+        lastThrottle = now;
+        setLastActiveTimestamp(now);
+        localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      }
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach(evt => window.addEventListener(evt, recordUserActivity, { passive: true }));
+
+    // Periodic check every 60 seconds
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const lastActiveStr = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
+      const lastActive = lastActiveStr ? parseInt(lastActiveStr, 10) : lastThrottle;
+      if (now - lastActive > INACTIVITY_TIMEOUT_MS) {
+        // Exceeded 30 days of inactivity!
+        setCurrentUser(null);
+        localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+        localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
+        localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
+        setRoleState('participant');
+        setNotifications(prev => [
+          {
+            id: `notif-expired-${now}`,
+            title: 'Session Expired ⏱️',
+            message: 'You were automatically logged out after 30 days of inactivity. Please sign in again.',
+            type: 'system',
+            timestamp: 'Just now',
+            read: false
+          },
+          ...prev
+        ]);
+      }
+    }, 60000);
+
+    return () => {
+      activityEvents.forEach(evt => window.removeEventListener(evt, recordUserActivity));
+      clearInterval(intervalId);
+    };
   }, [currentUser]);
 
   // STRICT ROLE ENFORCEMENT:
@@ -318,7 +419,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Current participant object
   const currentParticipant = participants.find(p => p.id === currentParticipantId) || participants[0];
 
-  // Spring Boot + MongoDB Connectivity
+  // Spring Boot + MySQL Connectivity
   const [backendStatus, setBackendStatus] = useState<'connected' | 'offline' | 'checking'>('checking');
   const [backendUrl, setBackendUrlState] = useState<string>(() => getStoredApiUrl());
 
@@ -345,7 +446,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     checkBackendConnection();
   };
 
-  // On mount: check health and pull live data from MongoDB if available
+  // On mount: check health and pull live data from MySQL if available
   useEffect(() => {
     let active = true;
     (async () => {
@@ -400,7 +501,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       for (const rg of registrations) {
         await api.createRegistration(rg).catch(() => {});
       }
-      return { success: true, message: 'Successfully synced local data to MongoDB via Spring Boot!' };
+      return { success: true, message: 'Successfully synced local data to MySQL via Spring Boot!' };
     } catch (e: any) {
       setBackendStatus('offline');
       return { success: false, message: e?.message || 'Sync failed' };
@@ -413,6 +514,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Connect to Spring Boot REST API
       const backendRes = await api.login(credentials);
       if (backendRes && backendRes.user) {
+        const now = Date.now();
+        localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+        localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+        setLastActiveTimestamp(now);
         setCurrentUser(backendRes.user);
         if (backendRes.participant) {
           setCurrentParticipantId(backendRes.participant.id);
@@ -434,6 +539,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Check if admin credentials
     if (ident === 'admin@socialshuffle.com' || ident === '+91 98220 11223' || ident === 'admin') {
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
       const adminUser: AuthUser = {
         id: 'u-admin',
         name: 'Aman Joshi',
@@ -441,7 +550,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         phone: '+91 98220 11223',
         role: 'admin',
         area: 'Pune',
-        bio: 'Social Shuffle Founder & Super Admin'
+        bio: 'Social Shuffle Founder & Super Admin',
+        authProvider: 'local',
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
       };
       setCurrentUser(adminUser);
       setRoleState('admin');
@@ -458,6 +570,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (matched) {
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
       const authUser: AuthUser = {
         id: `u-${matched.id}`,
         name: matched.name,
@@ -467,7 +583,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         area: matched.area,
         participantId: matched.id,
         avatar: matched.avatar,
-        bio: matched.bio
+        bio: matched.bio,
+        authProvider: 'local',
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
       };
       setCurrentUser(authUser);
       setRoleState('participant');
@@ -519,7 +638,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       area: data.area || 'Koregaon Park',
       participantId: newParticipantId,
       avatar: newParticipant.avatar,
-      bio: newParticipant.bio
+      bio: newParticipant.bio,
+      authProvider: 'local',
+      loginAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
     };
 
     // Save to local participants collection
@@ -528,6 +650,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Send to Spring Boot REST API
     api.register(data).catch(() => {});
     api.createParticipant(newParticipant).catch(() => {});
+
+    // Active session initiation
+    const now = Date.now();
+    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+    setLastActiveTimestamp(now);
 
     // Set current active user to this new participant
     setCurrentUser(newAuthUser);
@@ -539,7 +667,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const welcomeNotif: NotificationItem = {
       id: `notif-welcome-${Date.now()}`,
       title: `Welcome to Social Shuffle, ${data.name}! 🎲`,
-      message: 'Your Shuffler profile is ready. Check out upcoming meetups in Pune and book your first seat!',
+      message: 'Your Shuffler profile is ready. Session stays active for 30 days of inactivity.',
       type: 'system',
       timestamp: 'Just now',
       read: false
@@ -557,10 +685,129 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: `Welcome to Social Shuffle Pune, ${data.name}!` };
   };
 
+  // Google Account Sign-In / Registration
+  const loginWithGoogle = async (googleProfile?: GoogleUserProfile): Promise<{ success: boolean; message: string }> => {
+    const profile = googleProfile || {
+      email: 'parimalmshete@gmail.com',
+      name: 'Parimal Shete',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
+      area: 'Koregaon Park',
+      phone: '+91 98220 99887'
+    };
+
+    const emailClean = profile.email.trim().toLowerCase();
+
+    // Check if participant already exists by email
+    let matchedParticipant = participants.find(p => p.email.trim().toLowerCase() === emailClean);
+
+    if (!matchedParticipant) {
+      // Automatically register new participant profile from Google Account
+      const newParticipantId = `p-${Date.now().toString(36)}`;
+      matchedParticipant = {
+        id: newParticipantId,
+        name: profile.name,
+        email: emailClean,
+        phone: profile.phone || '+91 98220 ' + Math.floor(10000 + Math.random() * 90000),
+        area: profile.area || 'Koregaon Park',
+        avatar: profile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(profile.name)}`,
+        bio: 'Pune board gamer • Connected via Google Account',
+        joinedDate: new Date().toISOString().slice(0, 10),
+        totalEventsAttended: 0,
+        totalRegistrations: 0,
+        gamesPlayedIds: [],
+        venuesVisited: [],
+        totalPaxBrought: 0
+      };
+      setParticipants(prev => [matchedParticipant!, ...prev]);
+      api.createParticipant(matchedParticipant).catch(() => {});
+    }
+
+    const authUser: AuthUser = {
+      id: `u-${matchedParticipant.id}`,
+      name: matchedParticipant.name,
+      email: matchedParticipant.email,
+      phone: matchedParticipant.phone,
+      role: 'participant', // STRICT PARTICIPANT ROLE
+      area: matchedParticipant.area,
+      participantId: matchedParticipant.id,
+      avatar: profile.avatar || matchedParticipant.avatar,
+      bio: matchedParticipant.bio,
+      authProvider: 'google',
+      loginAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
+    };
+
+    const now = Date.now();
+    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+    setLastActiveTimestamp(now);
+
+    setCurrentUser(authUser);
+    setRoleState('participant');
+    setCurrentParticipantId(matchedParticipant.id);
+    setShowAuthModal(false);
+
+    // Sync to Spring Boot REST backend
+    api.googleLogin({
+      email: authUser.email,
+      name: authUser.name,
+      avatar: authUser.avatar,
+      phone: authUser.phone,
+      area: authUser.area,
+      googleId: profile.googleId || 'g_' + Math.random().toString(36).substring(2)
+    }).catch(() => {});
+
+    try {
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.6 }
+      });
+    } catch {}
+
+    setNotifications(prev => [
+      {
+        id: `notif-google-login-${Date.now()}`,
+        title: `Signed in with Google: ${authUser.name} ✨`,
+        message: 'Welcome to Social Shuffle Pune! Your session will remain active for 30 days of inactivity.',
+        type: 'system',
+        timestamp: 'Just now',
+        read: false
+      },
+      ...prev
+    ]);
+
+    return {
+      success: true,
+      message: `Signed in successfully with Google as ${authUser.name}!`
+    };
+  };
+
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+    localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
+    localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
     setRoleState('participant');
+  };
+
+  // Helper for testing/demoing the 30-day inactivity timeout
+  const simulateInactivityTimeout = () => {
+    const expiredTime = Date.now() - (INACTIVITY_TIMEOUT_MS + 1000);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(expiredTime));
+    setLastActiveTimestamp(expiredTime);
+    logout();
+    setNotifications(prev => [
+      {
+        id: `notif-sim-expired-${Date.now()}`,
+        title: '30-Day Inactivity Timeout Triggered ⏱️',
+        message: 'Simulation: Over 30 days of inactivity passed. You were automatically logged out as per session policy.',
+        type: 'system',
+        timestamp: 'Just now',
+        read: false
+      },
+      ...prev
+    ]);
   };
 
   // Helper to add audit log
@@ -619,7 +866,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     paxCount: number,
     guests: GuestInfo[],
     notes?: string
-  ): { success: boolean; message: string } => {
+  ): { success: boolean; message: string; registration?: Registration } => {
     const event = events.find(e => e.id === eventId);
     if (!event) return { success: false, message: 'Event not found' };
 
@@ -628,11 +875,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       r => r.eventId === eventId && r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
     );
     if (existing) {
-      return { success: false, message: 'You are already registered for this event!' };
+      return { success: false, message: 'You are already registered for this event!', registration: existing };
     }
 
     const regId = `reg-${event.number}-${Date.now().toString().slice(-4)}`;
     const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 16);
+    const qrToken = `SS-REG-${regId}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrToken)}`;
 
     const newRegistration: Registration = {
       id: regId,
@@ -648,7 +897,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       attendanceStatus: 'Pending',
       gamesPlayed: [],
       notes: notes || '',
-      registeredAt: nowStr
+      registeredAt: nowStr,
+      qrCodeToken: qrToken,
+      qrCodeUrl: qrUrl,
+      emailSent: true,
+      emailSentAt: new Date().toISOString()
     };
 
     setRegistrations(prev => [newRegistration, ...prev]);
@@ -671,7 +924,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newNotif: NotificationItem = {
       id: `notif-${Date.now()}`,
       title: `Registered for ${event.title}! 🎲`,
-      message: `See you at ${event.venue} on ${event.date}! Your registration with ${paxCount} pax is confirmed.`,
+      message: `See you at ${event.venue} on ${event.date}! Your registration with ${paxCount} pax is confirmed. Confirmation email & QR pass sent!`,
       type: 'registration',
       timestamp: 'Just now',
       read: false
@@ -689,7 +942,151 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // ignore in test environments
     }
 
-    return { success: true, message: `Successfully registered for ${event.title}!` };
+    return {
+      success: true,
+      message: `Successfully registered for ${event.title}! Confirmation email & QR ticket sent.`,
+      registration: newRegistration
+    };
+  };
+
+  // Verify Attendee QR code or Ticket ID (Door Scanner)
+  const verifyAttendeeQrCode = (
+    code: string,
+    eventId?: string
+  ): {
+    success: boolean;
+    message: string;
+    alreadyCheckedIn?: boolean;
+    registration?: Registration;
+  } => {
+    if (!code || !code.trim()) {
+      return { success: false, message: 'Please provide or scan a valid QR ticket code.' };
+    }
+    const clean = code.trim();
+    const cleanNoPrefix = clean.startsWith('SS-REG-') ? clean.replace('SS-REG-', '') : clean;
+
+    const reg = registrations.find(
+      r =>
+        r.id === clean ||
+        r.id === cleanNoPrefix ||
+        r.qrCodeToken === clean ||
+        (r.id && clean.toLowerCase().includes(r.id.toLowerCase()))
+    );
+
+    if (!reg) {
+      return {
+        success: false,
+        message: `Ticket Not Found: No registration matching token "${clean}".`
+      };
+    }
+
+    if (eventId && reg.eventId !== eventId) {
+      const wrongEvent = events.find(e => e.id === reg.eventId);
+      return {
+        success: false,
+        message: `Ticket Mismatch: This pass is for "${wrongEvent ? wrongEvent.title : reg.eventId}", not the current event!`,
+        registration: reg
+      };
+    }
+
+    if (reg.attendanceStatus === 'Checked In') {
+      return {
+        success: true,
+        alreadyCheckedIn: true,
+        message: `Already Checked-In earlier at ${reg.checkInTime || 'entrance'} (${reg.participantName})`,
+        registration: reg
+      };
+    }
+
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const updatedReg: Registration = {
+      ...reg,
+      attendanceStatus: 'Checked In',
+      checkInTime: nowTime
+    };
+
+    setRegistrations(prev => prev.map(r => (r.id === reg.id ? updatedReg : r)));
+
+    // Update participant stats
+    setParticipants(prev =>
+      prev.map(p => {
+        if (p.id === reg.participantId) {
+          return {
+            ...p,
+            totalEventsAttended: p.totalEventsAttended + 1,
+            lastAttendedEventId: reg.eventId
+          };
+        }
+        return p;
+      })
+    );
+
+    logAudit(
+      'QR Check-In Verified',
+      reg.participantName,
+      `Scanned and checked in attendee ${reg.participantName} (${reg.paxCount} PAX) via QR code.`
+    );
+
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.5 }
+      });
+    } catch {}
+
+    return {
+      success: true,
+      alreadyCheckedIn: false,
+      message: `Verified! Welcome ${reg.participantName} (${reg.paxCount} PAX)`,
+      registration: updatedReg
+    };
+  };
+
+  // Generate Email Preview HTML
+  const generateEmailPreviewHtml = (registrationId: string): string => {
+    const reg = registrations.find(r => r.id === registrationId);
+    if (!reg) return '';
+    const event = events.find(e => e.id === reg.eventId);
+    const eventTitle = event?.title || 'Social Shuffle Pune Meetup';
+    const eventVenue = event?.venue || 'Pune Meetup Hub';
+    const eventAddress = event?.address || 'Pune, Maharashtra';
+    const eventTime = event?.time || 'Check app schedule';
+    const qrToken = reg.qrCodeToken || `SS-REG-${reg.id}`;
+    const qrUrl = reg.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(qrToken)}`;
+
+    return `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f111a; color: #f1f5f9; padding: 24px; border-radius: 16px; max-width: 580px; margin: 0 auto; border: 1px solid #334155;">
+        <div style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+          <span style="background-color: #fbbf24; color: #1e1b4b; font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">🎲 VIP Pass Confirmed</span>
+          <h2 style="margin: 10px 0 0 0; color: #ffffff; font-size: 22px; font-weight: 900;">Holy Meeples, ${reg.participantName}! You're In! 🎉</h2>
+        </div>
+        <div style="background-color: rgba(124, 58, 237, 0.12); border-left: 4px solid #a855f7; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #cbd5e1;">
+          <strong>Prepare your victory dance! 💃🕺</strong><br/>
+          We are downright stoked that you're joining the <strong>Social Shuffle Pune</strong> tribe.
+          Whether you're looking to trade sheep for wheat in Catan, bluff your closest friends into oblivion during Avalon, or roll high-stakes dice, your table is officially secured.
+          <br/><br/>
+          <em>⚠️ Mild Warning: Side effects may include uncontrolled giggles, sudden cravings for 20 new board games, and making life-long friends in Pune!</em>
+        </div>
+        <div style="background-color: #1e2235; border: 1px solid #333a52; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Meetup:</span><strong style="color: #ffffff;">${eventTitle}</strong></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">When:</span><strong style="color: #ffffff;">${eventTime}</strong></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Where:</span><strong style="color: #ffffff;">${eventVenue} (${eventAddress})</strong></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Seats (PAX):</span><strong style="color: #ffffff;">${reg.paxCount} Shuffler(s)</strong></div>
+          <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Ticket Token:</span><span style="font-family: monospace; color: #38bdf8;">${qrToken}</span></div>
+        </div>
+        <div style="text-align: center; background-color: #0b0d14; border: 2px dashed #6366f1; border-radius: 14px; padding: 20px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 6px 0; color: #ffffff; font-size: 14px;">📱 Scan at the Door for Instant Entry</h4>
+          <p style="margin: 0 0 14px 0; font-size: 11px; color: #94a3b8;">Flash this QR code on your phone when arriving at the venue.</p>
+          <img src="${qrUrl}" alt="QR Ticket" style="width: 190px; height: 190px; border-radius: 8px; border: 4px solid #ffffff; background: #ffffff; padding: 4px; display: inline-block;" />
+          <div style="margin-top: 10px; font-family: monospace; font-size: 13px; font-weight: 700; color: #a855f7;">${qrToken}</div>
+        </div>
+        <div style="text-align: center; font-size: 11px; color: #64748b; line-height: 1.4;">
+          Social Shuffle Pune • Koregaon Park • Baner • Viman Nagar<br/>
+          Made with ❤️, dice rolls, and zero boring evenings.
+        </div>
+      </div>
+    `;
   };
 
   // Cancel registration
@@ -1388,7 +1785,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAdminUser,
         login,
         registerParticipant,
+        loginWithGoogle,
         logout,
+        lastActiveTimestamp,
+        sessionRemainingDays,
+        simulateInactivityTimeout,
         showAuthModal,
         setShowAuthModal,
         authModalMode,
@@ -1420,6 +1821,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         registerForEvent,
         cancelRegistration,
+        verifyAttendeeQrCode,
+        generateEmailPreviewHtml,
 
         updateAttendanceStatus,
         markAttendance: updateAttendanceStatus,

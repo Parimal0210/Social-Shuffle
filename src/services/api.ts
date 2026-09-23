@@ -1,8 +1,8 @@
 /**
  * Social Shuffle — Dynamic API Service
- * Connects React frontend with Spring Boot + MongoDB REST API.
+ * Connects React frontend with Spring Boot + MySQL REST API.
  * Includes automatic local fallback so the app works seamlessly in preview mode,
- * and dynamically hits Spring Boot when launched locally or remotely.
+ * and dynamically hits Spring Boot when launched locally or on GoDaddy/Cloud.
  */
 
 import {
@@ -118,6 +118,28 @@ class ApiService {
       const res = await this.fetchWithTimeout('/auth/register', {
         method: 'POST',
         body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        return (await res.json()) as AuthResponse;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async googleLogin(profile: {
+    email: string;
+    name: string;
+    avatar?: string;
+    phone?: string;
+    area?: string;
+    googleId?: string;
+  }): Promise<AuthResponse | null> {
+    try {
+      const res = await this.fetchWithTimeout('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify(profile)
       });
       if (res.ok) {
         return (await res.json()) as AuthResponse;

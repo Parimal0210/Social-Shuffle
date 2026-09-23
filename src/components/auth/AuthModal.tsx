@@ -11,10 +11,34 @@ import {
   ShieldCheck,
   Dices,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { SocialShuffleIcon } from '../SocialShuffleLogo';
+import { GoogleUserProfile } from '../../types';
+
+// Official Google 'G' Multicolor Logo
+const GoogleLogoSvg: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg className={className} viewBox="0 0 24 24">
+    <path
+      fill="#4285F4"
+      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+    />
+  </svg>
+);
 
 export const AuthModal: React.FC = () => {
   const {
@@ -23,12 +47,19 @@ export const AuthModal: React.FC = () => {
     authModalMode,
     setAuthModalMode,
     login,
-    registerParticipant
+    registerParticipant,
+    loginWithGoogle
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(authModalMode);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showGoogleChooser, setShowGoogleChooser] = useState(false);
+
+  // Custom Google account form state inside chooser
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [customGoogleName, setCustomGoogleName] = useState('');
+  const [customGoogleArea, setCustomGoogleArea] = useState('Koregaon Park');
 
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -46,6 +77,7 @@ export const AuthModal: React.FC = () => {
   React.useEffect(() => {
     setActiveTab(authModalMode);
     setError(null);
+    setShowGoogleChooser(false);
   }, [authModalMode, showAuthModal]);
 
   if (!showAuthModal) return null;
@@ -64,6 +96,54 @@ export const AuthModal: React.FC = () => {
     'Bavdhan',
     'Other'
   ];
+
+  // Quick Google preset accounts for instant sign in
+  const presetGoogleAccounts: GoogleUserProfile[] = [
+    {
+      email: 'parimalmshete@gmail.com',
+      name: 'Parimal Shete',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
+      area: 'Koregaon Park',
+      phone: '+91 98220 99887'
+    },
+    {
+      email: 'rohan.kulkarni@gmail.com',
+      name: 'Rohan Kulkarni',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
+      area: 'Koregaon Park',
+      phone: '+91 98220 12345'
+    }
+  ];
+
+  const handleExecuteGoogleLogin = async (profile: GoogleUserProfile) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await loginWithGoogle(profile);
+      setLoading(false);
+      if (!res.success) {
+        setError(res.message);
+      }
+    } catch {
+      setLoading(false);
+      setError('Unable to authenticate with Google. Please try again.');
+    }
+  };
+
+  const handleCustomGoogleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customGoogleEmail.trim() || !customGoogleName.trim()) {
+      setError('Please provide your Google email address and name');
+      return;
+    }
+    handleExecuteGoogleLogin({
+      email: customGoogleEmail.trim().toLowerCase(),
+      name: customGoogleName.trim(),
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(customGoogleName.trim())}`,
+      area: customGoogleArea,
+      phone: '+91 98220 ' + Math.floor(10000 + Math.random() * 90000)
+    });
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,9 +210,9 @@ export const AuthModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
       <div
-        className="w-full sm:max-w-md bg-[#0D1527] border border-[#1F305E] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full sm:max-w-md bg-[#0D1527] border border-[#1F305E] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Top Header */}
@@ -153,7 +233,7 @@ export const AuthModal: React.FC = () => {
               <p className="text-xs text-slate-400">
                 {activeTab === 'login'
                   ? 'Access your RSVPs, badges, and games'
-                  : 'Register free as a participant in under 30 seconds'}
+                  : 'Register free with Google or fill your details'}
               </p>
             </div>
           </div>
@@ -166,6 +246,7 @@ export const AuthModal: React.FC = () => {
                 setActiveTab('login');
                 setAuthModalMode('login');
                 setError(null);
+                setShowGoogleChooser(false);
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === 'login'
@@ -181,6 +262,7 @@ export const AuthModal: React.FC = () => {
                 setActiveTab('register');
                 setAuthModalMode('register');
                 setError(null);
+                setShowGoogleChooser(false);
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === 'register'
@@ -199,6 +281,134 @@ export const AuthModal: React.FC = () => {
             <div className="flex items-center gap-2 p-3 text-xs rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {/* PRIMARY GOOGLE SIGN-IN / REGISTER OPTION */}
+          {!showGoogleChooser ? (
+            <div className="space-y-3">
+              <button
+                type="button"
+                id="btn-google-auth"
+                onClick={() => setShowGoogleChooser(true)}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all border border-slate-200 active:scale-[0.99] disabled:opacity-50"
+              >
+                <GoogleLogoSvg className="w-4 h-4 shrink-0" />
+                <span>
+                  {activeTab === 'login' ? 'Continue with Google' : 'Sign up with Google Account'}
+                </span>
+              </button>
+
+              {/* Divider */}
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-[#1F305E]"></div>
+                <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {activeTab === 'login' ? 'Or sign in with details' : 'Or fill in your details'}
+                </span>
+                <div className="flex-grow border-t border-[#1F305E]"></div>
+              </div>
+            </div>
+          ) : (
+            /* GOOGLE ACCOUNT CHOOSER DIALOG */
+            <div className="p-4 rounded-xl bg-[#091024] border border-[#1F305E] space-y-3.5 animate-in fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-[#1F305E]">
+                <div className="flex items-center gap-2">
+                  <GoogleLogoSvg className="w-4 h-4" />
+                  <span className="text-xs font-bold text-white">Choose a Google Account</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleChooser(false)}
+                  className="text-[11px] text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <p className="text-[11px] text-slate-400">
+                to continue to <strong className="text-white">Social Shuffle Pune</strong>
+              </p>
+
+              {/* Preset accounts */}
+              <div className="space-y-1.5">
+                {presetGoogleAccounts.map(account => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    onClick={() => handleExecuteGoogleLogin(account)}
+                    disabled={loading}
+                    className="w-full p-2.5 rounded-lg bg-[#111C3B] hover:bg-[#18264e] border border-[#1F305E] hover:border-blue-500/50 flex items-center justify-between text-left transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={account.avatar}
+                        alt={account.name}
+                        className="w-8 h-8 rounded-full border border-slate-700 object-cover"
+                      />
+                      <div>
+                        <div className="text-xs font-semibold text-white group-hover:text-blue-300">
+                          {account.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono">{account.email}</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Or enter another Google account */}
+              <div className="pt-2 border-t border-[#1F305E]">
+                <details className="text-xs group">
+                  <summary className="cursor-pointer text-[11px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 select-none">
+                    <span>Use another Google account</span>
+                  </summary>
+                  <form onSubmit={handleCustomGoogleSubmit} className="mt-3 space-y-2.5">
+                    <div>
+                      <input
+                        type="text"
+                        required
+                        value={customGoogleName}
+                        onChange={e => setCustomGoogleName(e.target.value)}
+                        placeholder="Google Account Full Name"
+                        className="w-full bg-[#111C3B] border border-[#1F305E] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="email"
+                        required
+                        value={customGoogleEmail}
+                        onChange={e => setCustomGoogleEmail(e.target.value)}
+                        placeholder="yourname@gmail.com"
+                        className="w-full bg-[#111C3B] border border-[#1F305E] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <select
+                        value={customGoogleArea}
+                        onChange={e => setCustomGoogleArea(e.target.value)}
+                        className="w-full bg-[#111C3B] border border-[#1F305E] rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
+                      >
+                        {puneAreas.map(area => (
+                          <option key={area} value={area} className="bg-[#0D1527] text-white">
+                            {area}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-600/30"
+                    >
+                      <GoogleLogoSvg className="w-3.5 h-3.5" />
+                      <span>{loading ? 'Connecting...' : 'Sign in with this Google Account'}</span>
+                    </button>
+                  </form>
+                </details>
+              </div>
             </div>
           )}
 

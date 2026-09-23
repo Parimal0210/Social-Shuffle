@@ -20,7 +20,9 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Sparkles
+  Sparkles,
+  QrCode,
+  Camera
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AttendanceStatus, PaymentStatus, Registration } from '../../types';
@@ -39,6 +41,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
     updatePaymentStatus,
     toggleGamePlayedForAttendee,
     addWalkInRegistration,
+    verifyAttendeeQrCode,
     isOfflineMode,
     toggleOfflineMode,
     offlineSyncQueue,
@@ -62,6 +65,15 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
   const [selectedAttendeeDrawer, setSelectedAttendeeDrawer] = useState<Registration | null>(null);
   const [gameTaggingReg, setGameTaggingReg] = useState<Registration | null>(null);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+
+  // QR Scanner Modal state
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  const [qrCodeInput, setQrCodeInput] = useState('');
+  const [qrScanMessage, setQrScanMessage] = useState<{
+    type: 'success' | 'warning' | 'error';
+    text: string;
+    reg?: Registration;
+  } | null>(null);
 
   // Walk-in form state
   const [walkInName, setWalkInName] = useState('');
@@ -121,6 +133,41 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
     setWalkInPax(1);
   };
 
+  const handleVerifyQr = (overrideCode?: string) => {
+    const code = (overrideCode !== undefined ? overrideCode : qrCodeInput).trim();
+    if (!code) {
+      setQrScanMessage({
+        type: 'error',
+        text: 'Please enter or scan a QR code token (e.g. SS-REG-xxxx).'
+      });
+      return;
+    }
+
+    const res = verifyAttendeeQrCode(code, selectedEventId);
+    if (res.success) {
+      if (res.alreadyCheckedIn) {
+        setQrScanMessage({
+          type: 'warning',
+          text: res.message,
+          reg: res.registration
+        });
+      } else {
+        setQrScanMessage({
+          type: 'success',
+          text: res.message,
+          reg: res.registration
+        });
+        setQrCodeInput('');
+      }
+    } else {
+      setQrScanMessage({
+        type: 'error',
+        text: res.message,
+        reg: res.registration
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Event Selection & Header */}
@@ -149,7 +196,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           </div>
         </div>
 
-        {/* Event selector dropdown & Walk-in button */}
+        {/* Event selector dropdown & Walk-in & QR Scan buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <select
             id="select-event-attendance"
@@ -163,6 +210,21 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               </option>
             ))}
           </select>
+
+          {/* QR Code Scanner Button */}
+          <button
+            id="btn-open-qr-scanner"
+            onClick={() => {
+              setQrScanMessage(null);
+              setQrCodeInput('');
+              setIsQrScannerOpen(true);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+            title="Open QR scanner for attendee check-in"
+          >
+            <QrCode className="w-4 h-4 text-purple-200" />
+            <span>Scan QR Pass</span>
+          </button>
 
           <button
             id="btn-add-walk-in"
@@ -731,6 +793,155 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 className="w-full py-2.5 rounded-xl bg-slate-800 text-white font-semibold text-xs hover:bg-slate-700"
               >
                 Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Door QR & Ticket Scanner Modal */}
+      {isQrScannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#151722] border-2 border-indigo-500/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Door QR Scanner & Check-In</h3>
+                  <p className="text-[11px] text-slate-400">
+                    {currentEvent?.title} (#{currentEvent?.number})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsQrScannerOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Viewfinder Graphic with Laser Scan line */}
+            <div className="relative rounded-2xl bg-[#0b0d14] border-2 border-dashed border-indigo-500/50 p-6 flex flex-col items-center justify-center overflow-hidden">
+              {/* Laser animation bar */}
+              <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#38bdf8] animate-pulse" />
+
+              <div className="w-40 h-40 border-2 border-cyan-500/40 rounded-2xl flex flex-col items-center justify-center relative bg-indigo-950/20">
+                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
+                <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
+                <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
+                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+
+                <Camera className="w-10 h-10 text-cyan-400/80 animate-pulse mb-2" />
+                <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest text-center px-2">
+                  Scanner Active
+                </span>
+              </div>
+
+              <span className="text-[11px] text-slate-400 mt-3 text-center">
+                Point iPad/Phone camera at attendee pass or use scanner gun below.
+              </span>
+            </div>
+
+            {/* Scanner Input / Barcode Gun Form */}
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleVerifyQr();
+              }}
+              className="space-y-3"
+            >
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={qrCodeInput}
+                  onChange={e => setQrCodeInput(e.target.value)}
+                  placeholder="Paste or scan QR code token (e.g., SS-REG-...)..."
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all"
+                >
+                  Verify
+                </button>
+              </div>
+            </form>
+
+            {/* Quick 1-Tap Demo Test Attendees for Testing */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                Quick Test with Event Attendees (1-Click Sim):
+              </span>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                {currentEventRegistrations.slice(0, 6).map(reg => {
+                  const token = reg.qrCodeToken || `SS-REG-${reg.id}`;
+                  const isChecked = reg.attendanceStatus === 'Checked In';
+                  return (
+                    <button
+                      key={reg.id}
+                      type="button"
+                      onClick={() => handleVerifyQr(token)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-medium transition-all flex items-center gap-1 ${
+                        isChecked
+                          ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+                          : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <span>{isChecked ? '✓' : '🎲'}</span>
+                      <span>{reg.participantName}</span>
+                      <span className="text-[9px] text-slate-400 font-mono">({token.slice(-6)})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Scan Feedback Message */}
+            {qrScanMessage && (
+              <div
+                className={`p-3.5 rounded-2xl text-xs space-y-1.5 border animate-in fade-in zoom-in-95 duration-150 ${
+                  qrScanMessage.type === 'success'
+                    ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+                    : qrScanMessage.type === 'warning'
+                    ? 'bg-amber-950/50 border-amber-500/40 text-amber-200'
+                    : 'bg-rose-950/50 border-rose-500/40 text-rose-200'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  {qrScanMessage.type === 'success' ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  ) : qrScanMessage.type === 'warning' ? (
+                    <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  )}
+                  <span>{qrScanMessage.text}</span>
+                </div>
+
+                {qrScanMessage.reg && (
+                  <div className="pt-2 mt-1 border-t border-white/10 text-[11px] grid grid-cols-2 gap-2">
+                    <div><strong>Participant:</strong> {qrScanMessage.reg.participantName}</div>
+                    <div><strong>Pax:</strong> {qrScanMessage.reg.paxCount} Shuffler(s)</div>
+                    <div><strong>Phone:</strong> {qrScanMessage.reg.participantPhone}</div>
+                    <div><strong>Payment:</strong> {qrScanMessage.reg.paymentStatus}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsQrScannerOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors"
+              >
+                Done Scanning
               </button>
             </div>
           </div>

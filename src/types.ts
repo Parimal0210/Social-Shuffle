@@ -15,6 +15,18 @@ export interface AuthUser {
   avatar?: string;
   bio?: string;
   participantId?: string;
+  authProvider?: 'local' | 'google';
+  lastActiveAt?: string;
+  loginAt?: string;
+}
+
+export interface GoogleUserProfile {
+  email: string;
+  name: string;
+  avatar?: string;
+  phone?: string;
+  area?: string;
+  googleId?: string;
 }
 
 export interface LoginCredentials {
@@ -147,6 +159,10 @@ export interface Registration {
   gamesPlayed: string[]; // Game IDs played during this event
   notes?: string;
   registeredAt: string;
+  qrCodeToken?: string;
+  qrCodeUrl?: string;
+  emailSent?: boolean;
+  emailSentAt?: string;
 }
 
 export interface EventFeedback {

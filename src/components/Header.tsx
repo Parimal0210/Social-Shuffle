@@ -219,11 +219,26 @@ export const Header: React.FC = () => {
                   {/* User Profile Summary */}
                   <div className="p-2.5 mb-2 bg-[#0A1128] rounded-lg border border-[#1F305E]/80">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/40 flex items-center justify-center font-bold text-[#FF8566]">
-                        {currentUser?.name?.[0] || 'S'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-white truncate">{currentUser?.name}</div>
+                      {currentUser?.avatar ? (
+                        <img
+                          src={currentUser.avatar}
+                          alt={currentUser.name}
+                          className="w-9 h-9 rounded-full border border-[#FF6036]/40 object-cover"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/40 flex items-center justify-center font-bold text-[#FF8566]">
+                          {currentUser?.name?.[0] || 'S'}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                          <span>{currentUser?.name}</span>
+                          {currentUser?.authProvider === 'google' && (
+                            <span className="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.2 rounded font-semibold">
+                              Google
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-400 truncate">{currentUser?.email}</div>
                         <div className="text-[10px] font-semibold text-[#35C8A8] mt-0.5 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#35C8A8]"></span>
