@@ -469,7 +469,7 @@ export const ParticipantCommunity: React.FC = () => {
                   <a
                     href="https://chat.whatsapp.com/demo"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-block text-xs font-bold text-emerald-400 hover:underline"
                   >
                     Join 1,200+ Pune Shufflers →
@@ -490,7 +490,7 @@ export const ParticipantCommunity: React.FC = () => {
                   <a
                     href="https://instagram.com/socialshufflepune"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-block text-xs font-bold text-purple-400 hover:underline"
                   >
                     @socialshufflepune →

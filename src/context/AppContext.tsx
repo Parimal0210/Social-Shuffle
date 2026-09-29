@@ -230,7 +230,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return currentUser?.participantId || 'p-rahul';
   });
 
-  const adminName = 'Aman Joshi (Host)';
+  // Refers to database admin table for administrator name when logged in
+  const adminName = (currentUser?.role === 'admin' && currentUser?.name)
+    ? currentUser.name
+    : 'Aman Joshi (Host)';
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
@@ -605,6 +608,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const emailClean = data.email.trim().toLowerCase();
     const phoneClean = data.phone.trim();
+
+    // STRICT ACCESS CONTROL: Registration is strictly for participants only
+    if (emailClean === 'admin@socialshuffle.com' || phoneClean.replace(/[^0-9]/g, '') === '9822011223' || emailClean.includes('admin@')) {
+      return {
+        success: false,
+        message: 'Admin accounts cannot be registered from the application. Administrator details are pre-configured in the database. Please sign in instead.'
+      };
+    }
 
     if (participants.some(p => p.email.toLowerCase() === emailClean || p.phone.replace(/[^0-9]/g, '') === phoneClean.replace(/[^0-9]/g, ''))) {
       return { success: false, message: 'An account with this email or phone already exists. Please log in.' };

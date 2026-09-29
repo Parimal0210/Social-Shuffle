@@ -181,6 +181,13 @@ export const AuthModal: React.FC = () => {
       return;
     }
 
+    // STRICT ACCESS CONTROL: Registration is strictly for participants
+    const cleanMail = regEmail.trim().toLowerCase();
+    if (cleanMail === 'admin@socialshuffle.com' || cleanMail.includes('admin@') || regPhone.trim().replace(/[^0-9]/g, '') === '9822011223') {
+      setError('Administrator accounts cannot be registered from the application. Administrator accounts are pre-configured in the database table. Please sign in via the Sign In tab.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -506,6 +513,13 @@ export const AuthModal: React.FC = () => {
             </form>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+              <div className="p-2.5 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 flex items-center gap-2 text-[11px] text-[#35C8A8]">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>
+                  <strong>Participant Registration:</strong> Admin accounts cannot be created here and are managed directly via database.
+                </span>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
                   Full Name <span className="text-[#FF6036]">*</span>
@@ -633,8 +647,9 @@ export const AuthModal: React.FC = () => {
         </div>
 
         {/* Footer info */}
-        <div className="p-3 bg-[#0A1128] border-t border-[#1F305E] text-center text-[11px] text-slate-400">
-          Social Shuffle Pune • Board Game Community Management Platform
+        <div className="p-3 bg-[#0A1128] border-t border-[#1F305E] text-center text-[10px] text-slate-400 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#35C8A8]" />
+          <span>Secured with PBKDF2 • Zero Public DB Access • Anti-Phishing Guard</span>
         </div>
       </div>
     </div>
