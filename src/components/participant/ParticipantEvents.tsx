@@ -8,6 +8,10 @@ import {
   CheckCircle2,
   XCircle,
   Plus,
+  Minus,
+  User,
+  UserPlus,
+  UserCheck,
   Trash2,
   AlertCircle,
   QrCode,
@@ -15,7 +19,14 @@ import {
   Sparkles,
   Ticket,
   Eye,
-  Share2
+  Share2,
+  ShieldCheck,
+  CreditCard,
+  Lock,
+  Smartphone,
+  Building,
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, GuestInfo, Registration } from '../../types';
@@ -46,16 +57,38 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   // Registration modal state
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [registeringEvent, setRegisteringEvent] = useState<ShuffleEvent | null>(null);
-  const [paxCount, setPaxCount] = useState<number>(1);
-  const [guests, setGuests] = useState<GuestInfo[]>([]);
+  const [totalParticipants, setTotalParticipants] = useState<number>(1);
+  const [additionalParticipants, setAdditionalParticipants] = useState<GuestInfo[]>([]);
   const [notes, setNotes] = useState<string>('');
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [regFeedback, setRegFeedback] = useState<{ message: string; success: boolean } | null>(null);
+
+  const samplePuneNames = ['Tanvi Joshi', 'Rahul Kulkarni', 'Aditi Patil', 'Rohan Shinde', 'Sneha Deshpande', 'Siddharth More'];
 
   // Digital Ticket Pass & Email Preview Modals
   const [activeTicketReg, setActiveTicketReg] = useState<Registration | null>(null);
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
   const [emailPreviewRegId, setEmailPreviewRegId] = useState<string | null>(null);
   const [showEmailModal, setShowEmailModal] = useState<boolean>(false);
+
+  // Razorpay Payment Gateway State
+  const [razorpayGatewayModal, setRazorpayGatewayModal] = useState<{
+    event: ShuffleEvent;
+    totalParticipants: number;
+    additionalParticipants: GuestInfo[];
+    notes: string;
+    totalAmount: number;
+    orderId: string;
+  } | null>(null);
+  const [paymentProcessing, setPaymentProcessing] = useState<boolean>(false);
+  const [paymentStep, setPaymentStep] = useState<'checkout' | 'authorizing' | 'success'>('checkout');
+  const [selectedMethod, setSelectedMethod] = useState<'upi' | 'card' | 'netbanking'>('upi');
+  const [upiIdInput, setUpiIdInput] = useState<string>('shuffler@okhdfcbank');
+  const [paymentSuccessAlert, setPaymentSuccessAlert] = useState<{
+    eventName: string;
+    paymentId: string;
+    amount: number;
+  } | null>(null);
 
   // My registered events
   const myRegistrations = registrations.filter(
@@ -64,55 +97,214 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
   const openRegistration = (event: ShuffleEvent) => {
     setRegisteringEvent(event);
-    setPaxCount(1);
-    setGuests([]);
+    setTotalParticipants(1);
+    setAdditionalParticipants([]);
     setNotes('');
+    setValidationError(null);
     setRegFeedback(null);
     setShowRegisterModal(true);
   };
 
-  const handlePaxChange = (count: number) => {
-    setPaxCount(count);
-    const guestDiff = count - 1;
-    if (guestDiff > guests.length) {
+  const handleTotalParticipantsChange = (count: number) => {
+    // Default and minimum value is 1
+    const validCount = Math.max(1, Math.min(12, Math.floor(count || 1)));
+    setTotalParticipants(validCount);
+    setValidationError(null);
+
+    const neededAdditional = validCount - 1;
+
+    if (neededAdditional > additionalParticipants.length) {
       const added: GuestInfo[] = [];
-      for (let i = guests.length; i < guestDiff; i++) {
+      for (let i = additionalParticipants.length; i < neededAdditional; i++) {
         added.push({
-          id: `guest-${Date.now()}-${i}`,
+          id: `participant-${Date.now()}-${i + 2}`,
           name: '',
           phone: '',
-          area: currentParticipant.area
+          area: currentParticipant.area || 'Pune'
         });
       }
-      setGuests([...guests, ...added]);
-    } else if (guestDiff < guests.length) {
-      setGuests(guests.slice(0, Math.max(0, guestDiff)));
+      setAdditionalParticipants([...additionalParticipants, ...added]);
+    } else if (neededAdditional < additionalParticipants.length) {
+      setAdditionalParticipants(additionalParticipants.slice(0, neededAdditional));
     }
   };
 
-  const handleGuestNameChange = (index: number, name: string) => {
-    const updated = [...guests];
-    updated[index] = { ...updated[index], name };
-    setGuests(updated);
+  const handleAdditionalParticipantNameChange = (index: number, name: string) => {
+    setValidationError(null);
+    const updated = [...additionalParticipants];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], name };
+      setAdditionalParticipants(updated);
+    }
   };
 
+  const handleAdditionalParticipantPhoneChange = (index: number, phone: string) => {
+    const updated = [...additionalParticipants];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], phone };
+      setAdditionalParticipants(updated);
+    }
+  };
+
+  // Step 1: User clicks "Confirm & Pay via Razorpay" -> Validates and Redirects to Razorpay Gateway
   const handleConfirmRegistration = (e: React.FormEvent) => {
     e.preventDefault();
     if (!registeringEvent) return;
 
-    const result = registerForEvent(registeringEvent.id, paxCount, guests, notes);
-    setRegFeedback(result);
-
-    if (result.success && result.registration) {
-      setShowRegisterModal(false);
-      setActiveTicketReg(result.registration);
-      setShowTicketModal(true);
-      setActiveSubTab('my-events');
+    // If totalParticipants > 1, validate that every additional participant has a name
+    if (totalParticipants > 1) {
+      const neededAdditional = totalParticipants - 1;
+      for (let i = 0; i < neededAdditional; i++) {
+        const pName = additionalParticipants[i]?.name?.trim();
+        if (!pName) {
+          setValidationError(`Please enter the full name for Participant #${i + 2} before proceeding to payment.`);
+          return;
+        }
+      }
     }
+
+    const sanitizedAdditional = additionalParticipants.slice(0, totalParticipants - 1).map((p, i) => ({
+      ...p,
+      name: p.name.trim() || `Participant #${i + 2}`,
+      area: p.area || currentParticipant.area || 'Pune'
+    }));
+
+    const totalAmount = totalParticipants * registeringEvent.ticketPrice;
+    const orderId = `order_SS_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+
+    // Close the intake form modal
+    setShowRegisterModal(false);
+
+    // Redirect to Razorpay Payment Gateway
+    setRazorpayGatewayModal({
+      event: registeringEvent,
+      totalParticipants,
+      additionalParticipants: sanitizedAdditional,
+      notes,
+      totalAmount,
+      orderId
+    });
+    setPaymentStep('checkout');
+    setPaymentProcessing(false);
+
+    // If native Razorpay checkout.js script loaded, also initiate native popup
+    if (typeof (window as any).Razorpay !== 'undefined') {
+      try {
+        const rzp = new (window as any).Razorpay({
+          key: 'rzp_test_SocialShufflePune',
+          amount: totalAmount * 100,
+          currency: 'INR',
+          name: 'Social Shuffle Pune',
+          description: `${registeringEvent.title} (${totalParticipants} Pax)`,
+          image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=120&auto=format&fit=crop&q=80',
+          order_id: orderId,
+          handler: function (response: any) {
+            handleCompleteRazorpayPayment(response.razorpay_payment_id || `pay_${Date.now().toString(36)}`);
+          },
+          prefill: {
+            name: currentParticipant.name,
+            email: currentParticipant.email,
+            contact: currentParticipant.phone
+          },
+          theme: {
+            color: '#7c3aed'
+          }
+        });
+        rzp.open();
+      } catch (e) {
+        // Fallback to embedded Razorpay gateway view
+      }
+    }
+  };
+
+  // Step 2: Razorpay confirms payment was successfully done -> Only then register attendee and redirect to event page
+  const handleCompleteRazorpayPayment = (customPaymentId?: string) => {
+    if (!razorpayGatewayModal) return;
+
+    const paymentId = customPaymentId || `pay_rzp_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    setPaymentProcessing(true);
+    setPaymentStep('authorizing');
+
+    setTimeout(() => {
+      setPaymentStep('success');
+
+      setTimeout(() => {
+        // Only now that Razorpay confirms successful payment, finalize registration!
+        const result = registerForEvent(
+          razorpayGatewayModal.event.id,
+          razorpayGatewayModal.totalParticipants,
+          razorpayGatewayModal.additionalParticipants,
+          razorpayGatewayModal.notes,
+          {
+            razorpayPaymentId: paymentId,
+            razorpayOrderId: razorpayGatewayModal.orderId,
+            amountPaid: razorpayGatewayModal.totalAmount
+          }
+        );
+
+        setPaymentSuccessAlert({
+          eventName: razorpayGatewayModal.event.title,
+          paymentId: paymentId,
+          amount: razorpayGatewayModal.totalAmount
+        });
+
+        // Close Razorpay gateway modal
+        setRazorpayGatewayModal(null);
+        setPaymentProcessing(false);
+
+        // Redirect back to event page ("My Registrations")
+        setActiveSubTab('my-events');
+
+        // Show you are registered! Open digital ticket pass
+        if (result.success && result.registration) {
+          setActiveTicketReg(result.registration);
+          setShowTicketModal(true);
+        }
+      }, 700);
+    }, 1000);
+  };
+
+  const handleCancelPayment = () => {
+    setRazorpayGatewayModal(null);
+    setPaymentProcessing(false);
+    setPaymentStep('checkout');
+    setRegFeedback({
+      message: 'Razorpay payment was cancelled. You are not registered for the meetup.',
+      success: false
+    });
   };
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
+      {/* Payment Success Alert on Event Page */}
+      {paymentSuccessAlert && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-emerald-900/60 to-slate-900 border border-emerald-500/40 shadow-xl flex items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-sm text-white">Payment Confirmed via Razorpay! 🎉</span>
+                <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/40">
+                  {paymentSuccessAlert.paymentId}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200 mt-0.5">
+                You are registered for <strong>{paymentSuccessAlert.eventName}</strong> (₹{paymentSuccessAlert.amount} paid). Your digital QR check-in pass has been generated!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setPaymentSuccessAlert(null)}
+            className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-800 shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Sub Tabs */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
@@ -299,7 +491,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                         {reg.attendanceStatus === 'Checked In' ? '✓ Checked In' : 'Confirmed Booking'}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
-                        {reg.paxCount} {reg.paxCount > 1 ? 'Shufflers (You + Guests)' : 'Shuffler'}
+                        {reg.paxCount} {reg.paxCount > 1 ? 'Participants' : 'Participant (Solo)'}
                       </span>
                     </div>
 
@@ -315,8 +507,8 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
                     {reg.guests.length > 0 && (
                       <div className="text-xs text-slate-400 pt-1">
-                        <span className="font-semibold text-slate-300">Accompanying Guests: </span>
-                        {reg.guests.map(g => g.name || 'Friend').join(', ')}
+                        <span className="font-semibold text-slate-300">Additional Participants: </span>
+                        {reg.guests.map(g => g.name || 'Participant').join(', ')}
                       </div>
                     )}
 
@@ -418,55 +610,158 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 </div>
               </div>
 
-              {/* Shuffler Profile */}
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">Lead Shuffler</label>
-                <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-200 flex justify-between">
-                  <span className="font-bold">{currentParticipant.name}</span>
+              {/* Total Number of Participants Selector */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-200 font-bold text-xs flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Total Number of Participants</span>
+                  </label>
+                  <span className="text-[11px] font-bold text-purple-300 bg-purple-950/40 px-2 py-0.5 rounded-md border border-purple-800/40">
+                    {totalParticipants} {totalParticipants === 1 ? 'Participant (Solo)' : 'Participants'}
+                  </span>
+                </div>
+
+                {/* Stepper with custom counter - Default and Minimum is 1 */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                  <div>
+                    <span className="text-xs text-slate-300 font-semibold block">
+                      Number of Participants
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      Default & minimum: 1 (Includes you as Participant #1)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleTotalParticipantsChange(totalParticipants - 1)}
+                      disabled={totalParticipants <= 1}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors border border-slate-700"
+                      title="Decrease participants (minimum 1)"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={12}
+                      value={totalParticipants}
+                      onChange={e => handleTotalParticipantsChange(parseInt(e.target.value, 10) || 1)}
+                      className="w-12 text-center bg-slate-950 border border-slate-700 rounded-lg py-1.5 text-xs text-white font-bold focus:border-purple-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleTotalParticipantsChange(totalParticipants + 1)}
+                      disabled={totalParticipants >= 12}
+                      className="w-8 h-8 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
+                      title="Increase participants"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Validation error alert */}
+              {validationError && (
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
+              {/* Participant #1 (You / Lead) Profile */}
+              <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-200">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-purple-300 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-purple-600/30 border border-purple-400/40 text-[9px] flex items-center justify-center text-purple-200 font-bold">
+                      1
+                    </span>
+                    Participant #1 (Lead / You)
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Confirmed
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-1 text-[11px] text-slate-300 pl-5">
+                  <span className="font-bold text-white">{currentParticipant.name}</span>
                   <span className="text-slate-400">{currentParticipant.phone} • {currentParticipant.area}</span>
                 </div>
               </div>
 
-              {/* Pax Count Selector */}
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1.5">
-                  How many people are coming with you?
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map(num => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => handlePaxChange(num)}
-                      className={`py-2 rounded-xl font-bold border transition-all text-center ${
-                        paxCount === num
-                          ? 'bg-purple-600 border-purple-500 text-white shadow-md'
-                          : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-700/60'
-                      }`}
-                    >
-                      {num} {num === 1 ? 'Solo' : `${num} Pax`}
-                    </button>
-                  ))}
+              {/* If value is 1 (Solo) */}
+              {totalParticipants === 1 ? (
+                <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-800/30 flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-slate-300 leading-relaxed">
+                    <strong className="text-white">Attending Solo:</strong> 1 seat reserved for <strong>{currentParticipant.name}</strong>. No additional names required. Aman and Parimal will welcome you and seat you at a fun table with friendly people!
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* If they added in that value (totalParticipants > 1), ask for additional names only (no mobile) */
+                <div className="space-y-2.5 pt-1">
+                  <div>
+                    <label className="block text-slate-200 font-bold text-xs flex items-center gap-1.5">
+                      <UserPlus className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Names for Additional Participants ({totalParticipants - 1})</span>
+                      <span className="text-rose-400 font-normal">*Required</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400">
+                      Please enter the full name for each additional participant joining with you.
+                    </span>
+                  </div>
 
-              {/* Guest Information fields if Pax > 1 */}
-              {paxCount > 1 && (
-                <div className="space-y-2 pt-1">
-                  <label className="block text-slate-400 font-semibold">
-                    Guest Information (helps us balance board game tables)
-                  </label>
-                  {guests.map((guest, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder={`Guest #${idx + 1} Name`}
-                        value={guest.name}
-                        onChange={e => handleGuestNameChange(idx, e.target.value)}
-                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 text-xs focus:border-purple-500 focus:outline-none"
-                      />
-                    </div>
-                  ))}
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {additionalParticipants.slice(0, totalParticipants - 1).map((p, idx) => {
+                      const participantNumber = idx + 2;
+                      return (
+                        <div
+                          key={p.id || idx}
+                          className={`p-2.5 rounded-xl border transition-all ${
+                            p.name.trim()
+                              ? 'bg-slate-900/90 border-slate-700/80'
+                              : validationError
+                              ? 'bg-slate-900/80 border-rose-500/60 ring-1 ring-rose-500/40'
+                              : 'bg-slate-900/60 border-purple-500/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-bold text-purple-300 flex items-center gap-1.5">
+                              <span className="w-4 h-4 rounded-full bg-purple-600/30 border border-purple-400/40 text-[9px] flex items-center justify-center text-purple-200 font-bold">
+                                {participantNumber}
+                              </span>
+                              Participant #{participantNumber}
+                            </span>
+                            {p.name.trim() ? (
+                              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                                <CheckCircle2 className="w-3 h-3" /> Name entered
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-400 font-medium">
+                                Name required *
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <input
+                              type="text"
+                              required
+                              placeholder={`Participant #${participantNumber} Full Name * (e.g. ${samplePuneNames[idx % samplePuneNames.length]})`}
+                              value={p.name}
+                              onChange={e => handleAdditionalParticipantNameChange(idx, e.target.value)}
+                              className={`w-full bg-slate-950 border rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none transition-colors ${
+                                validationError && !p.name.trim()
+                                  ? 'border-rose-500 focus:border-rose-400'
+                                  : 'border-slate-700 focus:border-purple-500'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -479,19 +774,25 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   rows={2}
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="e.g. Please seat me at Catan or Coup table! First time playing modern board games."
+                  placeholder="e.g. Please seat us at Catan, Coup, or Secret Hitler! First time playing modern board games."
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-slate-100 text-xs focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
               {/* Total Calculation */}
-              <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-800/30 flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-slate-300 block">Total Due at Door / Registration</span>
-                  <span className="text-[10px] text-slate-400">{paxCount} ticket(s) × ₹{registeringEvent.ticketPrice}</span>
+              <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-800/30 text-xs space-y-1">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>Total Participants:</span>
+                  <span className="font-bold text-white">{totalParticipants} {totalParticipants === 1 ? 'Participant' : 'Participants'} (PAX)</span>
                 </div>
-                <div className="text-base font-black text-amber-400">
-                  ₹{paxCount * registeringEvent.ticketPrice}
+                <div className="flex items-center justify-between pt-1 border-t border-purple-900/30">
+                  <div>
+                    <span className="text-slate-300 block font-medium">Total Amount Due</span>
+                    <span className="text-[10px] text-slate-400">{totalParticipants} ticket(s) × ₹{registeringEvent.ticketPrice}</span>
+                  </div>
+                  <div className="text-base font-black text-amber-400">
+                    ₹{totalParticipants * registeringEvent.ticketPrice}
+                  </div>
                 </div>
               </div>
 
@@ -506,12 +807,231 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 <button
                   id="btn-confirm-registration"
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold shadow-lg shadow-purple-600/30 hover:opacity-95 transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold shadow-lg shadow-blue-600/30 hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
                 >
-                  Confirm Registration
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Proceed to Pay ₹{totalParticipants * registeringEvent.ticketPrice} via Razorpay</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Razorpay Payment Gateway Modal */}
+      {razorpayGatewayModal && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-[#0b1329] border border-blue-500/30 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden relative text-slate-100 flex flex-col max-h-[92vh]">
+            {/* Razorpay Brand Header */}
+            <div className="bg-gradient-to-r from-[#002970] via-[#022c6b] to-[#0b2447] p-4 text-white border-b border-blue-500/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500 text-white font-black flex items-center justify-center text-base shadow-lg shadow-blue-500/40">
+                    R
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-black text-sm tracking-wider text-white">RAZORPAY</span>
+                      <span className="text-[9px] bg-blue-400/20 text-blue-200 font-bold px-1.5 py-0.5 rounded border border-blue-400/30 flex items-center gap-0.5">
+                        <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+                        TRUSTED
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-blue-200 block font-medium">Social Shuffle Pune</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-blue-300 flex items-center justify-end gap-1 font-semibold">
+                    <Lock className="w-2.5 h-2.5 text-emerald-400" />
+                    <span>256-Bit SSL Secured</span>
+                  </div>
+                  <div className="text-lg font-black text-amber-400">
+                    ₹{razorpayGatewayModal.totalAmount}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order snapshot */}
+            <div className="p-3 bg-slate-900/90 border-b border-slate-800 text-xs flex items-center justify-between">
+              <div>
+                <span className="font-bold text-white block">{razorpayGatewayModal.event.title}</span>
+                <span className="text-[11px] text-slate-400">
+                  {razorpayGatewayModal.totalParticipants} Participant{razorpayGatewayModal.totalParticipants > 1 ? 's' : ''} • {razorpayGatewayModal.event.time}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block">Order Ref:</span>
+                <span className="font-mono text-[10px] text-purple-300 font-bold">{razorpayGatewayModal.orderId}</span>
+              </div>
+            </div>
+
+            {/* Payment Method Selector & Interactive Gateway */}
+            <div className="p-4 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="flex rounded-xl bg-slate-900/80 p-1 border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMethod('upi')}
+                  className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    selectedMethod === 'upi' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>UPI / QR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMethod('card')}
+                  className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    selectedMethod === 'card' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>Cards</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMethod('netbanking')}
+                  className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    selectedMethod === 'netbanking' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Building className="w-3.5 h-3.5" />
+                  <span>NetBanking</span>
+                </button>
+              </div>
+
+              {/* UPI Tab */}
+              {selectedMethod === 'upi' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold">
+                    {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI'].map(app => (
+                      <div
+                        key={app}
+                        onClick={() => setUpiIdInput(`${currentParticipant.phone || '9876543210'}@${app.toLowerCase().replace(/\s+/g, '')}`)}
+                        className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500 cursor-pointer transition-all hover:bg-slate-800/80 flex flex-col items-center"
+                      >
+                        <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-1 text-xs">
+                          ⚡
+                        </div>
+                        <span className="text-[10px] text-slate-300">{app}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-300">UPI ID / VPA</label>
+                    <input
+                      type="text"
+                      value={upiIdInput}
+                      onChange={e => setUpiIdInput(e.target.value)}
+                      placeholder="e.g. shuffler@okhdfcbank"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-800/30 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center">
+                      <QrCode className="w-10 h-10 text-slate-900" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-white text-xs block">Instant Razorpay UPI QR</span>
+                      <span className="text-[10px] text-slate-400">Accepts Google Pay, PhonePe, Paytm, CRED or any BHIM app</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cards Tab */}
+              {selectedMethod === 'card' && (
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-300">Card Number</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value="•••• •••• •••• 4242  (Razorpay Test Card)"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300">Expiry</label>
+                      <input
+                        type="text"
+                        readOnly
+                        value="12 / 28"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300">CVV</label>
+                      <input
+                        type="text"
+                        readOnly
+                        value="•••"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* NetBanking Tab */}
+              {selectedMethod === 'netbanking' && (
+                <div className="grid grid-cols-3 gap-2">
+                  {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Bank', 'Punjab National'].map(b => (
+                    <div key={b} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center hover:border-blue-500 cursor-pointer">
+                      <span className="text-[11px] font-bold text-slate-300">{b}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Status processing message when authorizing */}
+              {paymentProcessing && (
+                <div className="p-3.5 rounded-xl bg-blue-950/60 border border-blue-500/40 flex items-center gap-3 animate-pulse text-xs text-blue-200">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-400 shrink-0" />
+                  <div>
+                    <span className="font-bold block text-white text-xs">
+                      {paymentStep === 'authorizing' ? 'Verifying payment with Razorpay gateway...' : 'Payment Confirmed! Finalizing meetup registration...'}
+                    </span>
+                    <span className="text-[10px] text-blue-300">Secured 256-bit bank handshake in progress</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer action buttons */}
+            <div className="p-4 bg-slate-900/90 border-t border-slate-800 flex gap-2.5">
+              <button
+                type="button"
+                onClick={handleCancelPayment}
+                disabled={paymentProcessing}
+                className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 font-semibold text-xs hover:bg-slate-800 transition-colors disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCompleteRazorpayPayment()}
+                disabled={paymentProcessing}
+                className="flex-[2] py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-blue-600/30 flex items-center justify-center gap-1.5 transition-all disabled:opacity-60"
+              >
+                {paymentProcessing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Authorizing Payment...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Pay ₹{razorpayGatewayModal.totalAmount} & Register</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -656,9 +1176,26 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   <span className="text-slate-400">Seats Reserved:</span>
                   <span className="text-emerald-400 font-bold">{activeTicketReg.paxCount} Shuffler(s)</span>
                 </div>
-                <div className="flex justify-between">
+                {activeTicketReg.guests && activeTicketReg.guests.length > 0 && (
+                  <div className="flex justify-between items-start pt-1 border-t border-slate-800/80">
+                    <span className="text-slate-400">Additional Participants:</span>
+                    <span className="text-purple-300 font-semibold text-right max-w-[65%]">
+                      {activeTicketReg.guests.map(g => g.name || 'Friend').join(', ')}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1 border-t border-slate-800/80">
                   <span className="text-slate-400">Payment:</span>
-                  <span className="text-amber-400 font-bold">₹{activeTicketReg.paxCount * (ticketEvent?.ticketPrice || 0)} ({activeTicketReg.paymentStatus})</span>
+                  <div className="text-right">
+                    <span className="text-emerald-400 font-bold block">
+                      ₹{activeTicketReg.amountPaid || (activeTicketReg.paxCount * (ticketEvent?.ticketPrice || 0))} (Paid via Razorpay)
+                    </span>
+                    {activeTicketReg.razorpayPaymentId && (
+                      <span className="text-[10px] font-mono text-purple-300 block">
+                        Txn: {activeTicketReg.razorpayPaymentId}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

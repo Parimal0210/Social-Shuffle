@@ -163,6 +163,9 @@ export interface Registration {
   qrCodeUrl?: string;
   emailSent?: boolean;
   emailSentAt?: string;
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  amountPaid?: number;
 }
 
 export interface EventFeedback {

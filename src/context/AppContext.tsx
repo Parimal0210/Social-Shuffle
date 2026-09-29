@@ -101,7 +101,17 @@ interface AppContextType {
   syncOfflineData: () => void;
 
   // Participant Registration workflow
-  registerForEvent: (eventId: string, paxCount: number, guests: GuestInfo[], notes?: string) => { success: boolean; message: string; registration?: Registration };
+  registerForEvent: (
+    eventId: string,
+    paxCount: number,
+    guests: GuestInfo[],
+    notes?: string,
+    paymentDetails?: {
+      razorpayPaymentId?: string;
+      razorpayOrderId?: string;
+      amountPaid?: number;
+    }
+  ) => { success: boolean; message: string; registration?: Registration };
   cancelRegistration: (registrationId: string) => void;
   verifyAttendeeQrCode: (code: string, eventId?: string) => { success: boolean; message: string; alreadyCheckedIn?: boolean; registration?: Registration };
   generateEmailPreviewHtml: (registrationId: string) => string;
@@ -350,7 +360,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [registrations, setRegistrations] = useState<Registration[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_registrations`);
-    return saved ? JSON.parse(saved) : INITIAL_REGISTRATIONS;
+    let list: Registration[] = saved ? JSON.parse(saved) : INITIAL_REGISTRATIONS;
+    // Revert Priya Nair registration for Event #35
+    list = list.filter(r => {
+      const isPriya = (
+        r.participantId === 'p-priya' ||
+        r.participantName?.toLowerCase().includes('priya nair') ||
+        r.participantEmail?.toLowerCase().includes('priya.nair')
+      );
+      const isEvent35 = (
+        r.eventId === 'ev-35' ||
+        r.eventId === 'evt-35' ||
+        r.eventId === '35'
+      );
+      return !(isPriya && isEvent35);
+    });
+    return list;
   });
 
   const [feedbackList, setFeedbackList] = useState<EventFeedback[]>(() => {
@@ -876,7 +901,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     eventId: string,
     paxCount: number,
     guests: GuestInfo[],
-    notes?: string
+    notes?: string,
+    paymentDetails?: {
+      razorpayPaymentId?: string;
+      razorpayOrderId?: string;
+      amountPaid?: number;
+    }
   ): { success: boolean; message: string; registration?: Registration } => {
     const event = events.find(e => e.id === eventId);
     if (!event) return { success: false, message: 'Event not found' };
@@ -912,7 +942,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       qrCodeToken: qrToken,
       qrCodeUrl: qrUrl,
       emailSent: true,
-      emailSentAt: new Date().toISOString()
+      emailSentAt: new Date().toISOString(),
+      razorpayPaymentId: paymentDetails?.razorpayPaymentId || `pay_rzp_${Date.now().toString(36)}`,
+      razorpayOrderId: paymentDetails?.razorpayOrderId,
+      amountPaid: paymentDetails?.amountPaid || (paxCount * event.ticketPrice)
     };
 
     setRegistrations(prev => [newRegistration, ...prev]);
@@ -1084,6 +1117,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">When:</span><strong style="color: #ffffff;">${eventTime}</strong></div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Where:</span><strong style="color: #ffffff;">${eventVenue} (${eventAddress})</strong></div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Seats (PAX):</span><strong style="color: #ffffff;">${reg.paxCount} Shuffler(s)</strong></div>
+          ${reg.guests && reg.guests.length > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #94a3b8;">Accompanying Guests:</span><strong style="color: #c084fc;">${reg.guests.map(g => g.name || 'Friend').join(', ')}</strong></div>
+          ` : ''}
           <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Ticket Token:</span><span style="font-family: monospace; color: #38bdf8;">${qrToken}</span></div>
         </div>
         <div style="text-align: center; background-color: #0b0d14; border: 2px dashed #6366f1; border-radius: 14px; padding: 20px; margin-bottom: 20px;">

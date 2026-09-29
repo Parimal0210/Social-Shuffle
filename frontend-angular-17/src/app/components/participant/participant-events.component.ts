@@ -132,31 +132,77 @@ import { ShuffleEvent } from '../../models/types';
               </div>
             } @else {
               <div class="space-y-3">
-                <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Number of Seats (PAX)</label>
-                  <div class="flex gap-2">
-                    @for (pax of [1, 2, 3, 4]; track pax) {
-                      <button
-                        type="button"
-                        (click)="rsvpPax.set(pax)"
-                        [class]="rsvpPax() === pax ? 'bg-[#FF6036] text-white' : 'bg-[#111C3B] text-slate-300 border border-[#1F305E]'"
-                        class="flex-1 py-2 rounded-xl text-xs font-bold"
-                      >
-                        {{ pax }} {{ pax === 1 ? 'Solo' : 'Pax' }}
-                      </button>
-                    }
+                <div class="p-3 rounded-xl bg-[#111C3B] border border-[#1F305E] flex items-center justify-between">
+                  <div>
+                    <label class="block text-xs font-bold text-white">Total Number of Participants</label>
+                    <span class="text-[10px] text-slate-400">Default & minimum: 1 (Includes you as Participant #1)</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="setTotalParticipants(totalParticipants() - 1)"
+                      [disabled]="totalParticipants() <= 1"
+                      class="w-7 h-7 rounded-lg bg-[#0D1527] border border-[#1F305E] text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-sm"
+                    >
+                      -
+                    </button>
+                    <span class="w-8 text-center text-sm font-bold text-white">
+                      {{ totalParticipants() }}
+                    </span>
+                    <button
+                      type="button"
+                      (click)="setTotalParticipants(totalParticipants() + 1)"
+                      class="w-7 h-7 rounded-lg bg-[#FF6036] text-white flex items-center justify-center font-bold text-sm shadow-sm"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
 
-                <div class="text-xs text-slate-400">
-                  Booking for: <span class="text-white font-semibold">{{ auth.currentUser()?.name }}</span> ({{ auth.currentUser()?.phone }})
+                @if (validationError()) {
+                  <div class="p-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs">
+                    {{ validationError() }}
+                  </div>
+                }
+
+                <!-- Participant #1 (You) -->
+                <div class="p-2.5 rounded-xl bg-[#0D1527] border border-[#1F305E] text-xs text-slate-300">
+                  <div class="flex justify-between items-center text-white font-semibold">
+                    <span>Participant #1 (You): {{ auth.currentUser()?.name }}</span>
+                    <span class="text-emerald-400 text-[11px]">✓ Confirmed</span>
+                  </div>
+                </div>
+
+                @if (totalParticipants() > 1) {
+                  <div class="space-y-2 pt-1 border-t border-[#1F305E]">
+                    <div class="text-xs font-semibold text-slate-200">
+                      Names for Additional Participants ({{ totalParticipants() - 1 }}):
+                    </div>
+                    @for (p of additionalList(); track $index) {
+                      <div class="space-y-1">
+                        <label class="block text-[11px] text-slate-400">Participant #{{ $index + 2 }} Full Name *</label>
+                        <input
+                          type="text"
+                          [value]="p.name"
+                          (input)="updateAdditionalName($index, $any($event.target).value)"
+                          placeholder="Enter additional participant's full name"
+                          class="w-full bg-[#111C3B] border border-[#1F305E] rounded-xl px-3 py-2 text-xs text-white focus:border-[#FF6036] focus:outline-none"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="text-xs text-slate-400 flex items-center justify-between pt-1">
+                  <span>Seats: <strong class="text-white">{{ totalParticipants() }} PAX</strong></span>
+                  <span class="text-slate-300 font-medium">₹{{ (activeRsvpEvent()?.pricePerPerson || 0) * totalParticipants() }} Total</span>
                 </div>
 
                 <button
                   (click)="confirmRsvp()"
                   class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-[#FF6036] to-[#FF8566] text-white hover:opacity-95 shadow-lg shadow-[#FF6036]/20 transition-all"
                 >
-                  Confirm Reservation (₹{{ (activeRsvpEvent()?.pricePerPerson || 0) * rsvpPax() }})
+                  Confirm Reservation (₹{{ (activeRsvpEvent()?.pricePerPerson || 0) * totalParticipants() }})
                 </button>
               </div>
             }
@@ -172,7 +218,9 @@ export class ParticipantEventsComponent {
 
   selectedArea = signal<string>('all');
   activeRsvpEvent = signal<ShuffleEvent | null>(null);
-  rsvpPax = signal<number>(1);
+  totalParticipants = signal<number>(1);
+  additionalList = signal<{ name: string; phone?: string }[]>([]);
+  validationError = signal<string | null>(null);
   rsvpSuccess = signal<boolean>(false);
 
   filteredEvents(): ShuffleEvent[] {
@@ -187,14 +235,55 @@ export class ParticipantEventsComponent {
       return;
     }
     this.activeRsvpEvent.set(evt);
-    this.rsvpPax.set(1);
+    this.setTotalParticipants(1);
+    this.validationError.set(null);
     this.rsvpSuccess.set(false);
+  }
+
+  setTotalParticipants(count: number) {
+    // Default and minimum value is 1
+    const validCount = Math.max(1, count || 1);
+    this.totalParticipants.set(validCount);
+    this.validationError.set(null);
+    const needed = validCount - 1;
+    const current = this.additionalList();
+    if (needed > current.length) {
+      const added = [];
+      for (let i = current.length; i < needed; i++) {
+        added.push({ name: '', phone: '' });
+      }
+      this.additionalList.set([...current, ...added]);
+    } else {
+      this.additionalList.set(current.slice(0, needed));
+    }
+  }
+
+  updateAdditionalName(index: number, name: string) {
+    this.validationError.set(null);
+    const updated = [...this.additionalList()];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], name };
+      this.additionalList.set(updated);
+    }
   }
 
   confirmRsvp() {
     const evt = this.activeRsvpEvent();
     const user = this.auth.currentUser();
     if (!evt || !user) return;
+
+    const total = this.totalParticipants();
+    const needed = total - 1;
+    const additional = this.additionalList().slice(0, needed);
+
+    if (total > 1) {
+      for (let i = 0; i < needed; i++) {
+        if (!additional[i]?.name?.trim()) {
+          this.validationError.set(`Please enter the full name for Participant #${i + 2}`);
+          return;
+        }
+      }
+    }
 
     this.eventService.rsvpForEvent(
       evt.id,
@@ -204,7 +293,8 @@ export class ParticipantEventsComponent {
         email: user.email,
         phone: user.phone
       },
-      this.rsvpPax()
+      total,
+      additional
     );
 
     this.rsvpSuccess.set(true);

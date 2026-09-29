@@ -177,7 +177,12 @@ export class EventService {
   }
 
   // Quick RSVP for current participant
-  rsvpForEvent(eventId: string, participant: { id: string; name: string; email: string; phone: string }, pax: number) {
+  rsvpForEvent(
+    eventId: string,
+    participant: { id: string; name: string; email: string; phone: string },
+    pax: number,
+    guests: { name: string; phone?: string }[] = []
+  ) {
     const newReg: Registration = {
       id: `reg-${Date.now().toString(36)}`,
       eventId,
@@ -186,7 +191,7 @@ export class EventService {
       participantEmail: participant.email,
       participantPhone: participant.phone,
       paxCount: pax,
-      guests: [],
+      guests: guests || [],
       attendanceStatus: 'Registered',
       paymentStatus: 'Pay at Venue',
       gamesPlayedTonightIds: [],
