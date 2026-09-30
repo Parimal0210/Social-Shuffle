@@ -37,6 +37,7 @@ import {
   setStoredApiUrl,
   DEFAULT_API_URL
 } from '../services/api';
+import { parseExcelOrCsv } from '../utils/excelImport';
 
 interface OfflineSyncItem {
   id: string;
@@ -151,9 +152,18 @@ interface AppContextType {
   updateVolunteerStatus: (id: string, status: VolunteerStatus) => void;
   updateReportStatus: (id: string, status: 'New' | 'Investigating' | 'Resolved', notes?: string) => void;
 
-  // CSV Import / Export
+  // CSV & Excel Import / Export
   importRegistrations: (eventId: string, rows: Array<{ name: string; email: string; phone: string; area?: string; paxCount?: number; notes?: string }>) => { imported: number; duplicatesFound: number };
-  bulkImportRegistrations: (eventId: string, csvText: string) => { importedCount: number; errors: string[] };
+  bulkImportRegistrations: (
+    eventId: string,
+    input: string | ArrayBuffer
+  ) => {
+    importedCount: number;
+    errors: string[];
+    totalRows?: number;
+    capturedCount?: number;
+    skippedCount?: number;
+  };
   exportCSV: (dataType: 'attendance' | 'participants' | 'games' | 'feedback', eventId?: string) => void;
 
   // Notifications
@@ -1611,7 +1621,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logAudit('Report Status Updated', id, `Status: ${status}`);
   };
 
-  // CSV Import
+  // Excel & CSV Import
   const importRegistrations = (
     eventId: string,
     rows: Array<{ name: string; email: string; phone: string; area?: string; paxCount?: number; notes?: string }>
@@ -1624,10 +1634,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updatedParticipants = [...participants];
 
     rows.forEach((row, idx) => {
-      if (!row.name || !row.email) return;
+      if (!row.name) return;
 
       // Check duplicate participant
-      let participant = detectDuplicate(row.email, row.phone || '', row.name);
+      let participant = detectDuplicate(row.email || '', row.phone || '', row.name);
       if (participant) {
         duplicatesFound++;
       } else {
@@ -1642,18 +1652,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           totalRegistrations: 1,
           gamesPlayedIds: [],
           venuesVisited: [],
-          totalPaxBrought: 0
+          totalPaxBrought: (row.paxCount && row.paxCount > 1) ? (row.paxCount - 1) : 0
         };
         updatedParticipants.push(participant);
       }
 
       // Check if already registered for this event
       const alreadyRegistered = registrations.some(
-        r => r.eventId === eventId && r.participantEmail.toLowerCase() === row.email.toLowerCase()
+        r => r.eventId === eventId && (
+          (row.email && r.participantEmail.toLowerCase() === row.email.toLowerCase()) ||
+          (row.phone && r.participantPhone === row.phone)
+        )
       );
       if (!alreadyRegistered) {
+        const regId = `reg-imp-${Date.now()}-${idx}`;
+        const qrToken = `SS-REG-${regId}`;
         newRegs.push({
-          id: `reg-imp-${Date.now()}-${idx}`,
+          id: regId,
           eventId,
           participantId: participant.id,
           participantName: participant.name,
@@ -1662,10 +1677,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           participantArea: participant.area,
           paxCount: row.paxCount || 1,
           guests: [],
-          paymentStatus: 'Confirmed',
+          paymentStatus: 'Confirmed', // Confirmed because payment status was 'captured' in Excel
           attendanceStatus: 'Pending',
           gamesPlayed: [],
-          notes: row.notes || 'Imported via CSV/Excel',
+          notes: row.notes || 'Imported via Excel (Payment: captured)',
+          qrCodeToken: qrToken,
+          qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrToken)}`,
           registeredAt: nowStr
         });
         imported++;
@@ -1675,43 +1692,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setParticipants(updatedParticipants);
     setRegistrations(prev => [...newRegs, ...prev]);
 
-    logAudit('Excel/CSV Import', `Event ${eventId}`, `Imported ${imported} registrations (${duplicatesFound} existing profiles found)`);
+    if (backendStatus === 'connected' && newRegs.length > 0) {
+      api.bulkImportRegistrations(newRegs).catch(() => {});
+    }
+
+    logAudit('Excel Import', `Event ${eventId}`, `Imported ${imported} registrations with payment status=captured (${duplicatesFound} existing profiles matched)`);
     return { imported, duplicatesFound };
   };
 
-  const bulkImportRegistrations = (eventId: string, csvText: string): { importedCount: number; errors: string[] } => {
-    const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return { importedCount: 0, errors: ['CSV has no data rows'] };
-
-    const dataRows: Array<{ name: string; email: string; phone: string; area?: string; paxCount?: number; notes?: string }> = [];
-    const errors: string[] = [];
-
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
-    const nameIdx = headers.findIndex(h => h.includes('name'));
-    const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('mobile'));
-    const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'));
-    const areaIdx = headers.findIndex(h => h.includes('area') || h.includes('location') || h.includes('city'));
-    const paxIdx = headers.findIndex(h => h.includes('pax') || h.includes('guest') || h.includes('ticket') || h.includes('count'));
-    const notesIdx = headers.findIndex(h => h.includes('note') || h.includes('comment'));
-
-    for (let i = 1; i < lines.length; i++) {
-      const rawCols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-      const name = nameIdx >= 0 ? rawCols[nameIdx] : rawCols[0];
-      const phone = phoneIdx >= 0 ? rawCols[phoneIdx] : rawCols[1] || '';
-      const email = emailIdx >= 0 ? rawCols[emailIdx] : rawCols[2] || `${(name || 'user').toLowerCase().replace(/\s+/g, '')}@example.com`;
-      const area = areaIdx >= 0 ? rawCols[areaIdx] : rawCols[3] || 'Koregaon Park';
-      const paxCount = paxIdx >= 0 ? parseInt(rawCols[paxIdx], 10) || 1 : 1;
-      const notes = notesIdx >= 0 ? rawCols[notesIdx] : rawCols[5] || '';
-
-      if (name) {
-        dataRows.push({ name, phone, email, area, paxCount, notes });
-      } else {
-        errors.push(`Row ${i + 1} skipped: Missing name`);
-      }
+  const bulkImportRegistrations = (
+    eventId: string,
+    input: string | ArrayBuffer
+  ): {
+    importedCount: number;
+    errors: string[];
+    totalRows?: number;
+    capturedCount?: number;
+    skippedCount?: number;
+  } => {
+    const parseResult = parseExcelOrCsv(input);
+    if (parseResult.totalRows === 0) {
+      return {
+        importedCount: 0,
+        errors: parseResult.errorMessages.length > 0 ? parseResult.errorMessages : ['Spreadsheet has no data rows'],
+        totalRows: 0,
+        capturedCount: 0,
+        skippedCount: 0
+      };
     }
 
+    // Filter ONLY rows where:
+    // 1. payment status = captured
+    // 2. full_name is present
+    const eligibleRows = parseResult.rows.filter(r => r.isValid && r.isCaptured);
+
+    const dataRows = eligibleRows.map(r => ({
+      name: r.fullName,
+      email: r.email,
+      phone: r.phone,
+      area: 'Pune',
+      paxCount: r.itemQuantity,
+      notes: `Imported via Excel (Payment: captured, Qty: ${r.itemQuantity})`
+    }));
+
     const { imported } = importRegistrations(eventId, dataRows);
-    return { importedCount: imported, errors };
+
+    return {
+      importedCount: imported,
+      errors: parseResult.errorMessages,
+      totalRows: parseResult.totalRows,
+      capturedCount: parseResult.capturedCount,
+      skippedCount: parseResult.skippedCount
+    };
   };
 
   // CSV Export utility

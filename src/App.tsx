@@ -23,6 +23,7 @@ import { ParticipantEvents } from './components/participant/ParticipantEvents';
 import { ParticipantProgress } from './components/participant/ParticipantProgress';
 import { ParticipantCommunity } from './components/participant/ParticipantCommunity';
 import { ParticipantProfile } from './components/participant/ParticipantProfile';
+import { ParticipantFooter } from './components/participant/ParticipantFooter';
 import { AuthModal } from './components/auth/AuthModal';
 
 const AppContent: React.FC = () => {
@@ -123,32 +124,39 @@ const AppContent: React.FC = () => {
           </main>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto">
-          {/* Participant Tab Navigation (Desktop top pills + mobile bottom bar) */}
-          <ParticipantNav
-            activeTab={participantTab}
-            setActiveTab={tab => setParticipantTab(tab)}
-          />
+        <div className="flex-1 flex flex-col w-full">
+          <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto">
+            {/* Participant Tab Navigation (Desktop top pills + mobile bottom bar) */}
+            <ParticipantNav
+              activeTab={participantTab}
+              setActiveTab={tab => setParticipantTab(tab)}
+            />
 
-          {/* Participant Screens — app-based padding on mobile */}
-          <main className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8">
-            {participantTab === 'home' && (
-              <ParticipantHome
-                onNavigateTab={tab => setParticipantTab(tab)}
-                onSelectEventForRegistration={handleSelectEventForRegistration}
-              />
-            )}
+            {/* Participant Screens */}
+            <main className="flex-1 p-4 sm:p-6 md:p-8">
+              {participantTab === 'home' && (
+                <ParticipantHome
+                  onNavigateTab={tab => setParticipantTab(tab)}
+                  onSelectEventForRegistration={handleSelectEventForRegistration}
+                />
+              )}
 
-            {participantTab === 'events' && (
-              <ParticipantEvents preselectedEventId={preselectedEventId} />
-            )}
+              {participantTab === 'events' && (
+                <ParticipantEvents preselectedEventId={preselectedEventId} />
+              )}
 
-            {participantTab === 'progress' && <ParticipantProgress />}
+              {participantTab === 'progress' && <ParticipantProgress />}
 
-            {participantTab === 'community' && <ParticipantCommunity />}
+              {participantTab === 'community' && <ParticipantCommunity />}
 
-            {participantTab === 'profile' && <ParticipantProfile />}
-          </main>
+              {participantTab === 'profile' && <ParticipantProfile />}
+            </main>
+          </div>
+
+          {/* Common Footer across all participant pages (with bottom clearance for mobile nav) */}
+          <div className="pb-16 md:pb-0">
+            <ParticipantFooter onNavigateTab={tab => setParticipantTab(tab)} />
+          </div>
         </div>
       )}
 

@@ -58,6 +58,59 @@ export interface BackendHealthResponse {
 
 class ApiService {
   private timeoutMs = 3000;
+  private cache = new Map<string, { data: any; expiry: number }>();
+  private inFlight = new Map<string, Promise<any>>();
+
+  /**
+   * Invalidates specific cache entries by endpoint prefix or completely clears cache if no prefix passed.
+   */
+  public invalidateCache(...prefixes: string[]): void {
+    if (prefixes.length === 0) {
+      this.cache.clear();
+      return;
+    }
+    for (const key of Array.from(this.cache.keys())) {
+      if (prefixes.some(p => key.startsWith(p) || key.includes(p))) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * High-performance cached GET with In-Flight Request Deduplication.
+   * Avoids duplicate simultaneous network requests and eliminates redundant database queries.
+   */
+  private async cachedFetchJson<T>(endpoint: string, ttlMs: number = 15000): Promise<T | null> {
+    const now = Date.now();
+    const cached = this.cache.get(endpoint);
+    if (cached && cached.expiry > now) {
+      return cached.data as T;
+    }
+
+    // In-flight deduplication: return same active promise if already pending
+    if (this.inFlight.has(endpoint)) {
+      return (await this.inFlight.get(endpoint)) as T | null;
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await this.fetchWithTimeout(endpoint);
+        if (res.ok) {
+          const json = await res.json();
+          this.cache.set(endpoint, { data: json, expiry: Date.now() + ttlMs });
+          return json as T;
+        }
+        return null;
+      } catch {
+        return null;
+      } finally {
+        this.inFlight.delete(endpoint);
+      }
+    })();
+
+    this.inFlight.set(endpoint, promise);
+    return await promise;
+  }
 
   private async fetchWithTimeout(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const baseUrl = getStoredApiUrl();
@@ -86,15 +139,7 @@ class ApiService {
 
   // --- Health & Ping ---
   async checkHealth(): Promise<BackendHealthResponse | null> {
-    try {
-      const res = await this.fetchWithTimeout('/system/health');
-      if (res.ok) {
-        return (await res.json()) as BackendHealthResponse;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return this.cachedFetchJson<BackendHealthResponse>('/system/health', 10000);
   }
 
   // --- Authentication ---
@@ -120,6 +165,7 @@ class ApiService {
         body: JSON.stringify(data)
       });
       if (res.ok) {
+        this.invalidateCache('/participants');
         return (await res.json()) as AuthResponse;
       }
       return null;
@@ -142,6 +188,7 @@ class ApiService {
         body: JSON.stringify(profile)
       });
       if (res.ok) {
+        this.invalidateCache('/participants');
         return (await res.json()) as AuthResponse;
       }
       return null;
@@ -168,13 +215,7 @@ class ApiService {
 
   // --- Events ---
   async getEvents(): Promise<ShuffleEvent[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/events');
-      if (res.ok) return (await res.json()) as ShuffleEvent[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<ShuffleEvent[]>('/events', 20000);
   }
 
   async createEvent(event: ShuffleEvent): Promise<ShuffleEvent | null> {
@@ -183,7 +224,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(event)
       });
-      if (res.ok) return (await res.json()) as ShuffleEvent;
+      if (res.ok) {
+        this.invalidateCache('/events');
+        return (await res.json()) as ShuffleEvent;
+      }
       return null;
     } catch {
       return null;
@@ -196,7 +240,10 @@ class ApiService {
         method: 'PUT',
         body: JSON.stringify(updates)
       });
-      if (res.ok) return (await res.json()) as ShuffleEvent;
+      if (res.ok) {
+        this.invalidateCache('/events');
+        return (await res.json()) as ShuffleEvent;
+      }
       return null;
     } catch {
       return null;
@@ -208,7 +255,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/events/${id}/duplicate`, {
         method: 'POST'
       });
-      if (res.ok) return (await res.json()) as ShuffleEvent;
+      if (res.ok) {
+        this.invalidateCache('/events');
+        return (await res.json()) as ShuffleEvent;
+      }
       return null;
     } catch {
       return null;
@@ -220,7 +270,11 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/events/${id}`, {
         method: 'DELETE'
       });
-      return res.ok;
+      if (res.ok) {
+        this.invalidateCache('/events');
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -228,13 +282,7 @@ class ApiService {
 
   // --- Games ---
   async getGames(): Promise<Game[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/games');
-      if (res.ok) return (await res.json()) as Game[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<Game[]>('/games', 30000);
   }
 
   async createGame(game: Game): Promise<Game | null> {
@@ -243,7 +291,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(game)
       });
-      if (res.ok) return (await res.json()) as Game;
+      if (res.ok) {
+        this.invalidateCache('/games');
+        return (await res.json()) as Game;
+      }
       return null;
     } catch {
       return null;
@@ -256,7 +307,10 @@ class ApiService {
         method: 'PUT',
         body: JSON.stringify(updates)
       });
-      if (res.ok) return (await res.json()) as Game;
+      if (res.ok) {
+        this.invalidateCache('/games');
+        return (await res.json()) as Game;
+      }
       return null;
     } catch {
       return null;
@@ -268,7 +322,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/games/${id}/toggle-active`, {
         method: 'PATCH'
       });
-      if (res.ok) return (await res.json()) as Game;
+      if (res.ok) {
+        this.invalidateCache('/games');
+        return (await res.json()) as Game;
+      }
       return null;
     } catch {
       return null;
@@ -277,14 +334,8 @@ class ApiService {
 
   // --- Participants ---
   async getParticipants(search?: string): Promise<Participant[] | null> {
-    try {
-      const query = search ? `?search=${encodeURIComponent(search)}` : '';
-      const res = await this.fetchWithTimeout(`/participants${query}`);
-      if (res.ok) return (await res.json()) as Participant[];
-      return null;
-    } catch {
-      return null;
-    }
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return this.cachedFetchJson<Participant[]>(`/participants${query}`, 20000);
   }
 
   async createParticipant(participant: Participant): Promise<Participant | null> {
@@ -293,7 +344,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(participant)
       });
-      if (res.ok) return (await res.json()) as Participant;
+      if (res.ok) {
+        this.invalidateCache('/participants');
+        return (await res.json()) as Participant;
+      }
       return null;
     } catch {
       return null;
@@ -306,7 +360,10 @@ class ApiService {
         method: 'PUT',
         body: JSON.stringify(updates)
       });
-      if (res.ok) return (await res.json()) as Participant;
+      if (res.ok) {
+        this.invalidateCache('/participants');
+        return (await res.json()) as Participant;
+      }
       return null;
     } catch {
       return null;
@@ -334,7 +391,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/participants/merge?sourceId=${sourceId}&targetId=${targetId}`, {
         method: 'POST'
       });
-      if (res.ok) return (await res.json()) as Participant;
+      if (res.ok) {
+        this.invalidateCache('/participants', '/registrations');
+        return (await res.json()) as Participant;
+      }
       return null;
     } catch {
       return null;
@@ -343,14 +403,8 @@ class ApiService {
 
   // --- Registrations ---
   async getRegistrations(eventId?: string): Promise<Registration[] | null> {
-    try {
-      const query = eventId ? `?eventId=${encodeURIComponent(eventId)}` : '';
-      const res = await this.fetchWithTimeout(`/registrations${query}`);
-      if (res.ok) return (await res.json()) as Registration[];
-      return null;
-    } catch {
-      return null;
-    }
+    const query = eventId ? `?eventId=${encodeURIComponent(eventId)}` : '';
+    return this.cachedFetchJson<Registration[]>(`/registrations${query}`, 10000);
   }
 
   async createRegistration(reg: Registration): Promise<Registration | null> {
@@ -359,10 +413,29 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(reg)
       });
-      if (res.ok) return (await res.json()) as Registration;
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/participants');
+        return (await res.json()) as Registration;
+      }
       return null;
     } catch {
       return null;
+    }
+  }
+
+  async bulkImportRegistrations(registrations: Registration[]): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout('/registrations/bulk-import', {
+        method: 'POST',
+        body: JSON.stringify(registrations)
+      });
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/participants');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
   }
 
@@ -371,7 +444,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/registrations/${registrationId}/attendance?status=${encodeURIComponent(status)}`, {
         method: 'PATCH'
       });
-      if (res.ok) return (await res.json()) as Registration;
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/participants');
+        return (await res.json()) as Registration;
+      }
       return null;
     } catch {
       return null;
@@ -383,7 +459,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/registrations/${registrationId}/payment?status=${encodeURIComponent(status)}`, {
         method: 'PATCH'
       });
-      if (res.ok) return (await res.json()) as Registration;
+      if (res.ok) {
+        this.invalidateCache('/registrations');
+        return (await res.json()) as Registration;
+      }
       return null;
     } catch {
       return null;
@@ -395,7 +474,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/registrations/${registrationId}/toggle-game?gameId=${encodeURIComponent(gameId)}`, {
         method: 'POST'
       });
-      if (res.ok) return (await res.json()) as Registration;
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/games', '/participants');
+        return (await res.json()) as Registration;
+      }
       return null;
     } catch {
       return null;
@@ -408,7 +490,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(data)
       });
-      if (res.ok) return (await res.json()) as Registration;
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/participants');
+        return (await res.json()) as Registration;
+      }
       return null;
     } catch {
       return null;
@@ -420,7 +505,11 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/registrations/${id}`, {
         method: 'DELETE'
       });
-      return res.ok;
+      if (res.ok) {
+        this.invalidateCache('/registrations', '/participants');
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -428,13 +517,7 @@ class ApiService {
 
   // --- Community: Feedback, Reports, Volunteers ---
   async getFeedback(): Promise<EventFeedback[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/community/feedback');
-      if (res.ok) return (await res.json()) as EventFeedback[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<EventFeedback[]>('/community/feedback', 20000);
   }
 
   async submitFeedback(feedback: EventFeedback): Promise<EventFeedback | null> {
@@ -443,7 +526,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(feedback)
       });
-      if (res.ok) return (await res.json()) as EventFeedback;
+      if (res.ok) {
+        this.invalidateCache('/community/feedback');
+        return (await res.json()) as EventFeedback;
+      }
       return null;
     } catch {
       return null;
@@ -451,13 +537,7 @@ class ApiService {
   }
 
   async getReports(): Promise<SafetyReport[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/community/reports');
-      if (res.ok) return (await res.json()) as SafetyReport[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<SafetyReport[]>('/community/reports', 20000);
   }
 
   async submitReport(report: SafetyReport): Promise<SafetyReport | null> {
@@ -466,7 +546,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(report)
       });
-      if (res.ok) return (await res.json()) as SafetyReport;
+      if (res.ok) {
+        this.invalidateCache('/community/reports');
+        return (await res.json()) as SafetyReport;
+      }
       return null;
     } catch {
       return null;
@@ -480,7 +563,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/community/reports/${id}/status?${params.toString()}`, {
         method: 'PATCH'
       });
-      if (res.ok) return (await res.json()) as SafetyReport;
+      if (res.ok) {
+        this.invalidateCache('/community/reports');
+        return (await res.json()) as SafetyReport;
+      }
       return null;
     } catch {
       return null;
@@ -488,13 +574,7 @@ class ApiService {
   }
 
   async getVolunteers(): Promise<VolunteerApplication[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/community/volunteers');
-      if (res.ok) return (await res.json()) as VolunteerApplication[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<VolunteerApplication[]>('/community/volunteers', 20000);
   }
 
   async submitVolunteer(app: VolunteerApplication): Promise<VolunteerApplication | null> {
@@ -503,7 +583,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(app)
       });
-      if (res.ok) return (await res.json()) as VolunteerApplication;
+      if (res.ok) {
+        this.invalidateCache('/community/volunteers');
+        return (await res.json()) as VolunteerApplication;
+      }
       return null;
     } catch {
       return null;
@@ -515,7 +598,10 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/community/volunteers/${id}/status?status=${encodeURIComponent(status)}`, {
         method: 'PATCH'
       });
-      if (res.ok) return (await res.json()) as VolunteerApplication;
+      if (res.ok) {
+        this.invalidateCache('/community/volunteers');
+        return (await res.json()) as VolunteerApplication;
+      }
       return null;
     } catch {
       return null;
@@ -524,13 +610,7 @@ class ApiService {
 
   // --- Audit Logs & Notifications ---
   async getAuditLogs(): Promise<AuditLog[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/audit-logs');
-      if (res.ok) return (await res.json()) as AuditLog[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<AuditLog[]>('/audit-logs', 15000);
   }
 
   async createAuditLog(log: AuditLog): Promise<AuditLog | null> {
@@ -539,7 +619,10 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(log)
       });
-      if (res.ok) return (await res.json()) as AuditLog;
+      if (res.ok) {
+        this.invalidateCache('/audit-logs');
+        return (await res.json()) as AuditLog;
+      }
       return null;
     } catch {
       return null;
@@ -547,13 +630,7 @@ class ApiService {
   }
 
   async getNotifications(): Promise<NotificationItem[] | null> {
-    try {
-      const res = await this.fetchWithTimeout('/notifications');
-      if (res.ok) return (await res.json()) as NotificationItem[];
-      return null;
-    } catch {
-      return null;
-    }
+    return this.cachedFetchJson<NotificationItem[]>('/notifications', 15000);
   }
 
   async markNotificationRead(id: string): Promise<boolean> {
@@ -561,7 +638,11 @@ class ApiService {
       const res = await this.fetchWithTimeout(`/notifications/${id}/read`, {
         method: 'PATCH'
       });
-      return res.ok;
+      if (res.ok) {
+        this.invalidateCache('/notifications');
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -572,7 +653,11 @@ class ApiService {
       const res = await this.fetchWithTimeout('/notifications/mark-all-read', {
         method: 'POST'
       });
-      return res.ok;
+      if (res.ok) {
+        this.invalidateCache('/notifications');
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }

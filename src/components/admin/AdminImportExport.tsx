@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileSpreadsheet,
   Upload,
   Download,
   CheckCircle2,
   AlertCircle,
-  FileText,
   Calendar,
   Users,
   Dices,
-  MessageSquare
+  Filter,
+  Check,
+  X,
+  FileCheck,
+  Info
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
+import { parseExcelOrCsv, ParseResult } from '../../utils/excelImport';
 
 export const AdminImportExport: React.FC = () => {
   const {
@@ -19,44 +24,73 @@ export const AdminImportExport: React.FC = () => {
     registrations,
     participants,
     games,
-    feedbackList,
     bulkImportRegistrations
   } = useApp();
 
   const [targetEventId, setTargetEventId] = useState<string>(events[0]?.id || '');
   const [csvText, setCsvText] = useState<string>('');
-  const [importResult, setImportResult] = useState<{ importedCount: number; errors: string[] } | null>(null);
+  const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [importResult, setImportResult] = useState<{
+    importedCount: number;
+    errors: string[];
+    totalRows?: number;
+    capturedCount?: number;
+    skippedCount?: number;
+  } | null>(null);
 
-  // Sample CSV template generator
+  // Parse spreadsheet whenever fileBuffer or csvText changes
+  const previewData: ParseResult | null = useMemo(() => {
+    if (fileBuffer) {
+      return parseExcelOrCsv(fileBuffer);
+    }
+    if (csvText.trim()) {
+      return parseExcelOrCsv(csvText);
+    }
+    return null;
+  }, [fileBuffer, csvText]);
+
+  // Sample CSV template generator with required columns
   const downloadSampleTemplate = () => {
-    const header = 'Name,Phone,Email,Area,Pax,Notes\n';
-    const sampleRows =
-      'Aditi Sharma,9890123456,aditi.sharma@gmail.com,Koregaon Park,2,Excited for Catan table\n' +
-      'Kunal Patil,9823456789,kunal.patil@outlook.com,Baner,1,First time playing modern games\n' +
-      'Sneha Kulkarni,9876543210,sneha.k@yahoo.com,Viman Nagar,3,Coming with college friends\n';
+    const csvContent =
+      'payment status,full_name,item quantity,email,phone,notes\n' +
+      'captured,Aditi Sharma,2,aditi.sharma@gmail.com,9890123456,Excited for Catan table\n' +
+      'captured,Kunal Patil,1,kunal.patil@outlook.com,9823456789,First time playing modern games\n' +
+      'failed,Vikram Singh,1,vikram.s@example.com,9811122334,Payment failed (will be skipped)\n' +
+      'refunded,Pooja Hegde,2,pooja.h@example.com,9765432199,Cancelled ticket (will be skipped)\n' +
+      'captured,Sneha Kulkarni,3,sneha.k@yahoo.com,9876543210,Coming with college friends\n';
 
-    const blob = new Blob([header + sampleRows], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'social_shuffle_registration_template.csv';
+    a.download = 'social_shuffle_captured_registration_template.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Handle file upload
+  // Handle file upload (.xlsx, .xls, .csv, .txt)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
+    setImportResult(null);
+
+    const isExcelBinary = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
 
     const reader = new FileReader();
     reader.onload = event => {
-      const content = event.target?.result as string;
-      setCsvText(content);
+      const buffer = event.target?.result as ArrayBuffer;
+      setFileBuffer(buffer);
+      if (!isExcelBinary) {
+        // Also keep text representation for CSV/TXT
+        const decoder = new TextDecoder('utf-8');
+        setCsvText(decoder.decode(buffer));
+      } else {
+        setCsvText('');
+      }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   // Handle Drag & Drop
@@ -65,19 +99,42 @@ export const AdminImportExport: React.FC = () => {
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
     setFileName(file.name);
+    setImportResult(null);
+
+    const isExcelBinary = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
 
     const reader = new FileReader();
     reader.onload = event => {
-      const content = event.target?.result as string;
-      setCsvText(content);
+      const buffer = event.target?.result as ArrayBuffer;
+      setFileBuffer(buffer);
+      if (!isExcelBinary) {
+        const decoder = new TextDecoder('utf-8');
+        setCsvText(decoder.decode(buffer));
+      } else {
+        setCsvText('');
+      }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const handleProcessImport = () => {
-    if (!targetEventId || !csvText) return;
-    const res = bulkImportRegistrations(targetEventId, csvText);
+    if (!targetEventId || (!fileBuffer && !csvText.trim())) return;
+
+    const payload = fileBuffer || csvText;
+    const res = bulkImportRegistrations(targetEventId, payload);
     setImportResult(res);
+
+    if (res.importedCount > 0) {
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+      } catch {
+        // confetti fallback
+      }
+    }
   };
 
   // 1-Click Exporters
@@ -133,10 +190,52 @@ export const AdminImportExport: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-black text-white tracking-tight">Excel & CSV Data Hub</h2>
+        <h2 className="text-xl font-black text-white tracking-tight">Excel & CSV Registration Hub</h2>
         <p className="text-xs text-slate-400 mt-0.5">
-          Bulk import attendee registrations from ticketing platforms (BookMyShow, Townscript, Google Forms) or export master records
+          Bulk import attendee registrations from Razorpay, BookMyShow, Townscript, or custom spreadsheets with automated column filtering
         </p>
+      </div>
+
+      {/* Column Rules & Requirements Banner */}
+      <div className="p-4 rounded-2xl bg-[#111C3B]/80 border border-[#1F305E] space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-[#35C8A8]/10 text-[#35C8A8] shrink-0 mt-0.5">
+            <Filter className="w-5 h-5" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>Strict Column Filtering Rules Applied</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#35C8A8]/20 text-[#35C8A8] font-mono font-semibold">
+                payment status = captured
+              </span>
+            </h4>
+            <p className="text-xs text-slate-300">
+              The importer extracts <strong className="text-white">only</strong> the designated columns and filters out non-captured bookings:
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
+                <div className="text-[10px] font-mono text-slate-400">1. Filter Criteria</div>
+                <div className="font-bold text-emerald-400">payment status = captured</div>
+                <div className="text-[10px] text-slate-400">Non-captured rows are skipped</div>
+              </div>
+              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
+                <div className="text-[10px] font-mono text-slate-400">2. Attendee Name</div>
+                <div className="font-bold text-white">full_name</div>
+                <div className="text-[10px] text-slate-400">Full attendee profile name</div>
+              </div>
+              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
+                <div className="text-[10px] font-mono text-slate-400">3. Ticket Count</div>
+                <div className="font-bold text-white">item quantity</div>
+                <div className="text-[10px] text-slate-400">Pax count per booking</div>
+              </div>
+              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
+                <div className="text-[10px] font-mono text-slate-400">4. Contact Info</div>
+                <div className="font-bold text-white">email & phone</div>
+                <div className="text-[10px] text-slate-400">Pass & QR delivery</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bulk Importer Section */}
@@ -144,20 +243,20 @@ export const AdminImportExport: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-              <span>Bulk Import Registrations</span>
+              <FileSpreadsheet className="w-5 h-5 text-[#35C8A8]" />
+              <span>Import Excel / CSV to Event</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Supports CSV with columns: Name, Phone, Email, Area, Pax, Notes
+              Supports .xlsx, .xls, .csv spreadsheets. Ignores extra columns and filters only captured bookings.
             </p>
           </div>
 
           <button
             onClick={downloadSampleTemplate}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white text-xs font-semibold self-start sm:self-center"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white text-xs font-semibold self-start sm:self-center transition-all"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download CSV Template</span>
+            <Download className="w-3.5 h-3.5 text-[#35C8A8]" />
+            <span>Download Formatted Template</span>
           </button>
         </div>
 
@@ -169,7 +268,7 @@ export const AdminImportExport: React.FC = () => {
           <select
             value={targetEventId}
             onChange={e => setTargetEventId(e.target.value)}
-            className="w-full sm:max-w-md bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+            className="w-full sm:max-w-md bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#35C8A8]"
           >
             {events.map(ev => (
               <option key={ev.id} value={ev.id}>
@@ -183,15 +282,15 @@ export const AdminImportExport: React.FC = () => {
         <div
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-2xl p-6 text-center space-y-3 bg-slate-900/40 transition-colors"
+          className="border-2 border-dashed border-slate-700 hover:border-[#35C8A8]/60 rounded-2xl p-6 text-center space-y-3 bg-slate-900/40 transition-colors"
         >
-          <Upload className="w-8 h-8 text-purple-400 mx-auto" />
+          <Upload className="w-8 h-8 text-[#35C8A8] mx-auto" />
           <div>
-            <label className="text-xs font-bold text-purple-400 hover:text-purple-300 cursor-pointer underline">
-              <span>Choose a CSV file</span>
+            <label className="text-xs font-bold text-[#35C8A8] hover:underline cursor-pointer">
+              <span>Choose an Excel (.xlsx, .xls) or CSV file</span>
               <input
                 type="file"
-                accept=".csv,.txt"
+                accept=".xlsx,.xls,.csv,.txt"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -200,8 +299,9 @@ export const AdminImportExport: React.FC = () => {
           </div>
 
           {fileName && (
-            <div className="text-xs text-emerald-400 font-semibold">
-              Selected File: {fileName}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 font-semibold">
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>Loaded: {fileName}</span>
             </div>
           )}
         </div>
@@ -209,49 +309,191 @@ export const AdminImportExport: React.FC = () => {
         {/* Or direct Paste text */}
         <div>
           <label className="block text-slate-400 font-semibold text-xs mb-1">
-            Or Paste CSV Rows Directly:
+            Or Paste CSV / Tab-Separated Rows Directly:
           </label>
           <textarea
-            rows={4}
+            rows={3}
             value={csvText}
-            onChange={e => setCsvText(e.target.value)}
-            placeholder="Name,Phone,Email,Area,Pax,Notes&#10;Rohan Mehra,9890011223,rohan@gmail.com,Baner,2,Catan table please"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-purple-500"
+            onChange={e => {
+              setCsvText(e.target.value);
+              setFileBuffer(null);
+              setFileName('');
+              setImportResult(null);
+            }}
+            placeholder="payment status,full_name,item quantity,email,phone&#10;captured,Rohan Mehra,2,rohan@gmail.com,9890011223&#10;failed,Vikram Singh,1,vikram@gmail.com,9811122334"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-[#35C8A8]"
           />
         </div>
+
+        {/* Live Detected Columns & Preview */}
+        {previewData && (
+          <div className="space-y-4 pt-2 border-t border-slate-800">
+            {/* Column Mapping Badges */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-400 font-semibold flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-sky-400" />
+                Detected Columns:
+              </span>
+              <span className={`px-2 py-0.5 rounded-lg border font-mono text-[11px] ${
+                previewData.columns.paymentStatusKey
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              }`}>
+                payment status: {previewData.columns.paymentStatusKey || 'All treated captured'}
+              </span>
+              <span className={`px-2 py-0.5 rounded-lg border font-mono text-[11px] ${
+                previewData.columns.fullNameKey
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              }`}>
+                full_name: {previewData.columns.fullNameKey || 'Not detected'}
+              </span>
+              <span className="px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800/80 font-mono text-[11px] text-slate-300">
+                item quantity: {previewData.columns.itemQuantityKey || 'Default (1)'}
+              </span>
+              <span className="px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800/80 font-mono text-[11px] text-slate-300">
+                email: {previewData.columns.emailKey || 'Fallback'}
+              </span>
+              <span className="px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800/80 font-mono text-[11px] text-slate-300">
+                phone: {previewData.columns.phoneKey || 'N/A'}
+              </span>
+            </div>
+
+            {/* Metrics cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                <div className="text-[11px] text-slate-400">Total Rows</div>
+                <div className="text-lg font-black text-white">{previewData.totalRows}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-center">
+                <div className="text-[11px] text-emerald-400 font-semibold flex items-center justify-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Captured (To Import)
+                </div>
+                <div className="text-lg font-black text-emerald-300">{previewData.capturedCount}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 text-center">
+                <div className="text-[11px] text-rose-400 font-semibold flex items-center justify-center gap-1">
+                  <X className="w-3 h-3" />
+                  Skipped (Non-Captured)
+                </div>
+                <div className="text-lg font-black text-rose-400">{previewData.skippedCount}</div>
+              </div>
+            </div>
+
+            {/* Preview Table */}
+            <div className="border border-slate-800 rounded-xl overflow-hidden">
+              <div className="px-3 py-2 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300 font-semibold">
+                <span>Spreadsheet Rows Preview (First 8 Rows)</span>
+                <span className="text-[11px] text-slate-400">
+                  Showing {Math.min(previewData.rows.length, 8)} of {previewData.rows.length} rows
+                </span>
+              </div>
+              <div className="max-h-60 overflow-y-auto divide-y divide-slate-800/60 font-sans text-xs">
+                {previewData.rows.slice(0, 8).map((r, i) => (
+                  <div
+                    key={i}
+                    className={`px-3 py-2 flex items-center justify-between gap-3 text-xs ${
+                      r.isValid && r.isCaptured
+                        ? 'bg-slate-900/20 hover:bg-slate-800/40 text-slate-200'
+                        : 'bg-rose-950/10 hover:bg-rose-950/20 text-slate-400 opacity-75'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-6 text-[10px] font-mono text-slate-500">#{r.originalRowIndex}</span>
+
+                      {/* Payment Status Pill */}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider shrink-0 ${
+                          r.isCaptured
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 line-through'
+                        }`}
+                      >
+                        {r.paymentStatus || 'unknown'}
+                      </span>
+
+                      {/* Name & Contact */}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white truncate flex items-center gap-2">
+                          <span>{r.fullName || <span className="text-rose-400 italic">Missing Name</span>}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            ({r.itemQuantity} {r.itemQuantity === 1 ? 'PAX' : 'PAX'})
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {r.email} • {r.phone || 'No phone'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Status */}
+                    <div className="text-right shrink-0">
+                      {r.isValid && r.isCaptured ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Will Import</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-400">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>{r.skipReason || 'Ignored'}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Import Feedback */}
         {importResult && (
           <div
-            className={`p-4 rounded-xl text-xs space-y-1 ${
+            className={`p-4 rounded-xl text-xs space-y-2 ${
               importResult.importedCount > 0
                 ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
                 : 'bg-rose-500/15 border border-rose-500/30 text-rose-300'
             }`}
           >
-            <div className="flex items-center gap-2 font-bold">
+            <div className="flex items-center gap-2 font-bold text-sm">
               {importResult.importedCount > 0 ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400" />
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
               )}
-              <span>Imported {importResult.importedCount} registrations successfully!</span>
+              <span>
+                Successfully imported {importResult.importedCount} attendee bookings with payment status=captured!
+              </span>
             </div>
-            {importResult.errors.map((err, i) => (
-              <p key={i} className="text-slate-300 text-[11px]">
-                • {err}
+            {importResult.skippedCount !== undefined && importResult.skippedCount > 0 && (
+              <p className="text-slate-300 text-[11px]">
+                ℹ️ Skipped {importResult.skippedCount} row(s) where payment status was not &apos;captured&apos; or required fields were missing.
               </p>
-            ))}
+            )}
+            {importResult.errors && importResult.errors.length > 0 && (
+              <div className="max-h-28 overflow-y-auto space-y-0.5 text-[11px] text-slate-300 border-t border-slate-700/50 pt-1.5">
+                {importResult.errors.map((err, i) => (
+                  <p key={i}>• {err}</p>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         <button
           id="btn-process-import"
           onClick={handleProcessImport}
-          disabled={!csvText.trim()}
-          className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all"
+          disabled={!previewData || previewData.capturedCount === 0}
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#35C8A8] to-[#20B2AA] hover:opacity-95 disabled:opacity-40 text-[#0A1128] font-bold text-xs shadow-lg shadow-[#35C8A8]/20 transition-all flex items-center justify-center gap-2"
         >
-          Process & Import to Event
+          <FileCheck className="w-4 h-4" />
+          <span>
+            {previewData && previewData.capturedCount > 0
+              ? `Import ${previewData.capturedCount} Captured Registrations to Event`
+              : 'Import Captured Registrations'}
+          </span>
         </button>
       </div>
 
