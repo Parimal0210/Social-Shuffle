@@ -284,6 +284,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
+            id="dash-action-whatsapp"
+            onClick={() => onNavigate('whatsapp')}
+            className="p-4 rounded-2xl bg-[#111C3B] border border-[#1F305E] hover:border-[#25D366]/50 hover:bg-[#152248] transition-all text-left group"
+          >
+            <MessageSquare className="w-6 h-6 text-[#25D366] mb-2 group-hover:scale-110 transition-transform" />
+            <div className="text-sm font-bold text-white">WhatsApp Post</div>
+            <div className="text-xs text-slate-400 mt-0.5">Community broadcasts</div>
+          </button>
+
+          <button
             id="dash-action-import-csv"
             onClick={() => onNavigate('import_export')}
             className="p-4 rounded-2xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/50 hover:bg-[#152248] transition-all text-left group"

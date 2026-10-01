@@ -237,11 +237,73 @@ export interface AuditLog {
   timestamp: string;
 }
 
+export type NotificationType = 'event' | 'registration' | 'community' | 'system';
+
 export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  type: 'event' | 'registration' | 'community' | 'system';
+  type: NotificationType;
   timestamp: string;
   read: boolean;
+  recipientEmail?: string;
+  eventId?: string;
+  deliveryStatus?: 'Sent' | 'Delivered' | 'Failed';
+  emailHtml?: string;
+  actionUrl?: string;
+}
+
+export type EmailNotificationType = 'event_reminder' | 'registration_confirmation' | 'community_announcement' | 'custom_broadcast';
+
+export interface EmailNotificationRecord {
+  id: string;
+  type: EmailNotificationType;
+  eventId?: string;
+  eventTitle?: string;
+  recipientEmail: string;
+  recipientName: string;
+  recipientPhone?: string;
+  subject: string;
+  htmlContent: string;
+  plainText: string;
+  status: 'Sent' | 'Delivered' | 'Failed';
+  sentAt: string;
+  sentBy?: string;
+  metadata?: {
+    venue?: string;
+    eventDate?: string;
+    paxCount?: number;
+    qrCodeUrl?: string;
+  };
+}
+
+export interface EventEmailBroadcastRequest {
+  eventId: string;
+  subject: string;
+  message: string;
+  notificationType: EmailNotificationType;
+  recipientFilter: 'all' | 'confirmed_only' | 'pending_only';
+  includeQrPass: boolean;
+  includeVenueMap: boolean;
+  customHeading?: string;
+}
+
+export type WhatsAppMessageType =
+  | 'announcement'
+  | 'sold_out'
+  | 'seats_remaining'
+  | 'event_reminder'
+  | 'game_roster'
+  | 'custom';
+
+export interface WhatsAppCommunityBroadcastRecord {
+  id: string;
+  eventId?: string;
+  eventTitle?: string;
+  templateType: WhatsAppMessageType;
+  messageContent: string;
+  targetGroup: string;
+  triggeredBy: string;
+  triggeredAt: string;
+  method: 'whatsapp_web' | 'copied_clipboard' | 'group_link';
 }

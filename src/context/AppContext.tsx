@@ -18,8 +18,15 @@ import {
   AuthUser,
   LoginCredentials,
   RegisterCredentials,
-  GoogleUserProfile
+  GoogleUserProfile,
+  EventEmailBroadcastRequest
 } from '../types';
+import {
+  dispatchEventEmailBatch,
+  generateRegistrationEmailHtml,
+  generateEventReminderEmailHtml,
+  triggerBrowserPushNotification
+} from '../services/notificationEmailService';
 import {
   INITIAL_GAMES,
   INITIAL_EVENTS,
@@ -169,6 +176,10 @@ interface AppContextType {
   // Notifications
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  sendEventBroadcast: (request: EventEmailBroadcastRequest) => Promise<{ success: boolean; sentCount?: number; message?: string }>;
+  sendEventReminder: (eventId: string, note?: string) => Promise<boolean>;
+  sendRegistrationConfirmationEmail: (registrationId: string) => Promise<boolean>;
+  sendCommunityAnnouncement: (title: string, message: string) => Promise<boolean>;
 
   // Reset database
   resetDatabase: () => void;
@@ -975,13 +986,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     // Add confirmation notification
+    const confHtml = generateRegistrationEmailHtml(newRegistration, event);
+    triggerBrowserPushNotification(
+      `🎲 Registered for ${event.title}!`,
+      `Pass confirmed for ${newRegistration.participantName} (${paxCount} PAX). Confirmation email sent to ${newRegistration.participantEmail}!`
+    );
+
     const newNotif: NotificationItem = {
       id: `notif-${Date.now()}`,
       title: `Registered for ${event.title}! 🎲`,
       message: `See you at ${event.venue} on ${event.date}! Your registration with ${paxCount} pax is confirmed. Confirmation email & QR pass sent!`,
       type: 'registration',
       timestamp: 'Just now',
-      read: false
+      read: false,
+      recipientEmail: newRegistration.participantEmail,
+      eventId: event.id,
+      emailHtml: confHtml
     };
     setNotifications(prev => [newNotif, ...prev]);
 
@@ -1830,6 +1850,128 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const sendEventBroadcast = async (request: EventEmailBroadcastRequest): Promise<{ success: boolean; sentCount?: number; message?: string }> => {
+    const event = events.find(e => e.id === request.eventId);
+    if (!event) {
+      return { success: false, message: 'Event not found' };
+    }
+
+    const eventRegs = registrations.filter(r => r.eventId === request.eventId);
+    const result = await dispatchEventEmailBatch(event, eventRegs, request);
+
+    // Call backend API if connected
+    if (backendStatus === 'connected') {
+      api.sendEventEmailBroadcast(request).catch(() => {});
+    }
+
+    // Add notification item for the event
+    const newNotif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      title: request.subject,
+      message: `Dispatched push email notification to ${result.sentCount} attendees for ${event.title}.`,
+      type: 'event',
+      timestamp: 'Just now',
+      read: false,
+      eventId: event.id
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    // Update registration flags
+    setRegistrations(prev =>
+      prev.map(r => {
+        if (r.eventId === request.eventId && r.attendanceStatus !== 'Cancelled') {
+          return { ...r, emailSent: true, emailSentAt: new Date().toISOString() };
+        }
+        return r;
+      })
+    );
+
+    logAudit(
+      'Email Notification Push',
+      `Event #${event.number} - ${event.title}`,
+      `Dispatched email push to ${result.sentCount} attendees (${request.notificationType})`
+    );
+
+    return {
+      success: true,
+      sentCount: result.sentCount,
+      message: `Successfully sent email notifications to ${result.sentCount} participants!`
+    };
+  };
+
+  const sendEventReminder = async (eventId: string, note?: string): Promise<boolean> => {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    const res = await sendEventBroadcast({
+      eventId,
+      subject: `⏳ Reminder: ${event.title} is coming up!`,
+      message: note || `Hey {name}! Just a quick friendly reminder that ${event.title} is happening at ${event.venue} (${event.time}). Check-in is completely seamless with your digital QR pass attached below!`,
+      notificationType: 'event_reminder',
+      recipientFilter: 'all',
+      includeQrPass: true,
+      includeVenueMap: true
+    });
+    return res.success;
+  };
+
+  const sendRegistrationConfirmationEmail = async (registrationId: string): Promise<boolean> => {
+    const reg = registrations.find(r => r.id === registrationId);
+    if (!reg) return false;
+    const event = events.find(e => e.id === reg.eventId);
+
+    if (backendStatus === 'connected') {
+      api.sendRegistrationConfirmationEmail(registrationId).catch(() => {});
+    }
+
+    const emailHtml = generateRegistrationEmailHtml(reg, event);
+    triggerBrowserPushNotification(
+      `🎲 Registration Pass Confirmed!`,
+      `Pass for ${reg.participantName} at ${event?.title || 'Social Shuffle'}`
+    );
+
+    setRegistrations(prev =>
+      prev.map(r => (r.id === registrationId ? { ...r, emailSent: true, emailSentAt: new Date().toISOString() } : r))
+    );
+
+    const newNotif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      title: `Registration Pass: ${event?.title || 'Social Shuffle'} 🎟️`,
+      message: `Your entry pass and QR token (${reg.qrCodeToken || reg.id}) have been dispatched to ${reg.participantEmail}.`,
+      type: 'registration',
+      timestamp: 'Just now',
+      read: false,
+      recipientEmail: reg.participantEmail,
+      eventId: reg.eventId,
+      emailHtml
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    logAudit('Email Confirmation Sent', `${reg.participantName} (${reg.participantEmail})`, `Event: ${event?.title}`);
+    return true;
+  };
+
+  const sendCommunityAnnouncement = async (title: string, message: string): Promise<boolean> => {
+    if (backendStatus === 'connected') {
+      api.sendCommunityAnnouncement(title, message).catch(() => {});
+    }
+
+    triggerBrowserPushNotification(title, message);
+
+    const newNotif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      title: `📢 ${title}`,
+      message,
+      type: 'community',
+      timestamp: 'Just now',
+      read: false
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    logAudit('Community Announcement Broadcast', title, `Sent to all participants over email`);
+    return true;
+  };
+
   const resetDatabase = () => {
     localStorage.clear();
     setEvents(INITIAL_EVENTS);
@@ -1939,6 +2081,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         markNotificationRead,
         markAllNotificationsRead,
+        sendEventBroadcast,
+        sendEventReminder,
+        sendRegistrationConfirmationEmail,
+        sendCommunityAnnouncement,
         resetDatabase
       }}
     >

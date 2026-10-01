@@ -18,7 +18,6 @@ import {
   Mail,
   Sparkles,
   Ticket,
-  Eye,
   Share2,
   ShieldCheck,
   CreditCard,
@@ -26,10 +25,12 @@ import {
   Smartphone,
   Building,
   ArrowRight,
-  Loader2
+  Loader2,
+  Send
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, GuestInfo, Registration } from '../../types';
+import { openGoogleCalendar, downloadIcsFile } from '../../utils/calendarUtils';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
@@ -42,8 +43,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     registrations,
     currentParticipant,
     registerForEvent,
-    cancelRegistration,
-    generateEmailPreviewHtml
+    sendRegistrationConfirmationEmail
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'upcoming' | 'my-events'>('upcoming');
@@ -57,6 +57,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   // Registration modal state
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [registeringEvent, setRegisteringEvent] = useState<ShuffleEvent | null>(null);
+  const [resentToast, setResentToast] = useState(false);
   const [totalParticipants, setTotalParticipants] = useState<number>(1);
   const [additionalParticipants, setAdditionalParticipants] = useState<GuestInfo[]>([]);
   const [notes, setNotes] = useState<string>('');
@@ -65,11 +66,9 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
   const samplePuneNames = ['Tanvi Joshi', 'Rahul Kulkarni', 'Aditi Patil', 'Rohan Shinde', 'Sneha Deshpande', 'Siddharth More'];
 
-  // Digital Ticket Pass & Email Preview Modals
+  // Digital Ticket Pass Modal
   const [activeTicketReg, setActiveTicketReg] = useState<Registration | null>(null);
   const [showTicketModal, setShowTicketModal] = useState<boolean>(false);
-  const [emailPreviewRegId, setEmailPreviewRegId] = useState<string | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState<boolean>(false);
 
   // Razorpay Payment Gateway State
   const [razorpayGatewayModal, setRazorpayGatewayModal] = useState<{
@@ -531,28 +530,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <span>QR Ticket</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setEmailPreviewRegId(reg.id);
-                        setShowEmailModal(true);
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-colors"
-                      title="Preview registration email"
-                    >
-                      <Mail className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Email</span>
-                    </button>
-
-                    {reg.attendanceStatus !== 'Checked In' && (
+                    {event && (
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to cancel this registration?')) {
-                            cancelRegistration(reg.id);
-                          }
-                        }}
-                        className="px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs font-semibold transition-colors"
+                        onClick={() => openGoogleCalendar(event, reg)}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-1 transition-colors"
+                        title="Add this event to Google Calendar for automatic reminders"
                       >
-                        Cancel
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Google Calendar</span>
                       </button>
                     )}
                   </div>
@@ -1037,57 +1022,88 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       )}
 
       {/* Full Event Details Modal */}
-      {selectedEvent && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161822] border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">
-                Event #{selectedEvent.number}
-              </span>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+      {selectedEvent && (() => {
+        const eventRegistration = registrations.find(
+          r => r.eventId === selectedEvent.id && r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
+        );
+        const isRegistered = !!eventRegistration;
 
-            <h3 className="text-xl font-black text-white">{selectedEvent.title}</h3>
-
-            <p className="text-xs text-slate-300 leading-relaxed">{selectedEvent.description}</p>
-
-            <div className="space-y-2 text-xs text-slate-300 p-3 rounded-xl bg-slate-900 border border-slate-800">
-              <div>📍 <strong>Venue:</strong> {selectedEvent.venue} ({selectedEvent.address})</div>
-              <div>📅 <strong>Schedule:</strong> {selectedEvent.time}</div>
-              <div>🏷️ <strong>Category:</strong> {selectedEvent.category}</div>
-              <div>👥 <strong>Capacity:</strong> {selectedEvent.capacity} Shufflers</div>
-              <div>🎫 <strong>Ticket:</strong> ₹{selectedEvent.ticketPrice}</div>
-              <div>💡 <strong>Host Notes:</strong> {selectedEvent.notes}</div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-300 font-semibold"
-              >
-                Close
-              </button>
-              {selectedEvent.status === 'upcoming' && (
+        return (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#161822] border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">
+                  Event #{selectedEvent.number}
+                </span>
                 <button
-                  onClick={() => {
-                    const ev = selectedEvent;
-                    setSelectedEvent(null);
-                    openRegistration(ev);
-                  }}
-                  className="flex-1 py-2 rounded-xl bg-purple-600 text-white font-bold shadow hover:bg-purple-500"
+                  onClick={() => setSelectedEvent(null)}
+                  className="text-slate-400 hover:text-white"
                 >
-                  Register Spot
+                  ✕
                 </button>
+              </div>
+
+              <h3 className="text-xl font-black text-white">{selectedEvent.title}</h3>
+
+              <p className="text-xs text-slate-300 leading-relaxed">{selectedEvent.description}</p>
+
+              <div className="space-y-2 text-xs text-slate-300 p-3 rounded-xl bg-slate-900 border border-slate-800">
+                <div>📍 <strong>Venue:</strong> {selectedEvent.venue} ({selectedEvent.address})</div>
+                <div>📅 <strong>Schedule:</strong> {selectedEvent.time}</div>
+                <div>🏷️ <strong>Category:</strong> {selectedEvent.category}</div>
+                <div>👥 <strong>Capacity:</strong> {selectedEvent.capacity} Shufflers</div>
+                <div>🎫 <strong>Ticket:</strong> ₹{selectedEvent.ticketPrice}</div>
+                <div>💡 <strong>Host Notes:</strong> {selectedEvent.notes}</div>
+              </div>
+
+              {isRegistered && eventRegistration && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2 text-xs text-emerald-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Pass confirmed ({eventRegistration.paxCount} pax • Reg #{eventRegistration.id})</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedEvent(null);
+                      setActiveTicketReg(eventRegistration);
+                      setShowTicketModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-[11px] shrink-0"
+                  >
+                    View Pass
+                  </button>
+                </div>
               )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-300 font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  Close
+                </button>
+                {isRegistered ? (
+                  <div className="flex-1 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>You are registered</span>
+                  </div>
+                ) : selectedEvent.status === 'upcoming' ? (
+                  <button
+                    onClick={() => {
+                      const ev = selectedEvent;
+                      setSelectedEvent(null);
+                      openRegistration(ev);
+                    }}
+                    className="flex-1 py-2 rounded-xl bg-purple-600 text-white font-bold shadow hover:bg-purple-500 transition-colors"
+                  >
+                    Register Spot
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Digital Ticket Pass & Quirky Confirmation Modal */}
       {showTicketModal && activeTicketReg && (() => {
@@ -1208,17 +1224,55 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     <span className="text-[10px] text-slate-400">Sent to {activeTicketReg.participantEmail}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setEmailPreviewRegId(activeTicketReg.id);
-                    setShowEmailModal(true);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
-                >
-                  <Eye className="w-3 h-3" />
-                  <span>Preview</span>
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={async () => {
+                      await sendRegistrationConfirmationEmail(activeTicketReg.id);
+                      setResentToast(true);
+                      setTimeout(() => setResentToast(false), 3500);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-[#35C8A8]/20 hover:bg-[#35C8A8]/30 text-[#35C8A8] text-[11px] font-bold flex items-center gap-1 transition-colors"
+                    title="Resend email confirmation pass"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>{resentToast ? 'Sent!' : 'Resend Email'}</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Google Calendar Reminder Integration */}
+              {ticketEvent && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/40 via-[#101A38] to-indigo-950/40 border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-lg">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-400 shrink-0">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-white text-xs block">Add to Google Calendar</span>
+                      <span className="text-[11px] text-slate-300">Set automatic event reminders & add to your schedule</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      id="btn-add-google-calendar"
+                      onClick={() => openGoogleCalendar(ticketEvent, activeTicketReg)}
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/30 hover:shadow-blue-600/50 transition-all active:scale-95"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Google Calendar</span>
+                    </button>
+                    <button
+                      id="btn-download-ics"
+                      onClick={() => downloadIcsFile(ticketEvent, activeTicketReg)}
+                      className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                      title="Download .ics file for Apple Calendar or Outlook"
+                    >
+                      <span>.ICS</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Modal Actions */}
               <div className="flex gap-2.5 pt-1">
@@ -1245,46 +1299,6 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
           </div>
         );
       })()}
-
-      {/* Email Preview Modal */}
-      {showEmailModal && emailPreviewRegId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#151722] border border-slate-700 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-purple-400" />
-                <h4 className="text-sm font-black text-white">Confirmation Email Preview</h4>
-              </div>
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="text-xs text-slate-400 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
-              <div><strong>From:</strong> Social Shuffle Pune &lt;hello@socialshuffle.in&gt;</div>
-              <div><strong>Subject:</strong> 🎲 Holy Meeples! You're in for Social Shuffle! Ticket Pass Attached</div>
-            </div>
-
-            {/* Rendered HTML Email Preview */}
-            <div
-              className="rounded-2xl border border-slate-800 overflow-hidden shadow-inner"
-              dangerouslySetInnerHTML={{ __html: generateEmailPreviewHtml(emailPreviewRegId) }}
-            />
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 transition-colors"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

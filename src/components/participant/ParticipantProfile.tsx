@@ -18,6 +18,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { openGoogleCalendar } from '../../utils/calendarUtils';
 
 export const ParticipantProfile: React.FC = () => {
   const {
@@ -298,11 +299,23 @@ export const ParticipantProfile: React.FC = () => {
                     </div>
                   </div>
 
-                  {reg.checkInTime && (
-                    <div className="text-[11px] text-emerald-400 font-semibold">
-                      Checked in at {reg.checkInTime}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {event && reg.attendanceStatus !== 'Cancelled' && (
+                      <button
+                        onClick={() => openGoogleCalendar(event, reg)}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        title="Add to Google Calendar for reminder"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Add to Calendar</span>
+                      </button>
+                    )}
+                    {reg.checkInTime && (
+                      <div className="text-[11px] text-emerald-400 font-semibold">
+                        Checked in at {reg.checkInTime}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

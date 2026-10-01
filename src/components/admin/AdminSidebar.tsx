@@ -19,6 +19,7 @@ export type AdminViewSection =
   | 'dashboard'
   | 'events'
   | 'attendance'
+  | 'whatsapp'
   | 'participants'
   | 'games'
   | 'analytics'
@@ -44,6 +45,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const menuItems = [
     { id: 'dashboard' as AdminViewSection, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'events' as AdminViewSection, label: 'Events & Meetups', icon: Calendar },
+    { id: 'whatsapp' as AdminViewSection, label: 'WhatsApp Community', icon: MessageSquare, badge: 'Manual' },
     { id: 'attendance' as AdminViewSection, label: 'Live Attendance', icon: CheckSquare, badge: 'iPad 1-Tap' },
     { id: 'participants' as AdminViewSection, label: 'Participants CRM', icon: Users },
     { id: 'games' as AdminViewSection, label: 'Game Library', icon: Dices },

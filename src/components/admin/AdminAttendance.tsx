@@ -22,10 +22,12 @@ import {
   Calendar,
   Sparkles,
   QrCode,
-  Camera
+  Camera,
+  Bell
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AttendanceStatus, PaymentStatus, Registration } from '../../types';
+import { AdminEventNotificationModal } from './AdminEventNotificationModal';
 
 interface AdminAttendanceProps {
   initialEventId?: string;
@@ -45,7 +47,8 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
     isOfflineMode,
     toggleOfflineMode,
     offlineSyncQueue,
-    syncOfflineData
+    syncOfflineData,
+    sendEventBroadcast
   } = useApp();
 
   // Active event selection
@@ -57,6 +60,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
     return upcoming ? upcoming.id : events[0]?.id || '';
   });
 
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [attendanceFilter, setAttendanceFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
@@ -233,6 +237,18 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           >
             <Plus className="w-4 h-4" />
             <span>+ Walk-In</span>
+          </button>
+
+          {/* Push Email Notification Button */}
+          <button
+            id="btn-attendance-push-notif"
+            onClick={() => setIsNotificationModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-[#090F22] hover:bg-[#1E293B] border border-[#FF6036]/60 hover:border-[#FF6036] text-[#FF6036] hover:text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            title="Push email notification to all attendees of this event"
+          >
+            <Bell className="w-3.5 h-3.5 text-[#FF6036] animate-pulse" />
+            <span className="hidden sm:inline">Push Notification</span>
+            <span className="sm:hidden">Notify</span>
           </button>
 
           {isOfflineMode && offlineSyncQueue.length > 0 && (
@@ -946,6 +962,16 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
             </div>
           </div>
         </div>
+      )}
+      {/* Push Email Notification Modal */}
+      {isNotificationModalOpen && currentEvent && (
+        <AdminEventNotificationModal
+          event={currentEvent}
+          registrations={registrations}
+          isOpen={isNotificationModalOpen}
+          onClose={() => setIsNotificationModalOpen(false)}
+          onBroadcast={sendEventBroadcast}
+        />
       )}
     </div>
   );

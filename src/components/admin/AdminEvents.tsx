@@ -13,10 +13,14 @@ import {
   CheckSquare,
   ArrowRight,
   TrendingUp,
-  X
+  X,
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, EventCategory, EventStatus } from '../../types';
+import { AdminEventNotificationModal } from './AdminEventNotificationModal';
+import { AdminWhatsAppBroadcastModal } from './AdminWhatsAppBroadcastModal';
 
 interface AdminEventsProps {
   onOpenAttendanceForEvent: (eventId: string) => void;
@@ -29,11 +33,13 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
   showCreateModalInitially = false,
   onCloseCreateModalInitially
 }) => {
-  const { events, createEvent, updateEvent, duplicateEvent, archiveEvent, registrations, games } = useApp();
+  const { events, createEvent, updateEvent, duplicateEvent, archiveEvent, registrations, games, sendEventBroadcast } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEvent, setSelectedEvent] = useState<ShuffleEvent | null>(null);
+  const [broadcastEvent, setBroadcastEvent] = useState<ShuffleEvent | null>(null);
+  const [whatsAppEvent, setWhatsAppEvent] = useState<ShuffleEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(showCreateModalInitially);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -287,6 +293,29 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
               {/* Event Actions & Attendance Jump */}
               <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
                 <button
+                  id={`btn-wa-post-${event.id}`}
+                  onClick={() => setWhatsAppEvent(event)}
+                  className="px-3.5 py-2 rounded-xl bg-[#090F22] hover:bg-[#10241A] border border-[#25D366]/60 hover:border-[#25D366] text-[#25D366] hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  title="Post modifiable announcements, sold out notices, or seats remaining alerts to WhatsApp community"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                  <span>WhatsApp Community Post</span>
+                </button>
+
+                <button
+                  id={`btn-push-notif-${event.id}`}
+                  onClick={() => setBroadcastEvent(event)}
+                  className="px-3.5 py-2 rounded-xl bg-[#090F22] hover:bg-[#1E293B] border border-[#FF6036]/60 hover:border-[#FF6036] text-[#FF6036] hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  title="Trigger push notifications to all participants of this event over email"
+                >
+                  <Bell className="w-3.5 h-3.5 text-[#FF6036] animate-pulse" />
+                  <span>Push Email Notification</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FF6036]/20 text-[#FF6036]">
+                    {confirmedCount}
+                  </span>
+                </button>
+
+                <button
                   id={`btn-open-att-${event.id}`}
                   onClick={() => onOpenAttendanceForEvent(event.id)}
                   className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-purple-600/30 hover:opacity-95 transition-all"
@@ -515,6 +544,26 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
             </form>
           </div>
         </div>
+      )}
+      {/* Push Email Notification Modal */}
+      {broadcastEvent && (
+        <AdminEventNotificationModal
+          event={broadcastEvent}
+          registrations={registrations}
+          isOpen={!!broadcastEvent}
+          onClose={() => setBroadcastEvent(null)}
+          onBroadcast={sendEventBroadcast}
+        />
+      )}
+
+      {/* WhatsApp Community Broadcast Modal */}
+      {whatsAppEvent && (
+        <AdminWhatsAppBroadcastModal
+          event={whatsAppEvent}
+          registrations={registrations}
+          isOpen={!!whatsAppEvent}
+          onClose={() => setWhatsAppEvent(null)}
+        />
       )}
     </div>
   );

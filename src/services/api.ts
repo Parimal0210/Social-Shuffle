@@ -21,7 +21,8 @@ import {
   VolunteerStatus,
   LoginCredentials,
   RegisterCredentials,
-  AuthResponse
+  AuthResponse,
+  EventEmailBroadcastRequest
 } from '../types';
 
 const API_STORAGE_KEY = 'social_shuffle_api_url';
@@ -652,6 +653,68 @@ class ApiService {
     try {
       const res = await this.fetchWithTimeout('/notifications/mark-all-read', {
         method: 'POST'
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async sendEventEmailBroadcast(req: EventEmailBroadcastRequest): Promise<{ success: boolean; sentCount?: number; message?: string } | null> {
+    try {
+      const res = await this.fetchWithTimeout('/notifications/event-broadcast', {
+        method: 'POST',
+        body: JSON.stringify(req)
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications', '/registrations');
+        return await res.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async sendEventReminder(eventId: string, note?: string): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout(`/notifications/send-reminder/${eventId}${note ? `?note=${encodeURIComponent(note)}` : ''}`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async sendRegistrationConfirmationEmail(registrationId: string): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout(`/notifications/registration-confirmation/${registrationId}`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications', '/registrations');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async sendCommunityAnnouncement(title: string, message: string): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout('/notifications/community-announcement', {
+        method: 'POST',
+        body: JSON.stringify({ title, message })
       });
       if (res.ok) {
         this.invalidateCache('/notifications');
