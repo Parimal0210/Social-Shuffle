@@ -28,17 +28,120 @@ export const ParticipantProfile: React.FC = () => {
     games,
     registrations,
     currentUser,
+    isAuthenticated,
     logout,
     openAuthModal
   } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(currentParticipant.name);
-  const [email, setEmail] = useState(currentParticipant.email);
-  const [phone, setPhone] = useState(currentParticipant.phone);
-  const [area, setArea] = useState(currentParticipant.area);
-  const [bio, setBio] = useState(currentParticipant.bio || '');
+  const [name, setName] = useState(currentParticipant?.name || '');
+  const [email, setEmail] = useState(currentParticipant?.email || '');
+  const [phone, setPhone] = useState(currentParticipant?.phone || '');
+  const [area, setArea] = useState(currentParticipant?.area || 'Koregaon Park');
+  const [bio, setBio] = useState(currentParticipant?.bio || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Sync state if currentParticipant changes
+  React.useEffect(() => {
+    if (currentParticipant) {
+      setName(currentParticipant.name);
+      setEmail(currentParticipant.email);
+      setPhone(currentParticipant.phone);
+      setArea(currentParticipant.area);
+      setBio(currentParticipant.bio || '');
+    }
+  }, [currentParticipant]);
+
+  // GUEST / OUTSIDE USER PROFILE GATE:
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6 pb-20 md:pb-8">
+        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-[#111C3B] to-[#0A1128] border-2 border-[#FF6036]/40 shadow-2xl text-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#FF6036] via-[#8F43EE] to-[#35C8A8] p-0.5 shadow-xl shadow-[#FF6036]/25 mx-auto">
+            <div className="w-full h-full bg-[#0A1128] rounded-[22px] flex items-center justify-center">
+              <User className="w-9 h-9 text-[#FF8566]" />
+            </div>
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#FF6036]/15 text-[#FF8566] border border-[#FF6036]/30">
+              Guest Visitor Mode
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Create Your Shuffler Profile First
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Your profile is your digital board gaming passport in Pune. Register as a community participant to unlock personalized features:
+            </p>
+          </div>
+
+          {/* Perks Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left max-w-xl mx-auto">
+            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#35C8A8]" />
+                <span>Digital QR Entry Passes</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                1-tap table check-in at Sunday Pune cafes with zero waiting lines.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#8F43EE]" />
+                <span>120+ Game Library Tracking</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Record played titles, track wins, and build your gaming history.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#FFC226]" />
+                <span>Shuffler Levels & Badges</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Advance from Rising Shuffler to Table Veteran and Board Game Master.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#FF6036]" />
+                <span>Priority Meetup Bookings</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Reserve seats for high-demand editions before public tickets sell out.
+              </p>
+            </div>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              id="btn-profile-gate-register"
+              onClick={() => openAuthModal('register')}
+              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white font-extrabold text-sm shadow-xl shadow-[#FF6036]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Join Community (Register Free)</span>
+            </button>
+
+            <button
+              id="btn-profile-gate-login"
+              onClick={() => openAuthModal('login')}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#111C3B] hover:bg-[#162349] border border-[#1F305E] text-slate-200 font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-4 h-4 text-[#FF6036]" />
+              <span>Already a member? Sign In</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const myRegs = registrations.filter(r => r.participantId === currentParticipant.id);
 

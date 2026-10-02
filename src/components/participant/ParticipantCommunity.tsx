@@ -24,10 +24,14 @@ export const ParticipantCommunity: React.FC = () => {
     submitFeedback,
     submitSafetyReport,
     submitVolunteerApplication,
-    volunteersList
+    volunteersList,
+    isAuthenticated,
+    openAuthModal
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'feedback' | 'report' | 'contacts' | 'volunteer'>('feedback');
+  const [activeTab, setActiveTab] = useState<'feedback' | 'report' | 'contacts' | 'volunteer'>(
+    isAuthenticated ? 'feedback' : 'contacts'
+  );
 
   // Feedback form state
   const [feedbackEventId, setFeedbackEventId] = useState<string>(events[0]?.id || '');

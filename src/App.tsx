@@ -15,7 +15,6 @@ import { AdminSafetyReports } from './components/admin/AdminSafetyReports';
 import { AdminVolunteers } from './components/admin/AdminVolunteers';
 import { AdminImportExport } from './components/admin/AdminImportExport';
 import { AdminAuditLog } from './components/admin/AdminAuditLog';
-import { AdminWhatsAppCommunity } from './components/admin/AdminWhatsAppCommunity';
 
 // Participant Components
 import { ParticipantNav, ParticipantTab } from './components/participant/ParticipantNav';
@@ -101,8 +100,6 @@ const AppContent: React.FC = () => {
             {adminSection === 'attendance' && (
               <AdminAttendance initialEventId={targetAttendanceEventId} />
             )}
-
-            {adminSection === 'whatsapp' && <AdminWhatsAppCommunity />}
 
             {adminSection === 'participants' && <AdminParticipants />}
 

@@ -15,7 +15,8 @@ import {
   Calendar,
   Mail,
   Users,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
@@ -32,7 +33,11 @@ export const Header: React.FC = () => {
     currentUser,
     isAuthenticated,
     isAdminUser,
+    isGuest,
     logout,
+    switchToGuestView,
+    loginAsDemoParticipant,
+    loginAsDemoAdmin,
     openAuthModal,
     isOfflineMode,
     toggleOfflineMode,
@@ -190,38 +195,51 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* STRICT ROLE-BASED ACCESS CONTROL */}
-          {/* ONLY ADMIN USERS can see the Role Switcher. Participants NEVER see or toggle Admin! */}
-          {isAdminUser && (
-            <div className="flex items-center p-1 rounded-xl bg-[#090F22] border border-[#1F305E]">
-              <button
-                id="role-switch-admin"
-                onClick={() => setRole('admin')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  role === 'admin'
-                    ? 'bg-[#35C8A8] text-[#0A1128] font-bold shadow-md shadow-[#35C8A8]/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Admin Console</span>
-                <span className="sm:hidden">Admin</span>
-              </button>
-              <button
-                id="role-switch-participant"
-                onClick={() => setRole('participant')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  role === 'participant'
-                    ? 'bg-[#FF6036] text-white shadow-md shadow-[#FF6036]/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Participant Preview</span>
-                <span className="sm:hidden">User</span>
-              </button>
-            </div>
-          )}
+          {/* Perspective Switcher (Guest View, Participant, Admin) */}
+          <div className="flex items-center p-1 rounded-xl bg-[#090F22] border border-[#1F305E]">
+            <button
+              id="role-switch-guest"
+              onClick={switchToGuestView}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                isGuest
+                  ? 'bg-[#35C8A8] text-[#0A1128] font-bold shadow-md shadow-[#35C8A8]/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="View as outside non-registered guest"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Guest View</span>
+              <span className="sm:hidden">Guest</span>
+            </button>
+            <button
+              id="role-switch-participant"
+              onClick={loginAsDemoParticipant}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                isAuthenticated && !isAdminUser
+                  ? 'bg-[#FF6036] text-white shadow-md shadow-[#FF6036]/30 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="View as registered participant (Rohan)"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Participant</span>
+              <span className="sm:hidden">User</span>
+            </button>
+            <button
+              id="role-switch-admin"
+              onClick={loginAsDemoAdmin}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                isAdminUser && role === 'admin'
+                  ? 'bg-[#8F43EE] text-white font-bold shadow-md shadow-[#8F43EE]/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="View as administrator (Aman)"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Admin</span>
+              <span className="sm:hidden">Admin</span>
+            </button>
+          </div>
 
           {/* User Profile / Auth State Menu */}
           {isAuthenticated ? (
@@ -326,6 +344,17 @@ export const Header: React.FC = () => {
                     >
                       <UserPlus className="w-3.5 h-3.5 text-[#35C8A8]" />
                       <span>Register New Participant</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        switchToGuestView();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-xs text-slate-300 hover:bg-[#162349] transition-colors"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-[#35C8A8]" />
+                      <span>Switch to Outside Guest View</span>
                     </button>
 
                     <button

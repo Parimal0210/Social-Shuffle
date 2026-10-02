@@ -31,6 +31,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, GuestInfo, Registration } from '../../types';
 import { openGoogleCalendar, downloadIcsFile } from '../../utils/calendarUtils';
+import { GuestRegistrationPromptModal } from '../auth/GuestRegistrationPromptModal';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
@@ -43,7 +44,12 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     registrations,
     currentParticipant,
     registerForEvent,
-    sendRegistrationConfirmationEmail
+    sendRegistrationConfirmationEmail,
+    isAuthenticated,
+    isGuest,
+    openAuthModal,
+    pendingEventIdForRegistration,
+    setPendingEventIdForRegistration
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'upcoming' | 'my-events'>('upcoming');
@@ -53,6 +59,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     }
     return null;
   });
+
+  // Guest prompt modal state
+  const [showGuestPromptModal, setShowGuestPromptModal] = useState<boolean>(false);
+  const [guestPromptEvent, setGuestPromptEvent] = useState<ShuffleEvent | null>(null);
 
   // Registration modal state
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
@@ -94,7 +104,29 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     r => r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
   );
 
+  // Auto-open registration if user just registered/logged in from a pending event
+  React.useEffect(() => {
+    if (isAuthenticated && pendingEventIdForRegistration) {
+      const targetEvent = events.find(e => e.id === pendingEventIdForRegistration);
+      if (targetEvent) {
+        setRegisteringEvent(targetEvent);
+        setTotalParticipants(1);
+        setAdditionalParticipants([]);
+        setNotes('');
+        setValidationError(null);
+        setRegFeedback(null);
+        setShowRegisterModal(true);
+        setPendingEventIdForRegistration(null);
+      }
+    }
+  }, [isAuthenticated, pendingEventIdForRegistration, events, setPendingEventIdForRegistration]);
+
   const openRegistration = (event: ShuffleEvent) => {
+    if (!isAuthenticated) {
+      setGuestPromptEvent(event);
+      setShowGuestPromptModal(true);
+      return;
+    }
     setRegisteringEvent(event);
     setTotalParticipants(1);
     setAdditionalParticipants([]);
@@ -363,9 +395,11 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
                         {event.category}
                       </span>
-                      <span className="text-xs font-bold text-amber-400">
-                        ₹{event.ticketPrice} per ticket
-                      </span>
+                      {isAuthenticated && (
+                        <span className="text-xs font-bold text-amber-400">
+                          ₹{event.ticketPrice} per ticket
+                        </span>
+                      )}
                     </div>
 
                     <div>
@@ -386,16 +420,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                         <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
                         <span>{event.venue}, {event.area}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>
-                          {availableSeats} seats left of {event.capacity} total
-                        </span>
-                      </div>
                     </div>
 
-                    {/* Planned Games chips */}
-                    {event.plannedGames.length > 0 && (
+                    {/* Planned Games chips - do not show for guest view */}
+                    {isAuthenticated && event.plannedGames.length > 0 && (
                       <div className="pt-2">
                         <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1.5 flex items-center gap-1.5">
                           <Dices className="w-3.5 h-3.5 text-purple-400" />
@@ -426,7 +454,16 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       View Full Details
                     </button>
 
-                    {isRegistered ? (
+                    {!isAuthenticated ? (
+                      <button
+                        id={`btn-register-participant-first-${event.id}`}
+                        onClick={() => openAuthModal('register', event.id)}
+                        className="px-4 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white hover:opacity-95 shadow-md shadow-[#FF6036]/30 transition-all flex items-center gap-1.5 active:scale-95"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Join our community</span>
+                      </button>
+                    ) : isRegistered ? (
                       <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                         <span>Registered</span>
@@ -459,7 +496,35 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       {/* View: My Registrations */}
       {activeSubTab === 'my-events' && (
         <div className="space-y-4">
-          {myRegistrations.length === 0 ? (
+          {!isAuthenticated ? (
+            <div className="p-8 rounded-2xl bg-[#111C3B] border border-[#1F305E] text-center space-y-4 shadow-xl">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF6036]/15 text-[#FF6036] flex items-center justify-center mx-auto border border-[#FF6036]/30">
+                <Ticket className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-lg font-black text-white">Guest Visitor Mode</h4>
+                <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+                  You are exploring as a guest visitor. Register as a participant to reserve your spots at upcoming Pune cafes, unlock your personalized digital QR entry passes, and track all your event bookings.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  id="btn-guest-events-register"
+                  onClick={() => openAuthModal('register')}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white text-xs font-bold shadow-lg shadow-[#FF6036]/25 hover:opacity-95 transition-all"
+                >
+                  Join Community — Register Free
+                </button>
+                <button
+                  id="btn-guest-events-login"
+                  onClick={() => openAuthModal('login')}
+                  className="px-4 py-2.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-slate-300 text-xs font-semibold hover:text-white transition-colors"
+                >
+                  Existing Member Sign In
+                </button>
+              </div>
+            </div>
+          ) : myRegistrations.length === 0 ? (
             <div className="p-8 rounded-2xl bg-[#161822] border border-slate-800 text-center space-y-3">
               <Calendar className="w-10 h-10 text-slate-500 mx-auto" />
               <h4 className="text-base font-bold text-white">No active registrations</h4>
@@ -1051,8 +1116,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 <div>📍 <strong>Venue:</strong> {selectedEvent.venue} ({selectedEvent.address})</div>
                 <div>📅 <strong>Schedule:</strong> {selectedEvent.time}</div>
                 <div>🏷️ <strong>Category:</strong> {selectedEvent.category}</div>
-                <div>👥 <strong>Capacity:</strong> {selectedEvent.capacity} Shufflers</div>
-                <div>🎫 <strong>Ticket:</strong> ₹{selectedEvent.ticketPrice}</div>
+                {isAuthenticated && <div>🎫 <strong>Ticket:</strong> ₹{selectedEvent.ticketPrice}</div>}
                 <div>💡 <strong>Host Notes:</strong> {selectedEvent.notes}</div>
               </div>
 
@@ -1075,14 +1139,26 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-300 font-semibold hover:bg-slate-800 transition-colors"
+                  className="py-2.5 px-4 rounded-xl border border-slate-700 text-slate-300 font-semibold hover:bg-slate-800 transition-colors"
                 >
                   Close
                 </button>
-                {isRegistered ? (
+                {!isAuthenticated ? (
+                  <button
+                    onClick={() => {
+                      const ev = selectedEvent;
+                      setSelectedEvent(null);
+                      openAuthModal('register', ev.id);
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#FF6036]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Join our community</span>
+                  </button>
+                ) : isRegistered ? (
                   <div className="flex-1 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>You are registered</span>
@@ -1299,6 +1375,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
           </div>
         );
       })()}
+
+      {/* Guest registration prompt modal */}
+      <GuestRegistrationPromptModal
+        isOpen={showGuestPromptModal}
+        onClose={() => setShowGuestPromptModal(false)}
+        event={guestPromptEvent}
+        featureName="Event Seat Booking"
+      />
     </div>
   );
 };

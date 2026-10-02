@@ -69,10 +69,16 @@ interface AppContextType {
   currentUser: AuthUser | null;
   isAuthenticated: boolean;
   isAdminUser: boolean;
+  isGuest: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
   registerParticipant: (data: RegisterCredentials) => Promise<{ success: boolean; message: string }>;
   loginWithGoogle: (profile?: GoogleUserProfile) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
+  switchToGuestView: () => void;
+  loginAsDemoParticipant: () => void;
+  loginAsDemoAdmin: () => void;
+  pendingEventIdForRegistration: string | null;
+  setPendingEventIdForRegistration: (id: string | null) => void;
   lastActiveTimestamp: number;
   sessionRemainingDays: number;
   simulateInactivityTimeout: () => void;
@@ -80,7 +86,7 @@ interface AppContextType {
   setShowAuthModal: (show: boolean) => void;
   authModalMode: 'login' | 'register';
   setAuthModalMode: (mode: 'login' | 'register') => void;
-  openAuthModal: (mode?: 'login' | 'register') => void;
+  openAuthModal: (mode?: 'login' | 'register', pendingEventId?: string) => void;
   closeAuthModal: () => void;
 
   // Spring Boot & MySQL Integration
@@ -223,23 +229,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    // Default active demo participant for first-time presentation
-    const initialUser: AuthUser = {
-      id: 'u-rohan',
-      name: 'Rohan Kulkarni',
-      email: 'rohan.kulkarni@example.com',
-      phone: '+91 98220 12345',
-      role: 'participant',
-      area: 'Koregaon Park',
-      participantId: 'p-rahul',
-      bio: 'Board game lover, strategy nerd, Catan enthusiast.',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
-      authProvider: 'local',
-      loginAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString()
-    };
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-    return initialUser;
+    // Default to outside guest user (null) so non-registered visitors
+    // see the welcoming guest landing experience with 'Why Join?' benefits
+    return null;
   });
 
   const [lastActiveTimestamp, setLastActiveTimestamp] = useState<number>(() => {
@@ -268,9 +260,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [pendingEventIdForRegistration, setPendingEventIdForRegistration] = useState<string | null>(null);
 
-  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+  const openAuthModal = (mode: 'login' | 'register' = 'login', pendingEventId?: string) => {
     setAuthModalMode(mode);
+    if (pendingEventId) {
+      setPendingEventIdForRegistration(pendingEventId);
+    }
     setShowAuthModal(true);
   };
 
@@ -279,7 +275,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const isAuthenticated = Boolean(currentUser);
+  const isGuest = !currentUser;
   const isAdminUser = currentUser?.role === 'admin';
+
+  const switchToGuestView = () => {
+    setCurrentUser(null);
+    localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+    localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
+    setRoleState('participant');
+  };
+
+  const loginAsDemoParticipant = () => {
+    const demoParticipantUser: AuthUser = {
+      id: 'u-rohan',
+      name: 'Rohan Kulkarni',
+      email: 'rohan.kulkarni@example.com',
+      phone: '+91 98220 12345',
+      role: 'participant',
+      area: 'Koregaon Park',
+      participantId: 'p-rahul',
+      bio: 'Board game lover, strategy nerd, Catan enthusiast.',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
+      authProvider: 'local',
+      loginAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
+    };
+    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
+    setCurrentUser(demoParticipantUser);
+    setRoleState('participant');
+  };
+
+  const loginAsDemoAdmin = () => {
+    const demoAdminUser: AuthUser = {
+      id: 'u-admin-aman',
+      name: 'Aman Joshi (Host)',
+      email: 'aman@socialshuffle.in',
+      phone: '+91 98220 12345',
+      role: 'admin',
+      area: 'Koregaon Park',
+      participantId: 'p-rahul',
+      bio: 'Lead organizer & community host for Social Shuffle Pune.',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=160&q=80',
+      authProvider: 'local',
+      loginAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
+    };
+    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
+    setCurrentUser(demoAdminUser);
+    setRoleState('admin');
+  };
 
   // STRICT ACCESS CONTROL:
   // When currentUser changes, enforce role and sync participant profile
@@ -2004,10 +2050,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentUser,
         isAuthenticated,
         isAdminUser,
+        isGuest,
         login,
         registerParticipant,
         loginWithGoogle,
         logout,
+        switchToGuestView,
+        loginAsDemoParticipant,
+        loginAsDemoAdmin,
+        pendingEventIdForRegistration,
+        setPendingEventIdForRegistration,
         lastActiveTimestamp,
         sessionRemainingDays,
         simulateInactivityTimeout,
