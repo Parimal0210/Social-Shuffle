@@ -122,11 +122,11 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                 </li>
                 <li>
                   <button
-                    onClick={() => handleTabClick('progress')}
+                    onClick={() => handleTabClick('profile')}
                     className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <Trophy className="w-3.5 h-3.5 text-[#FFC226]" />
-                    <span>Player Leaderboard & XP</span>
+                    <span>My Profile & Progress</span>
                   </button>
                 </li>
                 <li>

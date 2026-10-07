@@ -306,10 +306,10 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
                 <span className="text-xs font-normal text-slate-400">Personal stats</span>
               </h3>
               <button
-                onClick={() => onNavigateTab('progress')}
+                onClick={() => onNavigateTab('profile')}
                 className="text-xs font-semibold text-[#FF6036] hover:text-[#ff8566] transition-colors"
               >
-                Full Journey →
+                Full Profile & Journey →
               </button>
             </div>
 
@@ -388,7 +388,7 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
             <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
               <span>{gamesRemainingCount} board games left to unlock in Pune!</span>
               <button
-                onClick={() => onNavigateTab('progress')}
+                onClick={() => onNavigateTab('profile')}
                 className="text-[#FF6036] hover:text-[#ff8566] font-semibold"
               >
                 View Unplayed Games →
@@ -485,7 +485,7 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
 
           <button
             id="action-games-to-play"
-            onClick={() => onNavigateTab('progress')}
+            onClick={() => onNavigateTab('profile')}
             className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/50 hover:bg-[#152248] transition-all text-left group"
           >
             <Dices className="w-5 h-5 text-[#35C8A8] mb-2 group-hover:scale-110 transition-transform" />

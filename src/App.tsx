@@ -20,7 +20,6 @@ import { AdminAuditLog } from './components/admin/AdminAuditLog';
 import { ParticipantNav, ParticipantTab } from './components/participant/ParticipantNav';
 import { ParticipantHome } from './components/participant/ParticipantHome';
 import { ParticipantEvents } from './components/participant/ParticipantEvents';
-import { ParticipantProgress } from './components/participant/ParticipantProgress';
 import { ParticipantCommunity } from './components/participant/ParticipantCommunity';
 import { ParticipantProfile } from './components/participant/ParticipantProfile';
 import { ParticipantFooter } from './components/participant/ParticipantFooter';
@@ -161,11 +160,11 @@ const AppContent: React.FC = () => {
                 <ParticipantEvents preselectedEventId={preselectedEventId} />
               )}
 
-              {participantTab === 'progress' && <ParticipantProgress />}
-
               {participantTab === 'community' && <ParticipantCommunity />}
 
-              {participantTab === 'profile' && <ParticipantProfile />}
+              {(participantTab === 'profile' || participantTab === 'progress') && (
+                <ParticipantProfile />
+              )}
             </main>
           </div>
 

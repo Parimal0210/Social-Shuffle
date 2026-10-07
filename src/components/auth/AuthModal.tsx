@@ -513,13 +513,6 @@ export const AuthModal: React.FC = () => {
             </form>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
-              <div className="p-2.5 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 flex items-center gap-2 text-[11px] text-[#35C8A8]">
-                <ShieldCheck className="w-4 h-4 shrink-0" />
-                <span>
-                  <strong>Participant Registration:</strong> Admin accounts cannot be created here and are managed directly via database.
-                </span>
-              </div>
-
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
                   Full Name <span className="text-[#FF6036]">*</span>

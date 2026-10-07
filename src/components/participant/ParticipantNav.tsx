@@ -17,8 +17,11 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
 }) => {
   const { isAuthenticated } = useApp();
 
-  // If user is a guest (not authenticated), redirect away from community tab
+  // Redirect 'progress' tab to 'profile' (merged view), and guest away from 'community'
   useEffect(() => {
+    if (activeTab === 'progress') {
+      setActiveTab('profile');
+    }
     if (!isAuthenticated && activeTab === 'community') {
       setActiveTab('home');
     }
@@ -27,9 +30,8 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
   const allTabs = [
     { id: 'home' as ParticipantTab, label: 'Home', icon: Home },
     { id: 'events' as ParticipantTab, label: 'Events', icon: Calendar, badge: upcomingCount },
-    { id: 'progress' as ParticipantTab, label: 'My Progress', icon: Trophy },
     { id: 'community' as ParticipantTab, label: 'Community', icon: Users },
-    { id: 'profile' as ParticipantTab, label: 'Profile', icon: User }
+    { id: 'profile' as ParticipantTab, label: 'My Profile', icon: User }
   ];
 
   // Remove community tab for guest view
