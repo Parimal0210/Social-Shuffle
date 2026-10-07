@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Home, Calendar, Trophy, Users, User } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 export type ParticipantTab = 'home' | 'events' | 'progress' | 'community' | 'profile';
 
@@ -14,13 +15,27 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
   setActiveTab,
   upcomingCount = 1
 }) => {
-  const tabs = [
+  const { isAuthenticated } = useApp();
+
+  // If user is a guest (not authenticated), redirect away from community tab
+  useEffect(() => {
+    if (!isAuthenticated && activeTab === 'community') {
+      setActiveTab('home');
+    }
+  }, [isAuthenticated, activeTab, setActiveTab]);
+
+  const allTabs = [
     { id: 'home' as ParticipantTab, label: 'Home', icon: Home },
     { id: 'events' as ParticipantTab, label: 'Events', icon: Calendar, badge: upcomingCount },
     { id: 'progress' as ParticipantTab, label: 'My Progress', icon: Trophy },
     { id: 'community' as ParticipantTab, label: 'Community', icon: Users },
     { id: 'profile' as ParticipantTab, label: 'Profile', icon: User }
   ];
+
+  // Remove community tab for guest view
+  const tabs = isAuthenticated
+    ? allTabs
+    : allTabs.filter(t => t.id !== 'community');
 
   return (
     <>

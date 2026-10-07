@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 
@@ -27,17 +27,25 @@ import { ParticipantFooter } from './components/participant/ParticipantFooter';
 import { AuthModal } from './components/auth/AuthModal';
 
 const AppContent: React.FC = () => {
-  const { userRole, role, isAdminUser, reportsList, volunteersList } = useApp();
+  const { userRole, role, isAdminUser, isAuthenticated, reportsList, volunteersList } = useApp();
 
   // Admin Navigation State
   const [adminSection, setAdminSection] = useState<AdminViewSection>('dashboard');
   const [targetAttendanceEventId, setTargetAttendanceEventId] = useState<string | undefined>();
+  const [targetImportEventId, setTargetImportEventId] = useState<string | undefined>();
   const [triggerCreateEvent, setTriggerCreateEvent] = useState(false);
   const [triggerAddGame, setTriggerAddGame] = useState(false);
 
   // Participant Navigation State
   const [participantTab, setParticipantTab] = useState<ParticipantTab>('home');
   const [preselectedEventId, setPreselectedEventId] = useState<string | undefined>();
+
+  // Ensure guest view cannot access community tab
+  useEffect(() => {
+    if (!isAuthenticated && participantTab === 'community') {
+      setParticipantTab('home');
+    }
+  }, [isAuthenticated, participantTab]);
 
   const pendingReportsCount = reportsList.filter(r => r.status === 'New').length;
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
@@ -50,6 +58,11 @@ const AppContent: React.FC = () => {
   const handleOpenAttendanceForEvent = (eventId: string) => {
     setTargetAttendanceEventId(eventId);
     setAdminSection('attendance');
+  };
+
+  const handleOpenImportForEvent = (eventId: string) => {
+    setTargetImportEventId(eventId);
+    setAdminSection('import_export');
   };
 
   const handleSelectEventForRegistration = (eventId: string) => {
@@ -92,6 +105,7 @@ const AppContent: React.FC = () => {
             {adminSection === 'events' && (
               <AdminEvents
                 onOpenAttendanceForEvent={handleOpenAttendanceForEvent}
+                onOpenImportForEvent={handleOpenImportForEvent}
                 showCreateModalInitially={triggerCreateEvent}
                 onCloseCreateModalInitially={() => setTriggerCreateEvent(false)}
               />
@@ -118,7 +132,9 @@ const AppContent: React.FC = () => {
 
             {adminSection === 'volunteers' && <AdminVolunteers />}
 
-            {adminSection === 'import_export' && <AdminImportExport />}
+            {adminSection === 'import_export' && (
+              <AdminImportExport initialEventId={targetImportEventId} />
+            )}
 
             {adminSection === 'audit' && <AdminAuditLog />}
           </main>

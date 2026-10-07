@@ -802,6 +802,44 @@ export const INITIAL_REGISTRATIONS: Registration[] = [
     checkInTime: '2026-09-20 16:40',
     gamesPlayed: ['g-flip7', 'g-coup'],
     registeredAt: '2026-09-18 19:40'
+  },
+
+  // For Event 34 (Priya Nair attended)
+  {
+    id: 'reg-34-5',
+    eventId: 'ev-34',
+    participantId: 'p-priya',
+    participantName: 'Priya Nair',
+    participantEmail: 'priya.nair@example.com',
+    participantPhone: '+91 97632 99011',
+    participantArea: 'Wakad',
+    paxCount: 1,
+    guests: [],
+    paymentStatus: 'Confirmed',
+    attendanceStatus: 'Checked In',
+    checkInTime: '2026-09-20 16:30',
+    gamesPlayed: ['g-justone', 'g-flip7'],
+    notes: 'Loved playing Just One with the Baner group',
+    registeredAt: '2026-09-17 19:10'
+  },
+
+  // For Event 33 (Priya Nair attended)
+  {
+    id: 'reg-33-1',
+    eventId: 'ev-33',
+    participantId: 'p-priya',
+    participantName: 'Priya Nair',
+    participantEmail: 'priya.nair@example.com',
+    participantPhone: '+91 97632 99011',
+    participantArea: 'Wakad',
+    paxCount: 1,
+    guests: [],
+    paymentStatus: 'Confirmed',
+    attendanceStatus: 'Checked In',
+    checkInTime: '2026-09-13 16:15',
+    gamesPlayed: ['g-wavelength', 'g-azul'],
+    notes: 'First time playing Azul - great host explanation',
+    registeredAt: '2026-09-10 14:00'
   }
 ];
 

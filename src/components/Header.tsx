@@ -219,7 +219,7 @@ export const Header: React.FC = () => {
                   ? 'bg-[#FF6036] text-white shadow-md shadow-[#FF6036]/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="View as registered participant (Rohan)"
+              title="View as registered participant (Priya)"
             >
               <User className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Participant</span>

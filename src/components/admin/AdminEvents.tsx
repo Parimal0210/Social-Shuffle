@@ -15,21 +15,25 @@ import {
   TrendingUp,
   X,
   Bell,
-  MessageSquare
+  MessageSquare,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, EventCategory, EventStatus } from '../../types';
 import { AdminEventNotificationModal } from './AdminEventNotificationModal';
 import { AdminWhatsAppBroadcastModal } from './AdminWhatsAppBroadcastModal';
+import { AdminImportRegistrationsModal } from './AdminImportRegistrationsModal';
 
 interface AdminEventsProps {
   onOpenAttendanceForEvent: (eventId: string) => void;
+  onOpenImportForEvent?: (eventId: string) => void;
   showCreateModalInitially?: boolean;
   onCloseCreateModalInitially?: () => void;
 }
 
 export const AdminEvents: React.FC<AdminEventsProps> = ({
   onOpenAttendanceForEvent,
+  onOpenImportForEvent,
   showCreateModalInitially = false,
   onCloseCreateModalInitially
 }) => {
@@ -40,6 +44,7 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<ShuffleEvent | null>(null);
   const [broadcastEvent, setBroadcastEvent] = useState<ShuffleEvent | null>(null);
   const [whatsAppEvent, setWhatsAppEvent] = useState<ShuffleEvent | null>(null);
+  const [importEvent, setImportEvent] = useState<ShuffleEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(showCreateModalInitially);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -292,6 +297,16 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
 
               {/* Event Actions & Attendance Jump */}
               <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+                <button
+                  id={`btn-import-regs-${event.id}`}
+                  onClick={() => setImportEvent(event)}
+                  className="px-3.5 py-2 rounded-xl bg-[#090F22] hover:bg-[#0B1E2E] border border-[#35C8A8]/60 hover:border-[#35C8A8] text-[#35C8A8] hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  title="Import registrations from Excel/CSV and automatically email QR entry passes"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-[#35C8A8]" />
+                  <span>Import Registrations</span>
+                </button>
+
                 <button
                   id={`btn-wa-post-${event.id}`}
                   onClick={() => setWhatsAppEvent(event)}
@@ -563,6 +578,15 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
           registrations={registrations}
           isOpen={!!whatsAppEvent}
           onClose={() => setWhatsAppEvent(null)}
+        />
+      )}
+
+      {/* Import Registrations Modal */}
+      {importEvent && (
+        <AdminImportRegistrationsModal
+          event={importEvent}
+          isOpen={!!importEvent}
+          onClose={() => setImportEvent(null)}
         />
       )}
     </div>

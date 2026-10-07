@@ -208,12 +208,13 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
         </div>
       )}
 
-      {/* 2. 'WHY JOIN?' SECTION FOR GUESTS
-          Displaying top 3 community benefits: live attendance, game tracking, exclusive meetups with custom icons */}
-      <WhyJoinCommunitySection
-        onRegisterClick={() => openAuthModal('register')}
-        showCta={!isAuthenticated}
-      />
+      {/* 2. 'WHY JOIN?' SECTION FOR GUESTS ONLY (do not show to participant) */}
+      {!isAuthenticated && (
+        <WhyJoinCommunitySection
+          onRegisterClick={() => openAuthModal('register')}
+          showCta={true}
+        />
+      )}
 
       {/* 3. NEXT UPCOMING EVENT SHOWCASE */}
       {nextEvent && (
@@ -230,11 +231,6 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#8F43EE]/20 text-[#a870f7] border border-[#8F43EE]/30">
                   {nextEvent.category}
                 </span>
-                {isAuthenticated && (
-                  <span className="text-xs text-slate-300 font-medium">
-                    ₹{nextEvent.ticketPrice} / person
-                  </span>
-                )}
               </div>
 
               <div>
@@ -283,7 +279,7 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
                   onClick={() => handleBookEventClick(nextEvent)}
                   className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white font-extrabold text-sm shadow-xl shadow-[#FF6036]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Book Your Spot</span>
+                  <span>Register Now</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}

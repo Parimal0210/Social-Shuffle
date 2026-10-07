@@ -80,8 +80,8 @@ export const GuestRegistrationPromptModal: React.FC<GuestRegistrationPromptModal
               <span className="text-xs font-black text-purple-300">
                 Event #{event.number}
               </span>
-              <span className="text-xs font-bold text-[#FFC226]">
-                ₹{event.ticketPrice} / pass
+              <span className="text-xs px-2 py-0.5 rounded-md bg-purple-950/60 text-purple-300 border border-purple-800/40 font-semibold">
+                {event.category}
               </span>
             </div>
             <div className="text-sm font-bold text-white">

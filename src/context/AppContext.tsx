@@ -130,11 +130,12 @@ interface AppContextType {
   verifyAttendeeQrCode: (code: string, eventId?: string) => { success: boolean; message: string; alreadyCheckedIn?: boolean; registration?: Registration };
   generateEmailPreviewHtml: (registrationId: string) => string;
 
-  // Attendance management (Admin)
+  // Attendance management (Admin & Participant)
   updateAttendanceStatus: (registrationId: string, status: AttendanceStatus) => void;
   markAttendance: (registrationId: string, status: AttendanceStatus) => void;
   addWalkInRegistration: (eventId: string, data: { name: string; phone: string; email: string; area: string; paxCount: number; paymentStatus: PaymentStatus; notes?: string }) => void;
   toggleGamePlayedForAttendee: (registrationId: string, gameId: string) => void;
+  updateGamesPlayedForRegistration: (registrationId: string, gameIds: string[]) => void;
   updateRegistrationNotes: (registrationId: string, notes: string) => void;
   updatePaymentStatus: (registrationId: string, paymentStatus: PaymentStatus) => void;
   addGuestToRegistration: (registrationId: string, guest: GuestInfo) => void;
@@ -195,19 +196,30 @@ const STORAGE_KEY = 'social_shuffle_v1_store';
 // Inactivity timeout: 1 month (30 days in milliseconds)
 const INACTIVITY_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
 
+export const PRIYA_AUTH_USER: AuthUser = {
+  id: 'u-priya',
+  name: 'Priya Nair',
+  email: 'priya.nair@example.com',
+  phone: '+91 97632 99011',
+  role: 'participant',
+  area: 'Wakad',
+  participantId: 'p-priya',
+  bio: 'First time shuffler turned weekly regular. Always looking for teammates for Just One!',
+  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
+  authProvider: 'local',
+  loginAt: new Date().toISOString(),
+  lastActiveAt: new Date().toISOString()
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Authentication & Session State with 30-day inactivity check
+  // Authentication & Session State: Keep Priya Nair logged in as participant
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
     const isLoggedOut = localStorage.getItem(`${STORAGE_KEY}_logged_out`) === 'true';
     const lastActiveStr = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
     const now = Date.now();
-
-    if (isLoggedOut) {
-      return null;
-    }
 
     if (saved) {
       try {
@@ -215,23 +227,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (lastActiveStr) {
           const lastActive = parseInt(lastActiveStr, 10);
           if (!isNaN(lastActive) && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
-            // User inactive for over a month -> log out automatically
-            localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
-            localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
-            return null;
+            // User inactive for over a month -> reset to Priya
+            localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+            localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
+            return PRIYA_AUTH_USER;
           }
         }
-        // Active within the month: user remains logged in!
-        localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-        return user;
+        // If user intentionally switched to admin view, preserve admin
+        if (user.role === 'admin') {
+          localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+          return user;
+        }
+        // If saved user is already Priya
+        if (user.participantId === 'p-priya') {
+          localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+          return user;
+        }
       } catch (e) {
-        return null;
+        // Fallback to Priya
       }
     }
 
-    // Default to outside guest user (null) so non-registered visitors
-    // see the welcoming guest landing experience with 'Why Join?' benefits
-    return null;
+    // If explicit instruction was given to keep Priya logged in:
+    // clear logged_out flag and set Priya as the logged in participant
+    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+    localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
+    return PRIYA_AUTH_USER;
   });
 
   const [lastActiveTimestamp, setLastActiveTimestamp] = useState<number>(() => {
@@ -250,7 +272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [currentParticipantId, setCurrentParticipantId] = useState<string>(() => {
-    return currentUser?.participantId || 'p-rahul';
+    return currentUser?.participantId || 'p-priya';
   });
 
   // Refers to database admin table for administrator name when logged in
@@ -286,23 +308,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginAsDemoParticipant = () => {
-    const demoParticipantUser: AuthUser = {
-      id: 'u-rohan',
-      name: 'Rohan Kulkarni',
-      email: 'rohan.kulkarni@example.com',
-      phone: '+91 98220 12345',
-      role: 'participant',
-      area: 'Koregaon Park',
-      participantId: 'p-rahul',
-      bio: 'Board game lover, strategy nerd, Catan enthusiast.',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
-      authProvider: 'local',
-      loginAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString()
-    };
     localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
     localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
-    setCurrentUser(demoParticipantUser);
+    localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
+    setCurrentUser(PRIYA_AUTH_USER);
+    setCurrentParticipantId('p-priya');
     setRoleState('participant');
   };
 
@@ -442,6 +452,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
       return !(isPriya && isEvent35);
     });
+
+    // Ensure Priya's attended meetups exist in the registrations state
+    const hasPriyaAttended = list.some(r => r.participantId === 'p-priya' && r.attendanceStatus === 'Checked In');
+    if (!hasPriyaAttended) {
+      const priyaInitialRegs = INITIAL_REGISTRATIONS.filter(r => r.participantId === 'p-priya');
+      list = [...list, ...priyaInitialRegs.filter(pr => !list.some(r => r.id === pr.id))];
+    }
+
     return list;
   });
 
@@ -1352,6 +1370,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  // Update batch games played for an attendee registration (e.g. from participant or admin)
+  const updateGamesPlayedForRegistration = (registrationId: string, newGameIds: string[]) => {
+    const reg = registrations.find(r => r.id === registrationId);
+    if (!reg) return;
+
+    const previousPlayed = new Set(reg.gamesPlayed || []);
+    const participantId = reg.participantId;
+
+    // 1. Update registration
+    setRegistrations(prev =>
+      prev.map(r => (r.id === registrationId ? { ...r, gamesPlayed: newGameIds } : r))
+    );
+
+    // 2. Recalculate participant gamesPlayedIds across all registrations
+    setParticipants(prev =>
+      prev.map(p => {
+        if (p.id === participantId) {
+          const allPlayed = new Set<string>();
+          registrations.forEach(r => {
+            if (r.participantId === participantId) {
+              const playedHere = r.id === registrationId ? newGameIds : (r.gamesPlayed || []);
+              playedHere.forEach(gid => allPlayed.add(gid));
+            }
+          });
+          return {
+            ...p,
+            gamesPlayedIds: Array.from(allPlayed)
+          };
+        }
+        return p;
+      })
+    );
+
+    // Increment play counts for newly added games
+    const newlyAdded = newGameIds.filter(gid => !previousPlayed.has(gid));
+    if (newlyAdded.length > 0) {
+      setGames(prev =>
+        prev.map(g => (newlyAdded.includes(g.id) ? { ...g, playsCount: g.playsCount + 1 } : g))
+      );
+    }
+
+    logAudit(
+      'Participant Logged Games',
+      reg.participantName,
+      `Updated games played for ${reg.id}: ${newGameIds.length} games logged`
+    );
+  };
+
   const updateRegistrationNotes = (registrationId: string, notes: string) => {
     setRegistrations(prev =>
       prev.map(r => (r.id === registrationId ? { ...r, notes } : r))
@@ -1758,11 +1824,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setParticipants(updatedParticipants);
     setRegistrations(prev => [...newRegs, ...prev]);
 
+    // Automatically generate and dispatch email with QR code to all imported participants
+    const targetEvent = events.find(e => e.id === eventId);
+    const newNotifications: NotificationItem[] = [];
+
+    newRegs.forEach((reg, i) => {
+      // Mark email as sent on registration record
+      reg.emailSent = true;
+      reg.emailSentAt = new Date().toISOString();
+
+      // Trigger Spring Boot backend email dispatch if connected
+      if (backendStatus === 'connected') {
+        api.sendRegistrationConfirmationEmail(reg.id).catch(() => {});
+      }
+
+      // Generate rich HTML email pass containing attendee details and Door QR Code
+      const emailHtml = generateRegistrationEmailHtml(reg, targetEvent);
+
+      // Create notification record with full HTML email pass and QR token
+      newNotifications.push({
+        id: `notif-imp-${Date.now()}-${i}`,
+        title: `Registration Pass: ${targetEvent?.title || 'Social Shuffle'} 🎟️`,
+        message: `Your entry pass and check-in QR code (${reg.qrCodeToken || reg.id}) have been automatically dispatched to ${reg.participantEmail}.`,
+        type: 'registration',
+        timestamp: 'Just now',
+        read: false,
+        recipientEmail: reg.participantEmail,
+        eventId: reg.eventId,
+        emailHtml
+      });
+    });
+
+    if (newNotifications.length > 0) {
+      setNotifications(prev => [...newNotifications, ...prev]);
+      triggerBrowserPushNotification(
+        `🎟️ ${newRegs.length} QR Passes Dispatched!`,
+        `Confirmation emails with entry QR codes sent to all ${newRegs.length} attendees imported from Excel for ${targetEvent?.title || 'the event'}.`
+      );
+    }
+
     if (backendStatus === 'connected' && newRegs.length > 0) {
       api.bulkImportRegistrations(newRegs).catch(() => {});
     }
 
-    logAudit('Excel Import', `Event ${eventId}`, `Imported ${imported} registrations with payment status=captured (${duplicatesFound} existing profiles matched)`);
+    logAudit('Excel Import', `Event ${eventId}`, `Imported ${imported} registrations with payment status=captured & automatically emailed QR passes (${duplicatesFound} existing profiles matched)`);
     return { imported, duplicatesFound };
   };
 
@@ -2029,7 +2134,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setVolunteersList(INITIAL_VOLUNTEERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setNotifications(INITIAL_NOTIFICATIONS);
-    setCurrentParticipantId('p-rahul');
+    setCurrentParticipantId('p-priya');
+    setCurrentUser(PRIYA_AUTH_USER);
     setIsOfflineMode(false);
     setOfflineSyncQueue([]);
   };
@@ -2101,6 +2207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         markAttendance: updateAttendanceStatus,
         addWalkInRegistration,
         toggleGamePlayedForAttendee,
+        updateGamesPlayedForRegistration,
         updateRegistrationNotes,
         updatePaymentStatus,
         addGuestToRegistration,

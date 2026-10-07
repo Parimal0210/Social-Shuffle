@@ -8,17 +8,23 @@ import {
   Calendar,
   Users,
   Dices,
-  Filter,
   Check,
   X,
   FileCheck,
-  Info
+  Info,
+  Mail,
+  QrCode,
+  Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
 import { parseExcelOrCsv, ParseResult } from '../../utils/excelImport';
 
-export const AdminImportExport: React.FC = () => {
+interface AdminImportExportProps {
+  initialEventId?: string;
+}
+
+export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEventId }) => {
   const {
     events,
     registrations,
@@ -27,7 +33,11 @@ export const AdminImportExport: React.FC = () => {
     bulkImportRegistrations
   } = useApp();
 
-  const [targetEventId, setTargetEventId] = useState<string>(events[0]?.id || '');
+  const [targetEventId, setTargetEventId] = useState<string>(
+    initialEventId && events.some(e => e.id === initialEventId)
+      ? initialEventId
+      : events[0]?.id || ''
+  );
   const [csvText, setCsvText] = useState<string>('');
   const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -192,50 +202,8 @@ export const AdminImportExport: React.FC = () => {
       <div>
         <h2 className="text-xl font-black text-white tracking-tight">Excel & CSV Registration Hub</h2>
         <p className="text-xs text-slate-400 mt-0.5">
-          Bulk import attendee registrations from Razorpay, BookMyShow, Townscript, or custom spreadsheets with automated column filtering
+          Bulk import attendee registrations from Razorpay, BookMyShow, Townscript, or custom spreadsheets with automated QR code pass delivery
         </p>
-      </div>
-
-      {/* Column Rules & Requirements Banner */}
-      <div className="p-4 rounded-2xl bg-[#111C3B]/80 border border-[#1F305E] space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-[#35C8A8]/10 text-[#35C8A8] shrink-0 mt-0.5">
-            <Filter className="w-5 h-5" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>Strict Column Filtering Rules Applied</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#35C8A8]/20 text-[#35C8A8] font-mono font-semibold">
-                payment status = captured
-              </span>
-            </h4>
-            <p className="text-xs text-slate-300">
-              The importer extracts <strong className="text-white">only</strong> the designated columns and filters out non-captured bookings:
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
-                <div className="text-[10px] font-mono text-slate-400">1. Filter Criteria</div>
-                <div className="font-bold text-emerald-400">payment status = captured</div>
-                <div className="text-[10px] text-slate-400">Non-captured rows are skipped</div>
-              </div>
-              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
-                <div className="text-[10px] font-mono text-slate-400">2. Attendee Name</div>
-                <div className="font-bold text-white">full_name</div>
-                <div className="text-[10px] text-slate-400">Full attendee profile name</div>
-              </div>
-              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
-                <div className="text-[10px] font-mono text-slate-400">3. Ticket Count</div>
-                <div className="font-bold text-white">item quantity</div>
-                <div className="text-[10px] text-slate-400">Pax count per booking</div>
-              </div>
-              <div className="p-2 rounded-lg bg-[#0A1128]/70 border border-[#1F305E]">
-                <div className="text-[10px] font-mono text-slate-400">4. Contact Info</div>
-                <div className="font-bold text-white">email & phone</div>
-                <div className="text-[10px] text-slate-400">Pass & QR delivery</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Bulk Importer Section */}
@@ -464,9 +432,19 @@ export const AdminImportExport: React.FC = () => {
                 <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
               )}
               <span>
-                Successfully imported {importResult.importedCount} attendee bookings with payment status=captured!
+                {importResult.importedCount > 0
+                  ? `Successfully imported ${importResult.importedCount} attendee bookings! Passes with QR codes emailed automatically.`
+                  : 'Import completed with 0 new bookings.'}
               </span>
             </div>
+            {importResult.importedCount > 0 && (
+              <div className="p-2.5 rounded-lg bg-[#081226] border border-emerald-500/20 text-emerald-300 flex items-center gap-2 text-xs">
+                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  Official confirmation emails containing personal ticket passes and check-in QR codes have been automatically dispatched to all {importResult.importedCount} attendees.
+                </span>
+              </div>
+            )}
             {importResult.skippedCount !== undefined && importResult.skippedCount > 0 && (
               <p className="text-slate-300 text-[11px]">
                 ℹ️ Skipped {importResult.skippedCount} row(s) where payment status was not &apos;captured&apos; or required fields were missing.

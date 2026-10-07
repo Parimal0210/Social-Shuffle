@@ -471,6 +471,18 @@ export const AuthModal: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    onClick={() => handleQuickLogin('priya.nair@example.com', 'shuffler123')}
+                    className="p-2 text-left rounded-lg bg-[#111C3B] border border-[#FF6036]/60 hover:border-[#FF6036] transition-all text-xs shadow"
+                  >
+                    <div className="font-semibold text-white flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#FF6036]"></span>
+                      Priya Nair
+                    </div>
+                    <div className="text-[10px] text-slate-400">Participant (Wakad)</div>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleQuickLogin('rohan.kulkarni@example.com', 'shuffler123')}
                     className="p-2 text-left rounded-lg bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/60 transition-all text-xs"
                   >
@@ -479,18 +491,6 @@ export const AuthModal: React.FC = () => {
                       Rohan K.
                     </div>
                     <div className="text-[10px] text-slate-400">Participant (KP)</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('ananya.d@example.com', 'shuffler123')}
-                    className="p-2 text-left rounded-lg bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/60 transition-all text-xs"
-                  >
-                    <div className="font-semibold text-white flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#FFC226]"></span>
-                      Ananya D.
-                    </div>
-                    <div className="text-[10px] text-slate-400">Participant (Baner)</div>
                   </button>
                 </div>
 

@@ -24,6 +24,12 @@ import {
   AuthResponse,
   EventEmailBroadcastRequest
 } from '../types';
+import {
+  BadgeCalculationResult,
+  BadgeLevelDefinition,
+  calculateBadgeLevel as calculateBadgeLevelLocal,
+  BADGE_LEVELS
+} from './badgeBackendService';
 
 const API_STORAGE_KEY = 'social_shuffle_api_url';
 export const DEFAULT_API_URL = 'http://localhost:8080/api';
@@ -724,6 +730,41 @@ class ApiService {
     } catch {
       return false;
     }
+  }
+
+  // --- Backend 10-Level Badge System ---
+  async getBadgeLevels(): Promise<BadgeLevelDefinition[]> {
+    try {
+      const res = await fetch('/api/badges/levels');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.levels) return json.levels;
+      }
+    } catch {
+      // Local fallback
+    }
+    return BADGE_LEVELS;
+  }
+
+  async calculateBadgeLevel(params: {
+    gamesPlayedCount: number;
+    totalGamesCount?: number;
+    eventsAttendedCount: number;
+  }): Promise<BadgeCalculationResult> {
+    try {
+      const res = await fetch('/api/badges/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) return json.data;
+      }
+    } catch {
+      // Local fallback
+    }
+    return calculateBadgeLevelLocal(params);
   }
 }
 
