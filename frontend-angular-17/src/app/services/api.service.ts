@@ -7,7 +7,7 @@ import { AuthResponse, LoginCredentials, RegisterCredentials, ShuffleEvent, Game
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:8080/api';
+  private baseUrl = 'https://social-shuffle-backend.onrender.com/api';
 
   constructor(private http: HttpClient) {}
 

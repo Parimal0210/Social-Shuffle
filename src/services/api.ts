@@ -32,7 +32,10 @@ import {
 } from './badgeBackendService';
 
 const API_STORAGE_KEY = 'social_shuffle_api_url';
-export const DEFAULT_API_URL = 'http://localhost:8080/api';
+export const DEFAULT_API_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_API_URL)
+    ? import.meta.env.VITE_BACKEND_API_URL
+    : 'https://social-shuffle-backend.onrender.com/api';
 
 export function getStoredApiUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_API_URL;

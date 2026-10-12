@@ -1,0 +1,163 @@
+package com.socialshuffle.model;
+
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.util.Objects;
+
+@Entity
+@Table(name = "notifications", indexes = {
+    @Index(name = "idx_notif_timestamp", columnList = "\"timestamp\""),
+    @Index(name = "idx_notif_read", columnList = "is_read")
+})
+public class NotificationItem implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @Column(name = "id", length = 64)
+    private String id;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "message", columnDefinition = "TEXT")
+    private String message;
+
+    @Column(name = "type", length = 50)
+    private String type; // event, registration, community, system
+
+    @Column(name = "\"timestamp\"", length = 50)
+    private String timestamp;
+
+    @Column(name = "is_read", nullable = false)
+    private boolean read = false;
+
+    @Column(name = "recipient_email", length = 120)
+    private String recipientEmail;
+
+    @Column(name = "event_id", length = 64)
+    private String eventId;
+
+    @Column(name = "delivery_status", length = 32)
+    private String deliveryStatus = "Sent";
+
+    public NotificationItem() {
+    }
+
+    public NotificationItem(String id, String title, String message, String type, String timestamp, boolean read) {
+        this.id = id;
+        this.title = title;
+        this.message = message;
+        this.type = type;
+        this.timestamp = timestamp;
+        this.read = read;
+        this.deliveryStatus = "Sent";
+    }
+
+    public NotificationItem(String id, String title, String message, String timestamp, boolean read, String eventId) {
+        this.id = id;
+        this.title = title;
+        this.message = message;
+        this.type = "registration";
+        this.timestamp = timestamp;
+        this.read = read;
+        this.eventId = eventId;
+        this.deliveryStatus = "Sent";
+    }
+
+    public String getRecipientEmail() {
+        return recipientEmail;
+    }
+
+    public void setRecipientEmail(String recipientEmail) {
+        this.recipientEmail = recipientEmail;
+    }
+
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NotificationItem that = (NotificationItem) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "NotificationItem{" +
+                "id='" + id + '\'' +
+                ", title='" + title + '\'' +
+                ", type='" + type + '\'' +
+                ", timestamp='" + timestamp + '\'' +
+                ", read=" + read +
+                '}';
+    }
+}
