@@ -2,7 +2,7 @@
 # Social Shuffle Pune - Push Frontend Codebase to GitHub
 set -e
 
-REPO_NAME="${2:-Social-Shuffle-Frontend}"
+REPO_NAME="${2:-Social-Shuffle}"
 GITHUB_USER="Parimal0210"
 PAT="${1:-$GITHUB_TOKEN}"
 
