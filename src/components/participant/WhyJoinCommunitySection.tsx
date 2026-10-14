@@ -133,7 +133,7 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
       description:
         'Zero paper checklists and zero waiting in line. Get your personalized QR pass directly on your phone with instant 1-tap table check-in at Pune cafes, real-time seat assignment, and priority waitlist alerts.',
       bulletPoints: [
-        'Instant iPad QR scanning at host entrance',
+        'Instant QR scanning at host entrance',
         'Real-time seat reservation confirmation',
         'Automatic waitlist drops before registrations close'
       ]

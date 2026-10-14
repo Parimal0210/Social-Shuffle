@@ -12,7 +12,7 @@ import { Registration } from '../../models/types';
     <div class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-black text-white">iPad 1-Tap Attendance Check-In</h2>
+          <h2 class="text-2xl font-black text-white">Live 1-Tap Attendance Check-In</h2>
           <p class="text-xs text-slate-400">Door check-in for Koregaon Park Weekend Meetup #42</p>
         </div>
 

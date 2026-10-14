@@ -39,7 +39,7 @@ const AppContent: React.FC = () => {
   const [participantTab, setParticipantTab] = useState<ParticipantTab>('home');
   const [preselectedEventId, setPreselectedEventId] = useState<string | undefined>();
 
-  // Ensure guest view cannot access community tab
+  // Ensure guest view cannot access community tab (profile tab displays guest showcase)
   useEffect(() => {
     if (!isAuthenticated && participantTab === 'community') {
       setParticipantTab('home');
@@ -50,9 +50,10 @@ const AppContent: React.FC = () => {
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
 
   // STRICT ACCESS RULE:
-  // Only authenticated admins can ever view the Admin Console!
-  // Any person registered as a participant strictly only sees participant sections!
-  const showAdminView = isAdminUser && (role === 'admin' || userRole === 'admin');
+  // - If user is not logged in: default view is Guest View
+  // - If user is logged in as participant: default view is Participant View
+  // - If user is logged in as admin: default view is Admin View
+  const showAdminView = isAuthenticated && isAdminUser;
 
   const handleOpenAttendanceForEvent = (eventId: string) => {
     setTargetAttendanceEventId(eventId);
@@ -77,7 +78,7 @@ const AppContent: React.FC = () => {
       {/* Main App Body */}
       {showAdminView ? (
         <div className="flex-1 flex flex-col lg:flex-row w-full max-w-7xl mx-auto">
-          {/* Admin Sidebar Navigation (iPad & Desktop optimized) */}
+          {/* Admin Sidebar Navigation (Responsive & Desktop optimized) */}
           <AdminSidebar
             currentSection={adminSection}
             onSelectSection={sec => setAdminSection(sec)}

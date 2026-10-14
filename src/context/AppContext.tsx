@@ -214,46 +214,39 @@ export const PRIYA_AUTH_USER: AuthUser = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Authentication & Session State: Keep Priya Nair logged in as participant
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
+    if (typeof window === 'undefined') return null;
+    const sessionActive = localStorage.getItem(`${STORAGE_KEY}_session_active`) === 'true';
     const isLoggedOut = localStorage.getItem(`${STORAGE_KEY}_logged_out`) === 'true';
+    const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
     const lastActiveStr = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
     const now = Date.now();
 
-    if (saved) {
+    // Only restore session if user explicitly logged in and has not logged out
+    if (sessionActive && saved && !isLoggedOut) {
       try {
         const user: AuthUser = JSON.parse(saved);
         if (lastActiveStr) {
           const lastActive = parseInt(lastActiveStr, 10);
           if (!isNaN(lastActive) && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
-            // User inactive for over a month -> reset to Priya
-            localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-            localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
-            return PRIYA_AUTH_USER;
+            // User inactive for over 30 days -> reset to logged out (Guest View)
+            localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+            localStorage.removeItem(`${STORAGE_KEY}_session_active`);
+            localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
+            return null;
           }
         }
-        // If user intentionally switched to admin view, preserve admin
-        if (user.role === 'admin') {
-          localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-          return user;
-        }
-        // If saved user is already Priya
-        if (user.participantId === 'p-priya') {
+        if (user && user.id) {
           localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
           return user;
         }
       } catch (e) {
-        // Fallback to Priya
+        // Fallback to guest
       }
     }
 
-    // If explicit instruction was given to keep Priya logged in:
-    // clear logged_out flag and set Priya as the logged in participant
-    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-    localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
-    return PRIYA_AUTH_USER;
+    // Default view: Guest View (currentUser = null) when not logged in
+    return null;
   });
 
   const [lastActiveTimestamp, setLastActiveTimestamp] = useState<number>(() => {
@@ -342,6 +335,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(currentUser));
+      localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
       if (currentUser.role === 'participant') {
         setRoleState('participant'); // strictly participant!
       } else if (currentUser.role === 'admin') {
@@ -352,6 +347,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } else {
       localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+      localStorage.removeItem(`${STORAGE_KEY}_session_active`);
       setRoleState('participant');
     }
   }, [currentUser]);
@@ -907,6 +903,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem(`${STORAGE_KEY}_auth_user`);
+    localStorage.removeItem(`${STORAGE_KEY}_session_active`);
     localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
     localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
     setRoleState('participant');

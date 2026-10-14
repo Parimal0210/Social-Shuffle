@@ -31,6 +31,9 @@ async function startServer() {
     });
   });
 
+  // Serve public assets (favicon, images)
+  app.use(express.static('public'));
+
   // Mount Vite middlewares for frontend SPA
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static('dist'));

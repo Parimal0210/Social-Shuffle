@@ -1,0 +1,11 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="10" fill="#0A1128"/>
+  <!-- Top-Left: Coral Orange Quarter Wedge -->
+  <path d="M 21.5 5.5 C 12.663 5.5 5.5 12.663 5.5 21.5 L 21.5 21.5 Z" fill="#FF6036"/>
+  <!-- Top-Right: Mint Teal Circle Token -->
+  <circle cx="34.5" cy="13.5" r="7.5" fill="#35C8A8"/>
+  <!-- Bottom-Left: Violet Purple Circle Token -->
+  <circle cx="13.5" cy="34.5" r="7.5" fill="#8F43EE"/>
+  <!-- Bottom-Right: Marigold Yellow Quarter Wedge -->
+  <path d="M 26.5 42.5 C 35.337 42.5 42.5 35.337 42.5 26.5 L 26.5 26.5 Z" fill="#FFC226"/>
+</svg>

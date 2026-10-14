@@ -32,7 +32,7 @@ export type AdminSection = 'dashboard' | 'attendance' | 'events' | 'games';
             class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs whitespace-nowrap transition-all flex-1 lg:flex-initial"
           >
             <span>📱</span>
-            <span>iPad Attendance Check-in</span>
+            <span>Live Attendance Check-in</span>
           </button>
         </nav>
       </div>

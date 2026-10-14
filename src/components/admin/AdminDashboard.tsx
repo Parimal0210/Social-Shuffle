@@ -261,7 +261,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* QUICK ACTIONS */}
       <div>
-        <h3 className="text-base font-bold text-white mb-3">Quick Actions (iPad & Touch Optimized)</h3>
+        <h3 className="text-base font-bold text-white mb-3">Quick Actions</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             id="dash-action-create-event"

@@ -52,7 +52,7 @@ frontend-angular-17/
 │           └── admin/
 │               ├── admin-sidebar.component.ts     # Organizer sidebar navigation
 │               ├── admin-dashboard.component.ts   # Capacity, metrics & ticket counts
-│               └── admin-attendance.component.ts  # iPad 1-tap door check-in
+│               └── admin-attendance.component.ts  # 1-tap door check-in
 ```
 
 ---
@@ -108,5 +108,5 @@ All endpoints (`/api/auth/login`, `/api/auth/register`, `/api/events`, `/api/gam
    - Strictly confined to participant experiences (Meetup RSVPs, Game Library, Progress, Badges, Profile).
    - Admin navigation and role toggles are hidden and inaccessible.
 2. **Organizers / Admins (`admin@socialshuffle.com`)**:
-   - Access to the Organizer Dashboard and iPad 1-Tap Attendance Check-in.
+   - Access to the Organizer Dashboard and Live 1-Tap Attendance Check-in.
    - Ability to preview the participant experience.

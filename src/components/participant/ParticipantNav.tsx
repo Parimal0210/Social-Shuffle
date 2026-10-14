@@ -34,14 +34,14 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
     { id: 'profile' as ParticipantTab, label: 'My Profile', icon: User }
   ];
 
-  // Remove community tab for guest view
+  // Guest view: include My Profile tab to showcase features unlocked by joining
   const tabs = isAuthenticated
     ? allTabs
     : allTabs.filter(t => t.id !== 'community');
 
   return (
     <>
-      {/* Desktop & iPad Tab Bar */}
+      {/* Desktop & Tablet Tab Bar */}
       <div className="hidden md:flex items-center justify-center py-4 px-6 border-b border-[#1F305E] bg-[#0A1128]/80 sticky top-[57px] z-30 backdrop-blur-md">
         <div className="flex items-center p-1.5 rounded-2xl bg-[#090F22] border border-[#1F305E] shadow-xl max-w-xl w-full justify-between">
           {tabs.map(tab => {

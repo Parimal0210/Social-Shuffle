@@ -18,14 +18,20 @@ import {
   ShieldCheck,
   Search,
   Plus,
-  Clock
+  Clock,
+  QrCode,
+  Trophy,
+  Star,
+  BookmarkCheck,
+  ArrowRight,
+  Shield
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { GameCategory, ShuffleEvent, Registration } from '../../types';
 import { openGoogleCalendar } from '../../utils/calendarUtils';
 import { LogAttendedGamesModal } from './LogAttendedGamesModal';
 import { calculateParticipantBadges } from '../../utils/badgeSystem';
-import { calculateBadgeLevel } from '../../services/badgeBackendService';
+import { calculateBadgeLevel, BADGE_LEVELS } from '../../services/badgeBackendService';
 
 export const ParticipantProfile: React.FC = () => {
   const {
@@ -69,103 +75,389 @@ export const ParticipantProfile: React.FC = () => {
     }
   }, [currentParticipant]);
 
-  // GUEST / OUTSIDE USER PROFILE GATE:
+  // GUEST / OUTSIDE USER PROFILE SHOWCASE:
   if (!isAuthenticated) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 pb-20 md:pb-8">
-        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-[#111C3B] to-[#0A1128] border-2 border-[#FF6036]/40 shadow-2xl text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#FF6036] via-[#8F43EE] to-[#35C8A8] p-0.5 shadow-xl shadow-[#FF6036]/25 mx-auto">
-            <div className="w-full h-full bg-[#0A1128] rounded-[22px] flex items-center justify-center">
-              <User className="w-9 h-9 text-[#FF8566]" />
-            </div>
+      <div className="max-w-4xl mx-auto space-y-8 pb-20 md:pb-12 animate-in fade-in duration-200">
+        {/* Top Hero Showcase Banner */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#111C3B] to-[#0A1128] border-2 border-[#FF6036]/40 shadow-2xl space-y-5 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FF6036]/15 border border-[#FF6036]/30 text-[#FF8566] text-xs font-bold tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-[#FFC226]" />
+            <span>Guest Preview • What’s Inside Your Shuffler Profile</span>
           </div>
 
-          <div className="space-y-2 max-w-lg mx-auto">
-            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#FF6036]/15 text-[#FF8566] border border-[#FF6036]/30">
-              Guest Visitor Mode • My Profile
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Your Shuffler Profile & Tabletop Passport
+          <div className="space-y-2 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              Your Personal Board Gaming Passport in Pune
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Your profile is your digital board gaming passport in Pune. Register as a participant to unlock your full profile, track your played games, and earn community badges.
+              When you join Social Shuffle, this tab becomes your personal tabletop dashboard. Track your played games, level up through 10 badge tiers, and manage your 1-tap QR entry passes for Pune cafe meetups.
             </p>
           </div>
 
-          {/* Prominent Curated Games Metric */}
-          <div className="p-5 rounded-2xl bg-[#090F22] border border-[#1F305E] max-w-xl mx-auto shadow-inner">
-            <div className="flex items-center justify-center gap-3.5">
-              <span className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FF6036] via-[#FFC226] to-[#35C8A8]">
-                {games.length}+
-              </span>
-              <div className="text-left">
-                <span className="text-sm font-bold text-white block">Curated Board Games in Library</span>
-                <span className="text-xs text-slate-400">Available across all Pune weekend cafe meetups</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Unified Perks Grid (No Repetitions) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left max-w-xl mx-auto">
-            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
-              <div className="text-xs font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#35C8A8]" />
-                <span>Digital QR Entry Passes</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                1-tap table check-in at Sunday Pune cafes with zero waiting lines.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
-              <div className="text-xs font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#8F43EE]" />
-                <span>Personal Game Library Tracking</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Record played titles, track table sessions, and build your gaming history.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
-              <div className="text-xs font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#FFC226]" />
-                <span>Earned Community Badges</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Unlock exclusive tabletop badges based on games explored and meetups attended.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-1">
-              <div className="text-xs font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#FF6036]" />
-                <span>Priority Meetup Bookings</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Reserve seats for high-demand cafe editions before public tickets sell out.
-              </p>
-            </div>
-          </div>
-
-          {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
-              id="btn-profile-gate-register"
+              id="btn-guest-profile-register"
               onClick={() => openAuthModal('register')}
-              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white font-extrabold text-sm shadow-xl shadow-[#FF6036]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white font-extrabold text-sm shadow-xl shadow-[#FF6036]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Join Community (Register Free)</span>
+              <span>Join Community & Create Profile (Free)</span>
             </button>
 
             <button
-              id="btn-profile-gate-login"
+              id="btn-guest-profile-login"
               onClick={() => openAuthModal('login')}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#111C3B] hover:bg-[#162349] border border-[#1F305E] text-slate-200 font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#111C3B] hover:bg-[#162349] border border-[#1F305E] text-slate-200 font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4 text-[#FF6036]" />
               <span>Already a member? Sign In</span>
+            </button>
+          </div>
+        </div>
+
+        {/* SECTION 1: INTERACTIVE SAMPLE PROFILE CARD */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-[#FF6036]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                1. Member Identity & Stats Card
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+              Interactive Preview
+            </span>
+          </div>
+
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#111C3B]/80 border border-[#1F305E] shadow-xl relative overflow-hidden space-y-6">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF6036]/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Profile Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border-2 border-[#FF6036]/50 shadow-lg">
+                    <img
+                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"
+                      alt="Sample Shuffler Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 p-1 bg-[#0A1128] rounded-lg border border-[#1F305E]">
+                    <span className="text-xs">🎲</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-lg font-black text-white">Priya Nair</h4>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#8F43EE]/20 text-[#a870f7] border border-[#8F43EE]/40">
+                      Level 3 • Tabletop Tactician
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-[#FF6036]" />
+                      Wakad, Pune
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-[#35C8A8]" />
+                      Member since Oct 2024
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-3.5 py-1.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-left shrink-0">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Level Status</span>
+                <span className="text-xs font-bold text-[#FFC226]">Level 3 (70% XP)</span>
+              </div>
+            </div>
+
+            {/* Level XP Progress Bar */}
+            <div className="p-4 rounded-2xl bg-[#090F22] border border-[#1F305E] space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-slate-300">Level 3: Tabletop Tactician</span>
+                <span className="text-[#35C8A8] font-bold">14 / 20 Games Played to Level 4</span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#FF6036] via-[#FFC226] to-[#35C8A8]"
+                  style={{ width: '70%' }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Play 6 more unique board games at Pune Sunday meetups to unlock the <strong className="text-white">Board Room Veteran</strong> badge!
+              </p>
+            </div>
+
+            {/* Milestone Stats Counters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-center">
+                <Dices className="w-4 h-4 text-[#FF6036] mx-auto mb-1" />
+                <span className="text-xl font-black text-white block">14</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Games Played</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-center">
+                <Calendar className="w-4 h-4 text-[#35C8A8] mx-auto mb-1" />
+                <span className="text-xl font-black text-white block">6</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Sunday Meetups</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-center">
+                <MapPin className="w-4 h-4 text-[#8F43EE] mx-auto mb-1" />
+                <span className="text-xl font-black text-white block">3</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Venues Visited</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#090F22] border border-[#1F305E] text-center">
+                <Users className="w-4 h-4 text-[#FFC226] mx-auto mb-1" />
+                <span className="text-xl font-black text-white block">4</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Friends Brought</span>
+              </div>
+            </div>
+
+            {/* Bio & Play Style */}
+            <div className="p-3.5 rounded-xl bg-[#090F22]/60 border border-[#1F305E] text-xs text-slate-300">
+              <strong className="text-white font-bold block mb-1">Favorite Games & Play Style:</strong>
+              “Love social deduction like Secret Hitler, engine builders like Wingspan, and party favorites like Codenames. Always excited to meet new teammates and teach rules!”
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: 10-LEVEL SHUFFLER BADGE ROADMAP */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#FFC226]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                2. 10-Tier Shuffler Badge & Level Roadmap
+              </h3>
+            </div>
+            <span className="text-[10px] text-slate-400">Earned via games & meetups</span>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#111C3B]/60 border border-[#1F305E] space-y-4">
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Every Sunday meetup you attend and every game you learn pushes you higher up the 10-level hierarchy. Here is a preview of the levels you will unlock:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-emerald-500/30 space-y-1.5 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">🎲</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Level 1 • Unlocked</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Initiate of the Ivory Dice</h5>
+                <p className="text-[11px] text-slate-400">Attended first meetup and played first curated game.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-blue-500/30 space-y-1.5 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">🛡️</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">Level 2 • Unlocked</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Guild Pioneer</h5>
+                <p className="text-[11px] text-slate-400">Attended 3 meetups and explored 6 unique tabletop games.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-purple-500/40 space-y-1.5 relative overflow-hidden bg-purple-500/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">⚔️</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">Level 3 • Active</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Tabletop Tactician</h5>
+                <p className="text-[11px] text-slate-400">Attended 5+ meetups, mastered 12+ games across 3 genres.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-amber-500/30 space-y-1.5 opacity-80">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">👑</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-800 text-amber-300">Level 5 • Next Milestone</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Grand Strategy Champion</h5>
+                <p className="text-[11px] text-slate-400">10+ meetups, 25+ games mastered, Pune cafe regular.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-[#FF6036]/30 space-y-1.5 opacity-70">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">🔥</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-800 text-[#FF8566]">Level 7 • Master</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Pune Board Room Legend</h5>
+                <p className="text-[11px] text-slate-400">50+ games played. VIP early seat reservation rights.</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#090F22] border border-cyan-500/30 space-y-1.5 opacity-60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">⚡</span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-800 text-cyan-300">Level 10 • Mythic</span>
+                </div>
+                <h5 className="text-xs font-bold text-white">Mythic Tabletop Archon</h5>
+                <p className="text-[11px] text-slate-400">90%+ of entire 120+ game catalog explored!</p>
+              </div>
+            </div>
+
+            {/* Perks Callout */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#FF6036]/10 to-[#8F43EE]/10 border border-[#1F305E] flex items-center gap-3 text-xs text-slate-300">
+              <Trophy className="w-5 h-5 text-[#FFC226] shrink-0" />
+              <span>
+                <strong>Community Perks:</strong> High-level shufflers earn early access booking for high-demand editions, table host privileges, and custom badge flair.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 3: PERSONAL GAME LIBRARY & PLAY TRACKER */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Dices className="w-4 h-4 text-[#35C8A8]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                3. Curated Board Games Tracker ({games.length}+ Titles)
+              </h3>
+            </div>
+            <span className="text-[10px] text-slate-400">1-tap play logging</span>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#111C3B]/60 border border-[#1F305E] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p className="text-xs text-slate-300">
+                In your profile, you maintain a personal log of every board game you have explored:
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-[#35C8A8]/20 text-[#35C8A8] border border-[#35C8A8]/30">
+                  Played (Sample: 14)
+                </span>
+                <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#090F22] text-slate-400 border border-[#1F305E]">
+                  To-Play Wishlist
+                </span>
+              </div>
+            </div>
+
+            {/* Sample Game Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                { name: 'Catan', tag: 'Strategy • 3-4 Players', status: 'Mastered', rating: 'Played 4x', icon: '🌾' },
+                { name: 'Codenames', tag: 'Party / Deduction • 4-8 Players', status: 'Played', rating: 'Played 6x', icon: '🕵️' },
+                { name: 'Secret Hitler', tag: 'Social Deduction • 5-10 Players', status: 'Played', rating: 'Played 3x', icon: '🎭' },
+                { name: 'Wingspan', tag: 'Engine Building • 1-5 Players', status: 'Played', rating: 'Played 2x', icon: '🦅' },
+                { name: 'Ticket to Ride: Europe', tag: 'Route Building • 2-5 Players', status: 'Wishlist', rating: 'Next Sunday', icon: '🚂' },
+                { name: 'Splendor', tag: 'Card Drafting • 2-4 Players', status: 'Wishlist', rating: 'Next Sunday', icon: '💎' },
+              ].map((g, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-[#090F22] border border-[#1F305E] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{g.icon}</span>
+                    <div>
+                      <h5 className="text-xs font-bold text-white">{g.name}</h5>
+                      <span className="text-[10px] text-slate-400 block">{g.tag}</span>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    g.status === 'Wishlist'
+                      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                      : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                  }`}>
+                    {g.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 bg-[#090F22] rounded-xl border border-[#1F305E] flex items-center justify-between text-xs">
+              <span className="text-slate-300">
+                After each Sunday meetup, tap <strong>“Tag Games Played”</strong> on your RSVP to automatically log games!
+              </span>
+              <span className="text-[#35C8A8] font-bold text-[11px] shrink-0">+ Tag Games</span>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 4: DIGITAL QR ENTRY PASS & RSVP HUB */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-[#8F43EE]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                4. Digital QR Entry Pass & Calendar Sync
+              </h3>
+            </div>
+            <span className="text-[10px] text-slate-400">Zero paper queues</span>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#111C3B]/60 border border-[#1F305E] space-y-4">
+            <p className="text-xs text-slate-300">
+              When you book a spot for any Pune meetup, your ticket pass is automatically saved in your profile:
+            </p>
+
+            {/* Ticket Preview Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-[#090F22] to-[#121B35] border-2 border-[#35C8A8]/30 max-w-xl mx-auto shadow-xl space-y-4">
+              <div className="flex items-start justify-between gap-4 pb-3 border-b border-[#1F305E]">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#35C8A8]/20 text-[#35C8A8]">
+                    Confirmed Pass • Table Assigned
+                  </span>
+                  <h4 className="text-sm font-black text-white mt-1">Koregaon Park Sunday Meetup #42</h4>
+                  <p className="text-xs text-slate-400">Toit Brewpub & Cafe, Pune</p>
+                </div>
+                <div className="w-14 h-14 bg-white rounded-xl p-1 shrink-0 flex items-center justify-center shadow">
+                  <QrCode className="w-12 h-12 text-slate-900" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="p-2 rounded-lg bg-[#0A1128] border border-[#1F305E]">
+                  <span className="text-[10px] text-slate-400 block">Date</span>
+                  <strong className="text-white">This Sunday</strong>
+                </div>
+                <div className="p-2 rounded-lg bg-[#0A1128] border border-[#1F305E]">
+                  <span className="text-[10px] text-slate-400 block">Time</span>
+                  <strong className="text-white">4:00 PM</strong>
+                </div>
+                <div className="p-2 rounded-lg bg-[#0A1128] border border-[#1F305E]">
+                  <span className="text-[10px] text-slate-400 block">Table</span>
+                  <strong className="text-[#35C8A8]">Table #4</strong>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Instant 1-Tap Entrance Check-In
+                </span>
+                <span className="text-slate-400 font-mono text-[10px]">Pass: SS-KP42-PN88</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM FINAL CONVERSION CTA */}
+        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-[#FF6036] via-[#ff7d59] to-[#8F43EE] text-white shadow-2xl text-center space-y-4">
+          <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
+            Ready to claim your tabletop passport?
+          </h3>
+          <p className="text-xs sm:text-sm text-white/90 max-w-xl mx-auto leading-relaxed">
+            Creating your Shuffler Profile takes under 30 seconds. Join Pune’s warmest board gaming family, RSVP to meetups, and start building your game collection today.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => openAuthModal('register')}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0A1128] hover:bg-[#111C3B] text-white font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4 text-[#35C8A8]" />
+              <span>Create Free Shuffler Profile</span>
+            </button>
+
+            <button
+              onClick={() => openAuthModal('login')}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/40 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In to Existing Account</span>
             </button>
           </div>
         </div>

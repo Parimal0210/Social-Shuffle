@@ -110,92 +110,86 @@ export const Header: React.FC = () => {
             </button>
           )}
 
-          {/* Notifications Dropdown */}
-          <div className="relative">
-            <button
-              id="btn-notifications"
-              onClick={() => setShowNotifMenu(!showNotifMenu)}
-              className="relative p-2 rounded-lg bg-[#111C3B] border border-[#1F305E] text-slate-300 hover:text-white hover:border-[#35C8A8]/40 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF6036] text-white text-[10px] font-bold flex items-center justify-center shadow">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+          {/* Social Shuffle Pulse Notifications: Shown ONLY to logged-in participants and admins */}
+          {isAuthenticated && (
+            <div className="relative">
+              <button
+                id="btn-notifications"
+                onClick={() => setShowNotifMenu(!showNotifMenu)}
+                className="relative p-2 rounded-lg bg-[#111C3B] border border-[#1F305E] text-slate-300 hover:text-white hover:border-[#35C8A8]/40 transition-colors"
+                aria-label="Social Shuffle Pulse Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF6036] text-white text-[10px] font-bold flex items-center justify-center shadow">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
-            {showNotifMenu && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#111C3B] border border-[#1F305E] rounded-xl shadow-2xl z-50 p-3">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1F305E]">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-[#FFC226]" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">Social Shuffle Pulse</span>
-                  </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllNotificationsRead}
-                      className="text-[11px] text-[#35C8A8] hover:text-[#52e5c5] font-medium"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-
-                <div className="max-h-80 overflow-y-auto space-y-2">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-400">
-                      No notifications yet.
+              {showNotifMenu && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#111C3B] border border-[#1F305E] rounded-xl shadow-2xl z-50 p-3">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1F305E]">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#FFC226]" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">Social Shuffle Pulse</span>
                     </div>
-                  ) : (
-                    notifications.map(n => (
-                      <div
-                        key={n.id}
-                        onClick={() => markNotificationRead(n.id)}
-                        className={`p-3 rounded-xl text-left transition-colors border ${
-                          n.read
-                            ? 'bg-[#0A1128]/60 border-[#1F305E]/60 text-slate-400'
-                            : 'bg-[#162349] border-[#35C8A8]/40 text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
-                            {n.type === 'event' && <Calendar className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />}
-                            {n.type === 'registration' && <Sparkles className="w-3.5 h-3.5 text-[#FFC226] shrink-0" />}
-                            {n.type === 'community' && <Users className="w-3.5 h-3.5 text-purple-400 shrink-0" />}
-                            <span>{n.title}</span>
-                          </h4>
-                          <span className="text-[10px] text-slate-500 whitespace-nowrap">{n.timestamp}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">{n.message}</p>
-                        {n.emailHtml && (
-                          <div className="mt-2 flex items-center justify-between pt-1 border-t border-white/5">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markNotificationRead(n.id);
-                                setViewingEmailNotif(n);
-                                setShowNotifMenu(false);
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#35C8A8]/20 hover:bg-[#35C8A8]/30 border border-[#35C8A8]/40 text-[11px] text-[#35C8A8] font-bold transition-colors"
-                            >
-                              <Mail className="w-3 h-3" />
-                              <span>View Email Pass & QR</span>
-                            </button>
-                            <span className="text-[10px] text-emerald-400 font-mono">Delivered over email</span>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] text-[#35C8A8] font-bold px-2 py-0.5 rounded-full bg-[#35C8A8]/10 border border-[#35C8A8]/30">
+                        {unreadCount} New
+                      </span>
+                    )}
+                  </div>
 
-          {/* Perspective Switcher (Guest View, Participant, Admin) */}
+                  <div className="max-h-80 overflow-y-auto space-y-2">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n.id}
+                          className={`p-3 rounded-xl text-left border ${
+                            n.read
+                              ? 'bg-[#0A1128]/60 border-[#1F305E]/60 text-slate-400'
+                              : 'bg-[#162349] border-[#35C8A8]/40 text-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                              {n.type === 'event' && <Calendar className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />}
+                              {n.type === 'registration' && <Sparkles className="w-3.5 h-3.5 text-[#FFC226] shrink-0" />}
+                              {n.type === 'community' && <Users className="w-3.5 h-3.5 text-purple-400 shrink-0" />}
+                              <span>{n.title}</span>
+                            </h4>
+                            <span className="text-[10px] text-slate-500 whitespace-nowrap">{n.timestamp}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">{n.message}</p>
+                          {n.emailHtml && (
+                            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono pt-1.5 border-t border-white/5">
+                              <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span>Pass confirmation & QR delivered to your registered email</span>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 
+            ========================================================================================
+            [TESTING CONTROL: Perspective Switcher (Guest View, Participant, Admin)]
+            Commented out per instructions so role is strictly determined by authentication state:
+            - Not logged in  => Guest View
+            - Logged in User => Participant View
+            - Administrator  => Admin View
+            (Uncomment this block anytime in the future for quick developer testing)
+            ========================================================================================
           <div className="flex items-center p-1 rounded-xl bg-[#090F22] border border-[#1F305E]">
             <button
               id="role-switch-guest"
@@ -240,6 +234,8 @@ export const Header: React.FC = () => {
               <span className="sm:hidden">Admin</span>
             </button>
           </div>
+            ========================================================================================
+          */}
 
           {/* User Profile / Auth State Menu */}
           {isAuthenticated ? (
@@ -346,6 +342,8 @@ export const Header: React.FC = () => {
                       <span>Register New Participant</span>
                     </button>
 
+                    {/* 
+                    [TESTING CONTROL] Switch to Guest View item in dropdown
                     <button
                       onClick={() => {
                         switchToGuestView();
@@ -356,6 +354,7 @@ export const Header: React.FC = () => {
                       <Globe className="w-3.5 h-3.5 text-[#35C8A8]" />
                       <span>Switch to Outside Guest View</span>
                     </button>
+                    */}
 
                     <button
                       onClick={() => {

@@ -179,7 +179,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              iPad Event-Day Station
+              Live Event-Day Station
             </span>
             {isOfflineMode && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
@@ -263,7 +263,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
         </div>
       </div>
 
-      {/* Real-time Attendance KPI Strip (iPad touch glanceable) */}
+      {/* Real-time Attendance KPI Strip (Touch glanceable) */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="p-3.5 rounded-xl bg-[#161822] border border-slate-800 text-center">
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
@@ -356,7 +356,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
         </div>
       </div>
 
-      {/* Main Attendance Table / Cards (Optimized for iPad 1-tap operation) */}
+      {/* Main Attendance Table / Cards (Optimized for 1-tap operation) */}
       <div className="space-y-3">
         {filteredRegistrations.length === 0 ? (
           <div className="p-8 rounded-2xl bg-[#161822] border border-slate-800 text-center space-y-2">
@@ -477,7 +477,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                   </div>
                 </div>
 
-                {/* 1-TAP CHECK-IN ACTION & STATUS DROPDOWN (Huge iPad Touch Target) */}
+                {/* 1-TAP CHECK-IN ACTION & STATUS DROPDOWN (1-Tap Touch Target) */}
                 <div className="flex items-center gap-3 shrink-0 self-start md:self-center">
                   {/* Status Dropdown */}
                   <select
@@ -693,7 +693,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
         </div>
       )}
 
-      {/* SLIDE-OUT RIGHT DRAWER FOR IPAD / TABLET (Section 10 Customer Profile) */}
+      {/* SLIDE-OUT RIGHT DRAWER FOR TABLET / DESKTOP (Section 10 Customer Profile) */}
       {selectedAttendeeDrawer && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
           <div className="bg-[#161822] border-l border-slate-800 w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
@@ -858,7 +858,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               </div>
 
               <span className="text-[11px] text-slate-400 mt-3 text-center">
-                Point iPad/Phone camera at attendee pass or use scanner gun below.
+                Point device camera at attendee pass or use scanner gun below.
               </span>
             </div>
 
