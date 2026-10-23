@@ -4,7 +4,8 @@ import { BADGE_LEVELS, calculateBadgeLevel } from './src/services/badgeBackendSe
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  // Dev server must run on port 3000 in this environment (port 8080 is reserved by the proxy)
+  const PORT = 3000;
 
   app.use(express.json());
 

@@ -11,7 +11,6 @@ import {
   MessageSquare,
   AlertTriangle,
   HeartHandshake,
-  PhoneCall,
   CheckCircle2,
   UserPlus,
   LogIn,
@@ -67,14 +66,8 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
         r.attendanceStatus !== 'Cancelled'
     );
 
-  // Compute game progress metrics (for authenticated participants)
-  const totalGamesCount = games.length;
+  // Compute game progress metrics (for authenticated participant level display)
   const gamesPlayedCount = currentParticipant?.gamesPlayedIds?.length || 0;
-  const gamesRemainingCount = Math.max(0, totalGamesCount - gamesPlayedCount);
-  const progressPercent = Math.min(
-    100,
-    Math.round((gamesPlayedCount / (totalGamesCount || 1)) * 100)
-  );
 
   const handleBookEventClick = (event: ShuffleEvent) => {
     if (!isAuthenticated) {
@@ -296,183 +289,10 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
         </div>
       )}
 
-      {/* 4. AUTHENTICATED USER STATS (Only for logged-in participants) */}
-      {isAuthenticated && currentParticipant && (
-        <>
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <span>Your Shuffle Journey</span>
-                <span className="text-xs font-normal text-slate-400">Personal stats</span>
-              </h3>
-              <button
-                onClick={() => onNavigateTab('profile')}
-                className="text-xs font-semibold text-[#FF6036] hover:text-[#ff8566] transition-colors"
-              >
-                Full Profile & Journey →
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <div className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#FF6036]/40 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-[#FF6036]/15 text-[#FF6036] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-black text-white tracking-tight">
-                  {currentParticipant.totalEventsAttended}
-                </div>
-                <div className="text-xs text-slate-400 font-medium mt-0.5">Events Attended</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/40 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-[#35C8A8]/15 text-[#35C8A8] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <Dices className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-black text-white tracking-tight">
-                  {gamesPlayedCount}
-                </div>
-                <div className="text-xs text-slate-400 font-medium mt-0.5">Games Played</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#FFC226]/40 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-[#FFC226]/15 text-[#FFC226] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-black text-white tracking-tight">
-                  {gamesRemainingCount}
-                </div>
-                <div className="text-xs text-slate-400 font-medium mt-0.5">Left to Explore</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#8F43EE]/40 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-[#8F43EE]/15 text-[#8F43EE] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-black text-white tracking-tight">
-                  {currentParticipant.venuesVisited?.length || 1}
-                </div>
-                <div className="text-xs text-slate-400 font-medium mt-0.5">Venues Visited</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/40 transition-all col-span-2 sm:col-span-1 group">
-                <div className="w-8 h-8 rounded-lg bg-[#35C8A8]/15 text-[#35C8A8] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-black text-white tracking-tight">
-                  {currentParticipant.totalPaxBrought}
-                </div>
-                <div className="text-xs text-slate-400 font-medium mt-0.5">Friends Brought</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Game Progress Card */}
-          <div className="p-5 rounded-2xl bg-[#111C3B] border border-[#1F305E] space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Dices className="w-5 h-5 text-[#35C8A8]" />
-                <span className="font-bold text-white text-sm sm:text-base">Game Library Mastery</span>
-              </div>
-              <span className="text-xs font-extrabold text-[#35C8A8]">
-                {gamesPlayedCount} / {totalGamesCount} Games Played ({progressPercent}%)
-              </span>
-            </div>
-
-            <div className="w-full h-3 bg-[#0A1128] rounded-full overflow-hidden p-0.5 border border-[#1F305E]">
-              <div
-                className="h-full bg-gradient-to-r from-[#FF6036] via-[#FFC226] to-[#35C8A8] rounded-full transition-all duration-700 shadow-sm shadow-[#FF6036]/50"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-              <span>{gamesRemainingCount} board games left to unlock in Pune!</span>
-              <button
-                onClick={() => onNavigateTab('profile')}
-                className="text-[#FF6036] hover:text-[#ff8566] font-semibold"
-              >
-                View Unplayed Games →
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* 5. COMMUNITY DETAILS & HOST CONTACTS (Accessible to guests and members alike) */}
-      <div className="p-6 rounded-2xl bg-[#111C3B] border border-[#1F305E] space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1F305E] pb-4">
-          <div>
-            <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
-              <SocialShuffleIcon size={20} />
-              <span>Community Details & Contacts</span>
-            </h3>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Organized with ❤️ in Pune by tabletop enthusiasts for tabletop enthusiasts.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigateTab('community')}
-            className="text-xs font-bold text-[#FF6036] hover:text-[#ff8566] self-start sm:self-center"
-          >
-            Full Community Page →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-[#090F22] border border-[#1F305E] space-y-1.5">
-            <div className="text-xs font-bold text-white flex items-center gap-2">
-              <PhoneCall className="w-4 h-4 text-[#35C8A8]" />
-              <span>Host Contacts</span>
-            </div>
-            <div className="text-xs text-slate-300">
-              <strong>Aman Joshi & Parimal</strong>
-            </div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              +91 98220 12345
-            </div>
-            <div className="text-[10px] text-slate-500">
-              Available 10 AM - 9 PM daily
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#090F22] border border-[#1F305E] space-y-1.5">
-            <div className="text-xs font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-[#25D366]" />
-              <span>WhatsApp Community</span>
-            </div>
-            <div className="text-xs text-slate-300">
-              Pune Tabletop Announcements
-            </div>
-            <div className="text-[11px] text-[#25D366] font-medium">
-              2,400+ members strong
-            </div>
-            <div className="text-[10px] text-slate-500">
-              Weekly game polls & seat alerts
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#090F22] border border-[#1F305E] space-y-1.5">
-            <div className="text-xs font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#FFC226]" />
-              <span>Safe Space Policy</span>
-            </div>
-            <div className="text-xs text-slate-300">
-              Zero-tolerance harassment
-            </div>
-            <div className="text-[11px] text-slate-400">
-              All tables moderated by trained hosts
-            </div>
-            <div className="text-[10px] text-[#35C8A8]">
-              Beginner-friendly guaranteed
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. EXPLORE ACTION GRID */}
+      {/* 4. EXPLORE SOCIAL SHUFFLE */}
       <div>
         <h3 className="text-base font-bold text-white tracking-tight mb-3">Explore Social Shuffle</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <button
             id="action-upcoming-events"
             onClick={() => onNavigateTab('events')}
@@ -484,13 +304,13 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
           </button>
 
           <button
-            id="action-games-to-play"
+            id="action-my-profile"
             onClick={() => onNavigateTab('profile')}
             className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/50 hover:bg-[#152248] transition-all text-left group"
           >
             <Dices className="w-5 h-5 text-[#35C8A8] mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-bold text-white">Games Yet to Play</div>
-            <div className="text-xs text-slate-400 mt-0.5">Explore 120+ library</div>
+            <div className="text-sm font-bold text-white">My Profile</div>
+            <div className="text-xs text-slate-400 mt-0.5">Passport, badges & games</div>
           </button>
 
           <button
@@ -500,37 +320,27 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
           >
             <MessageSquare className="w-5 h-5 text-[#FFC226] mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-bold text-white">Community & FAQ</div>
-            <div className="text-xs text-slate-400 mt-0.5">Venues, WhatsApp, info</div>
-          </button>
-
-          <button
-            id="action-report-issue"
-            onClick={() => onNavigateTab('community')}
-            className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-rose-500/50 hover:bg-[#152248] transition-all text-left group"
-          >
-            <AlertTriangle className="w-5 h-5 text-rose-400 mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-bold text-white">Report an Issue</div>
-            <div className="text-xs text-slate-400 mt-0.5">Confidential & safe</div>
+            <div className="text-xs text-slate-400 mt-0.5">Venues, guidelines, info</div>
           </button>
 
           <button
             id="action-volunteer"
             onClick={() => onNavigateTab('community')}
-            className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#35C8A8]/50 hover:bg-[#152248] transition-all text-left group"
+            className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#8F43EE]/50 hover:bg-[#152248] transition-all text-left group"
           >
-            <HeartHandshake className="w-5 h-5 text-[#35C8A8] mb-2 group-hover:scale-110 transition-transform" />
+            <HeartHandshake className="w-5 h-5 text-[#8F43EE] mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-bold text-white">Join as Volunteer</div>
             <div className="text-xs text-slate-400 mt-0.5">Help teach & host</div>
           </button>
 
           <button
-            id="action-contact-hosts"
+            id="action-report-issue"
             onClick={() => onNavigateTab('community')}
-            className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-[#8F43EE]/50 hover:bg-[#152248] transition-all text-left group"
+            className="p-4 rounded-xl bg-[#111C3B] border border-[#1F305E] hover:border-rose-500/50 hover:bg-[#152248] transition-all text-left group col-span-2 sm:col-span-1"
           >
-            <PhoneCall className="w-5 h-5 text-[#8F43EE] mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-bold text-white">Contact Hosts</div>
-            <div className="text-xs text-slate-400 mt-0.5">WhatsApp & Instagram</div>
+            <AlertTriangle className="w-5 h-5 text-rose-400 mb-2 group-hover:scale-110 transition-transform" />
+            <div className="text-sm font-bold text-white">Report an Issue</div>
+            <div className="text-xs text-slate-400 mt-0.5">Confidential & safe</div>
           </button>
         </div>
       </div>

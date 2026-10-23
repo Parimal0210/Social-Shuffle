@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Home, Calendar, Trophy, Users, User } from 'lucide-react';
+import { Home, Calendar, Users, IdCard } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export type ParticipantTab = 'home' | 'events' | 'progress' | 'community' | 'profile';
@@ -28,10 +28,10 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
   }, [isAuthenticated, activeTab, setActiveTab]);
 
   const allTabs = [
-    { id: 'home' as ParticipantTab, label: 'Home', icon: Home },
-    { id: 'events' as ParticipantTab, label: 'Events', icon: Calendar, badge: upcomingCount },
-    { id: 'community' as ParticipantTab, label: 'Community', icon: Users },
-    { id: 'profile' as ParticipantTab, label: 'My Profile', icon: User }
+    { id: 'home' as ParticipantTab, label: 'Home', shortLabel: 'Home', icon: Home },
+    { id: 'profile' as ParticipantTab, label: 'My Profile', shortLabel: 'My Profile', icon: IdCard },
+    { id: 'events' as ParticipantTab, label: 'Events', shortLabel: 'Events', icon: Calendar, badge: upcomingCount },
+    { id: 'community' as ParticipantTab, label: 'Community', shortLabel: 'Community', icon: Users }
   ];
 
   // Guest view: include My Profile tab to showcase features unlocked by joining
@@ -90,7 +90,7 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
                     <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#35C8A8]" />
                   )}
                 </div>
-                <span className="text-[10px] tracking-tight">{tab.label}</span>
+                <span className="text-[10px] tracking-tight">{tab.shortLabel || tab.label}</span>
                 {isActive && (
                   <div className="w-1.5 h-1.5 rounded-full bg-[#FF6036] -mt-0.5" />
                 )}

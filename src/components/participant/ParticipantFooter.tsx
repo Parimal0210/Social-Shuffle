@@ -12,7 +12,8 @@ import {
   Users,
   CheckCircle2,
   X,
-  ExternalLink
+  ExternalLink,
+  IdCard
 } from 'lucide-react';
 import { SocialShuffleIcon } from '../SocialShuffleLogo';
 import { ParticipantTab } from './ParticipantNav';
@@ -125,8 +126,8 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                     onClick={() => handleTabClick('profile')}
                     className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    <Trophy className="w-3.5 h-3.5 text-[#FFC226]" />
-                    <span>My Profile & Progress</span>
+                    <IdCard className="w-3.5 h-3.5 text-[#FFC226]" />
+                    <span>My Profile</span>
                   </button>
                 </li>
                 <li>
