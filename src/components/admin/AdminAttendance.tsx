@@ -175,25 +175,25 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
   return (
     <div className="space-y-6">
       {/* Event Selection & Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#161822] p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#1C1B18] p-4 sm:p-5 rounded-2xl border border-[#36332D] shadow-xl">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#35C8A8]/15 text-[#35C8A8] border border-[#35C8A8]/30">
               Live Event-Day Station
             </span>
             {isOfflineMode && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC226]/15 text-[#FFC226] border border-[#FFC226]/30 flex items-center gap-1">
                 <WifiOff className="w-3 h-3" />
                 Offline Mode Active ({offlineSyncQueue.length} queued)
               </span>
             )}
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#F5F2EB] tracking-tight">
             Live Attendance & Check-In
           </h2>
 
-          <div className="text-xs text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-[#A8A29E] flex items-center gap-2">
             <span>📅 {currentEvent?.time}</span>
             <span>•</span>
             <span>📍 {currentEvent?.venue} ({currentEvent?.area})</span>
@@ -206,7 +206,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
             id="select-event-attendance"
             value={selectedEventId}
             onChange={e => setSelectedEventId(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-purple-500 max-w-xs"
+            className="bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-xs font-bold text-[#F5F2EB] focus:outline-none focus:border-[#FF6036] max-w-xs"
           >
             {events.map(ev => (
               <option key={ev.id} value={ev.id}>
@@ -223,19 +223,19 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               setQrCodeInput('');
               setIsQrScannerOpen(true);
             }}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+            className="px-3.5 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#FF6036]/20 transition-all active:scale-95"
             title="Open QR scanner for attendee check-in"
           >
-            <QrCode className="w-4 h-4 text-purple-200" />
+            <QrCode className="w-4 h-4 text-white" />
             <span>Scan QR Pass</span>
           </button>
 
           <button
             id="btn-add-walk-in"
             onClick={() => setIsWalkInModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 transition-all"
+            className="px-3.5 py-2 rounded-xl bg-[#24221E] hover:bg-[#2C2924] border border-[#36332D] text-[#F5F2EB] font-heading font-bold text-xs flex items-center gap-1.5 shadow transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#FF6036]" />
             <span>+ Walk-In</span>
           </button>
 
@@ -243,7 +243,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           <button
             id="btn-attendance-push-notif"
             onClick={() => setIsNotificationModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#090F22] hover:bg-[#1E293B] border border-[#FF6036]/60 hover:border-[#FF6036] text-[#FF6036] hover:text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            className="px-3.5 py-2 rounded-xl bg-[#24221E] hover:bg-[#2C2924] border border-[#FF6036]/50 hover:border-[#FF6036] text-[#FF6036] hover:text-white font-heading font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
             title="Push email notification to all attendees of this event"
           >
             <Bell className="w-3.5 h-3.5 text-[#FF6036] animate-pulse" />
@@ -254,7 +254,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           {isOfflineMode && offlineSyncQueue.length > 0 && (
             <button
               onClick={syncOfflineData}
-              className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all"
+              className="px-3 py-2 rounded-xl bg-[#35C8A8] hover:bg-[#2bb496] text-[#141312] font-bold text-xs flex items-center gap-1.5 shadow transition-all"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Sync ({offlineSyncQueue.length})</span>
@@ -265,68 +265,68 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
       {/* Real-time Attendance KPI Strip (Touch glanceable) */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="p-3.5 rounded-xl bg-[#161822] border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+        <div className="p-3.5 rounded-xl bg-[#1C1B18] border border-[#36332D] text-center">
+          <span className="text-[10px] text-[#A8A29E] font-bold uppercase tracking-wider block">
             Total Expected Pax
           </span>
-          <span className="text-xl sm:text-2xl font-black text-white mt-0.5 block">
+          <span className="text-xl sm:text-2xl font-black text-[#F5F2EB] mt-0.5 block">
             {totalRegisteredPax}
           </span>
-          <span className="text-[10px] text-slate-500">{currentEventRegistrations.length} bookings</span>
+          <span className="text-[10px] text-[#78716C]">{currentEventRegistrations.length} bookings</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#161822] border border-emerald-500/20 text-center">
-          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">
+        <div className="p-3.5 rounded-xl bg-[#1C1B18] border border-[#35C8A8]/30 text-center">
+          <span className="text-[10px] text-[#35C8A8] font-bold uppercase tracking-wider block">
             Checked-In Pax
           </span>
-          <span className="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5 block">
+          <span className="text-xl sm:text-2xl font-black text-[#35C8A8] mt-0.5 block">
             {checkedInPax}
           </span>
-          <span className="text-[10px] text-emerald-400 font-semibold">{checkedInRegs.length} shufflers</span>
+          <span className="text-[10px] text-[#35C8A8]/90 font-semibold">{checkedInRegs.length} shufflers</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#161822] border border-amber-500/20 text-center">
-          <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">
+        <div className="p-3.5 rounded-xl bg-[#1C1B18] border border-[#FFC226]/30 text-center">
+          <span className="text-[10px] text-[#FFC226] font-bold uppercase tracking-wider block">
             Pending Arrival
           </span>
-          <span className="text-xl sm:text-2xl font-black text-amber-400 mt-0.5 block">
+          <span className="text-xl sm:text-2xl font-black text-[#FFC226] mt-0.5 block">
             {pendingRegs.reduce((acc, curr) => acc + curr.paxCount, 0)}
           </span>
-          <span className="text-[10px] text-amber-400 font-semibold">{pendingRegs.length} shufflers</span>
+          <span className="text-[10px] text-[#FFC226]/90 font-semibold">{pendingRegs.length} shufflers</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#161822] border border-rose-500/20 text-center">
+        <div className="p-3.5 rounded-xl bg-[#1C1B18] border border-rose-500/20 text-center">
           <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider block">
             Cancelled
           </span>
           <span className="text-xl sm:text-2xl font-black text-rose-400 mt-0.5 block">
             {cancelledRegs.length}
           </span>
-          <span className="text-[10px] text-slate-500">Seats freed</span>
+          <span className="text-[10px] text-[#78716C]">Seats freed</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#161822] border border-purple-500/20 text-center col-span-2 sm:col-span-1">
-          <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider block">
+        <div className="p-3.5 rounded-xl bg-[#1C1B18] border border-[#8F43EE]/30 text-center col-span-2 sm:col-span-1">
+          <span className="text-[10px] text-[#8F43EE] font-bold uppercase tracking-wider block">
             Capacity
           </span>
-          <span className="text-xl sm:text-2xl font-black text-purple-300 mt-0.5 block">
+          <span className="text-xl sm:text-2xl font-black text-[#8F43EE] mt-0.5 block">
             {capacityUtilization}%
           </span>
-          <span className="text-[10px] text-slate-400">{currentEvent?.capacity} max venue</span>
+          <span className="text-[10px] text-[#A8A29E]">{currentEvent?.capacity} max venue</span>
         </div>
       </div>
 
       {/* Fast Search & Filters */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-[#78716C]" />
           <input
             id="input-attendance-search"
             type="text"
             placeholder="Search by attendee name, phone, email, guest name..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500 placeholder:text-slate-500"
+            className="w-full bg-[#1C1B18] border border-[#36332D] rounded-xl pl-9 pr-3 py-2 text-xs text-[#F5F2EB] focus:outline-none focus:border-[#FF6036] placeholder:text-[#78716C]"
           />
         </div>
 
@@ -334,7 +334,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           <select
             value={attendanceFilter}
             onChange={e => setAttendanceFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-purple-500"
+            className="bg-[#1C1B18] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
           >
             <option value="all">All Attendance</option>
             <option value="Checked In">Checked In</option>
@@ -346,7 +346,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
           <select
             value={paymentFilter}
             onChange={e => setPaymentFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-purple-500"
+            className="bg-[#1C1B18] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
           >
             <option value="all">All Payments</option>
             <option value="Confirmed">Confirmed</option>
@@ -359,10 +359,10 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
       {/* Main Attendance Table / Cards (Optimized for 1-tap operation) */}
       <div className="space-y-3">
         {filteredRegistrations.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-[#161822] border border-slate-800 text-center space-y-2">
-            <Users className="w-8 h-8 text-slate-500 mx-auto" />
-            <h4 className="text-sm font-bold text-white">No registrations match current filters</h4>
-            <p className="text-xs text-slate-400">
+          <div className="p-8 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center space-y-2">
+            <Users className="w-8 h-8 text-[#78716C] mx-auto" />
+            <h4 className="text-sm font-heading font-bold text-[#F5F2EB]">No registrations match current filters</h4>
+            <p className="text-xs text-[#A8A29E]">
               Try adjusting the search query or use "+ Walk-In" to register an attendee on the spot.
             </p>
           </div>
@@ -376,10 +376,10 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 key={reg.id}
                 className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg ${
                   isCheckedIn
-                    ? 'bg-[#141d1a] border-emerald-500/40'
+                    ? 'bg-[#35C8A8]/10 border-[#35C8A8]/40'
                     : reg.attendanceStatus === 'Cancelled'
-                    ? 'bg-[#1d1416] border-rose-500/20 opacity-60'
-                    : 'bg-[#161822] border-slate-800 hover:border-purple-500/40'
+                    ? 'bg-[#1C1B18]/50 border-rose-500/20 opacity-60'
+                    : 'bg-[#1C1B18] border-[#36332D] hover:border-[#FF6036]/40'
                 }`}
               >
                 {/* Attendee Info & Quick Details */}
@@ -388,15 +388,15 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                   className="flex-1 cursor-pointer group"
                 >
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-extrabold text-white group-hover:text-purple-300 transition-colors">
+                    <span className="text-base font-heading font-bold text-[#F5F2EB] group-hover:text-[#FF6036] transition-colors">
                       {reg.participantName}
                     </span>
 
-                    <span className="text-xs px-2 py-0.5 rounded-md bg-purple-950/40 text-purple-300 font-bold border border-purple-800/30">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#24221E] text-[#FFC226] font-bold border border-[#36332D]">
                       {reg.paxCount} {reg.paxCount > 1 ? 'Pax' : 'Solo'}
                     </span>
 
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-[#A8A29E] font-medium">
                       {reg.participantPhone}
                     </span>
 
@@ -415,17 +415,17 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                       title="Tap to toggle payment status"
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer transition-all ${
                         reg.paymentStatus === 'Confirmed'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'
+                          ? 'bg-[#35C8A8]/15 text-[#35C8A8] border border-[#35C8A8]/30 hover:bg-[#35C8A8]/25'
                           : reg.paymentStatus === 'Pending'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'bg-[#FFC226]/15 text-[#FFC226] border border-[#FFC226]/30 hover:bg-[#FFC226]/25'
+                          : 'bg-[#24221E] text-[#A8A29E] border border-[#36332D]'
                       }`}
                     >
                       💳 {reg.paymentStatus}
                     </span>
 
                     {reg.checkInTime && (
-                      <span className="text-[10px] text-emerald-400 font-semibold">
+                      <span className="text-[10px] text-[#35C8A8] font-semibold">
                         Checked in @ {reg.checkInTime}
                       </span>
                     )}
@@ -433,11 +433,11 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
                   {/* Accompanying guests preview */}
                   {reg.guests.length > 0 && (
-                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <Users className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="text-xs text-[#A8A29E] mt-1 flex items-center gap-1.5 flex-wrap">
+                      <Users className="w-3.5 h-3.5 text-[#78716C]" />
                       <span>Guests:</span>
                       {reg.guests.map((g, idx) => (
-                        <span key={idx} className="font-semibold text-slate-300">
+                        <span key={idx} className="font-semibold text-[#F5F2EB]">
                           {g.name || `Guest #${idx + 1}`}{idx < reg.guests.length - 1 ? ',' : ''}
                         </span>
                       ))}
@@ -446,19 +446,19 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
                   {/* Games played tagged for this attendee */}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <Dices className="w-3 h-3 text-purple-400" />
+                    <span className="text-[11px] text-[#A8A29E] flex items-center gap-1">
+                      <Dices className="w-3 h-3 text-[#FF6036]" />
                       Games at table:
                     </span>
                     {reg.gamesPlayed.length === 0 ? (
-                      <span className="text-[10px] text-slate-500 italic">None tagged yet</span>
+                      <span className="text-[10px] text-[#78716C] italic">None tagged yet</span>
                     ) : (
                       reg.gamesPlayed.map(gid => {
                         const gObj = games.find(g => g.id === gid);
                         return (
                           <span
                             key={gid}
-                            className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-900/40 text-purple-200 border border-purple-700/40"
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#24221E] text-[#FFC226] border border-[#36332D]"
                           >
                             {gObj ? gObj.name : gid}
                           </span>
@@ -470,7 +470,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                         e.stopPropagation();
                         setGameTaggingReg(reg);
                       }}
-                      className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 underline ml-1"
+                      className="text-[10px] font-bold text-[#35C8A8] hover:underline ml-1"
                     >
                       + Tag Games
                     </button>
@@ -483,7 +483,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                   <select
                     value={reg.attendanceStatus}
                     onChange={e => markAttendance(reg.id, e.target.value as AttendanceStatus)}
-                    className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-semibold text-white focus:outline-none focus:border-purple-500"
+                    className="bg-[#141312] border border-[#36332D] rounded-xl px-2.5 py-2 text-xs font-semibold text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                   >
                     <option value="Pending">Pending</option>
                     <option value="Checked In">Checked In</option>
@@ -496,16 +496,16 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                     <button
                       id={`btn-undo-checkin-${reg.id}`}
                       onClick={() => markAttendance(reg.id, 'Pending')}
-                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition-all flex items-center gap-1.5"
+                      className="px-4 py-2.5 rounded-xl bg-[#24221E] hover:bg-[#2C2924] text-[#A8A29E] hover:text-[#F5F2EB] text-xs font-bold border border-[#36332D] transition-all flex items-center gap-1.5"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-[#35C8A8]" />
                       <span>Undo</span>
                     </button>
                   ) : (
                     <button
                       id={`btn-1tap-checkin-${reg.id}`}
                       onClick={() => markAttendance(reg.id, 'Checked In')}
-                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-1.5 transform active:scale-95"
+                      className="px-5 py-2.5 rounded-xl bg-[#35C8A8] hover:bg-[#2bb496] text-[#141312] text-xs font-heading font-extrabold shadow-lg shadow-[#35C8A8]/20 transition-all flex items-center gap-1.5 transform active:scale-95"
                     >
                       <UserCheck className="w-4 h-4" />
                       <span>Check In</span>
@@ -515,7 +515,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                   <button
                     onClick={() => setSelectedAttendeeDrawer(reg)}
                     title="View Profile Drawer"
-                    className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                    className="p-2 rounded-xl bg-[#24221E] hover:bg-[#2C2924] text-[#A8A29E] hover:text-[#F5F2EB] border border-[#36332D] transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -528,19 +528,19 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
       {/* GAME TAGGING MODAL (Record games played by attendee at this event) */}
       {gameTaggingReg && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161822] border border-purple-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
               <div>
-                <h3 className="text-base font-black text-white">Record Games Played</h3>
-                <p className="text-xs text-purple-400 font-semibold">{gameTaggingReg.participantName}</p>
+                <h3 className="text-base font-heading font-bold text-[#F5F2EB]">Record Games Played</h3>
+                <p className="text-xs text-[#FF6036] font-semibold">{gameTaggingReg.participantName}</p>
               </div>
-              <button onClick={() => setGameTaggingReg(null)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setGameTaggingReg(null)} className="text-[#A8A29E] hover:text-[#F5F2EB]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-[#A8A29E]">
               Select which games this attendee played at this meetup. These will automatically save to their permanent Social Shuffle profile & stats!
             </p>
 
@@ -559,10 +559,10 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                         : [...gameTaggingReg.gamesPlayed, game.id];
                       setGameTaggingReg({ ...gameTaggingReg, gamesPlayed: updatedPlayed });
                     }}
-                    className={`p-2 rounded-xl text-left text-xs font-semibold border transition-all flex items-center justify-between ${
+                    className={`p-2.5 rounded-xl text-left text-xs font-semibold border transition-all flex items-center justify-between ${
                       isSelected
-                        ? 'bg-purple-600 border-purple-500 text-white shadow-md'
-                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                        ? 'bg-[#FF6036] border-[#FF6036] text-white shadow-md'
+                        : 'bg-[#24221E] border-[#36332D] text-[#A8A29E] hover:text-[#F5F2EB] hover:bg-[#2C2924]'
                     }`}
                   >
                     <span className="truncate">{game.name}</span>
@@ -572,10 +572,10 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-3 border-t border-[#2C2924] flex justify-end">
               <button
                 onClick={() => setGameTaggingReg(null)}
-                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow"
+                className="px-5 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-md shadow-[#FF6036]/20"
               >
                 Done Tagging
               </button>
@@ -586,49 +586,49 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
       {/* WALK-IN REGISTRATION MODAL */}
       {isWalkInModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161822] border border-purple-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
               <div>
-                <h3 className="text-base font-black text-white">Event-Day Walk-In Registration</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{currentEvent?.title}</p>
+                <h3 className="text-base font-heading font-bold text-[#F5F2EB]">Event-Day Walk-In Registration</h3>
+                <p className="text-xs text-[#A8A29E] mt-0.5">{currentEvent?.title}</p>
               </div>
-              <button onClick={() => setIsWalkInModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsWalkInModalOpen(false)} className="text-[#A8A29E] hover:text-[#F5F2EB]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleWalkInSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Attendee Full Name</label>
+                <label className="block text-[#A8A29E] font-semibold mb-1">Attendee Full Name</label>
                 <input
                   type="text"
                   required
                   value={walkInName}
                   onChange={e => setWalkInName(e.target.value)}
                   placeholder="e.g. Vikram Seth"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Phone Number</label>
+                  <label className="block text-[#A8A29E] font-semibold mb-1">Phone Number</label>
                   <input
                     type="tel"
                     required
                     value={walkInPhone}
                     onChange={e => setWalkInPhone(e.target.value)}
                     placeholder="+91 98220 12345"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Pune Area</label>
+                  <label className="block text-[#A8A29E] font-semibold mb-1">Pune Area</label>
                   <select
                     value={walkInArea}
                     onChange={e => setWalkInArea(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                   >
                     <option value="Koregaon Park">Koregaon Park</option>
                     <option value="Baner">Baner</option>
@@ -642,22 +642,22 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Pax Count</label>
+                  <label className="block text-[#A8A29E] font-semibold mb-1">Pax Count</label>
                   <input
                     type="number"
                     min="1"
                     max="10"
                     value={walkInPax}
                     onChange={e => setWalkInPax(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Payment Status</label>
+                  <label className="block text-[#A8A29E] font-semibold mb-1">Payment Status</label>
                   <select
                     value={walkInPayment}
                     onChange={e => setWalkInPayment(e.target.value as PaymentStatus)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
                   >
                     <option value="Confirmed">Confirmed (Cash / UPI)</option>
                     <option value="Pending">Pending</option>
@@ -666,9 +666,9 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 flex justify-between items-center text-xs">
-                <span className="text-slate-300">Total Due ({walkInPax} tickets)</span>
-                <span className="text-amber-400 font-bold text-sm">
+              <div className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D] flex justify-between items-center text-xs">
+                <span className="text-[#A8A29E]">Total Due ({walkInPax} tickets)</span>
+                <span className="text-[#FFC226] font-bold text-sm">
                   ₹{walkInPax * (currentEvent?.ticketPrice || 250)}
                 </span>
               </div>
@@ -677,13 +677,13 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 <button
                   type="button"
                   onClick={() => setIsWalkInModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-semibold hover:bg-slate-800"
+                  className="flex-1 py-2.5 rounded-xl border border-[#36332D] text-[#A8A29E] font-semibold hover:bg-[#24221E] hover:text-[#F5F2EB]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-600/30"
+                  className="flex-1 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold shadow-lg shadow-[#FF6036]/20"
                 >
                   Complete Walk-In & Check In
                 </button>
@@ -695,15 +695,15 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
       {/* SLIDE-OUT RIGHT DRAWER FOR TABLET / DESKTOP (Section 10 Customer Profile) */}
       {selectedAttendeeDrawer && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
-          <div className="bg-[#161822] border-l border-slate-800 w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-purple-400">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
+          <div className="bg-[#1C1B18] border-l border-[#36332D] w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#FF6036]">
                 Participant CRM Profile
               </span>
               <button
                 onClick={() => setSelectedAttendeeDrawer(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-[#A8A29E] hover:text-[#F5F2EB] p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -711,41 +711,41 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
             {/* Profile Header */}
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xl font-black">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF6036] flex items-center justify-center text-white text-xl font-heading font-black shadow-md">
                 {selectedAttendeeDrawer.participantName[0]}
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-heading font-bold text-[#F5F2EB]">
                   {selectedAttendeeDrawer.participantName}
                 </h3>
-                <span className="text-xs text-purple-300 font-semibold">
+                <span className="text-xs text-[#FFC226] font-semibold">
                   {selectedAttendeeDrawer.participantPhone}
                 </span>
-                <span className="text-xs text-slate-400 block">
+                <span className="text-xs text-[#A8A29E] block">
                   {selectedAttendeeDrawer.participantEmail}
                 </span>
               </div>
             </div>
 
             {/* Current Event Booking Details */}
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+            <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2 text-xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A8A29E] block">
                 Today's Booking
               </span>
               <div className="flex justify-between">
-                <span className="text-slate-400">Attendance Status:</span>
-                <span className="font-bold text-white">{selectedAttendeeDrawer.attendanceStatus}</span>
+                <span className="text-[#A8A29E]">Attendance Status:</span>
+                <span className="font-bold text-[#F5F2EB]">{selectedAttendeeDrawer.attendanceStatus}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Pax Count:</span>
-                <span className="font-bold text-white">{selectedAttendeeDrawer.paxCount}</span>
+                <span className="text-[#A8A29E]">Pax Count:</span>
+                <span className="font-bold text-[#F5F2EB]">{selectedAttendeeDrawer.paxCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Payment:</span>
-                <span className="font-bold text-amber-400">{selectedAttendeeDrawer.paymentStatus}</span>
+                <span className="text-[#A8A29E]">Payment:</span>
+                <span className="font-bold text-[#FFC226]">{selectedAttendeeDrawer.paymentStatus}</span>
               </div>
               {selectedAttendeeDrawer.notes && (
-                <div className="pt-1 text-slate-300 italic">
+                <div className="pt-1 text-[#A8A29E] italic">
                   Note: "{selectedAttendeeDrawer.notes}"
                 </div>
               )}
@@ -758,30 +758,30 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
               return (
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-slate-300 block">Lifetime Shuffle History</span>
+                  <span className="text-xs font-bold text-[#F5F2EB] block">Lifetime Shuffle History</span>
                   <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block">Events Attended</span>
-                      <span className="text-lg font-black text-purple-400">{part.totalEventsAttended}</span>
+                    <div className="p-3 rounded-xl bg-[#24221E] border border-[#36332D]">
+                      <span className="text-[#A8A29E] text-[10px] block">Events Attended</span>
+                      <span className="text-lg font-heading font-bold text-[#FF6036]">{part.totalEventsAttended}</span>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block">Games Mastered</span>
-                      <span className="text-lg font-black text-cyan-400">{part.gamesPlayedIds.length}</span>
+                    <div className="p-3 rounded-xl bg-[#24221E] border border-[#36332D]">
+                      <span className="text-[#A8A29E] text-[10px] block">Games Mastered</span>
+                      <span className="text-lg font-heading font-bold text-[#35C8A8]">{part.gamesPlayedIds.length}</span>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block">Friends Brought</span>
-                      <span className="text-lg font-black text-emerald-400">{part.totalPaxBrought}</span>
+                    <div className="p-3 rounded-xl bg-[#24221E] border border-[#36332D]">
+                      <span className="text-[#A8A29E] text-[10px] block">Friends Brought</span>
+                      <span className="text-lg font-heading font-bold text-[#FFC226]">{part.totalPaxBrought}</span>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block">Locality</span>
-                      <span className="text-xs font-bold text-white mt-1 block">{part.area}</span>
+                    <div className="p-3 rounded-xl bg-[#24221E] border border-[#36332D]">
+                      <span className="text-[#A8A29E] text-[10px] block">Locality</span>
+                      <span className="text-xs font-bold text-[#F5F2EB] mt-1 block">{part.area}</span>
                     </div>
                   </div>
 
                   {/* Games Played List */}
                   {part.gamesPlayedIds.length > 0 && (
                     <div className="pt-2">
-                      <span className="text-[11px] font-bold text-slate-400 block mb-1.5">
+                      <span className="text-[11px] font-bold text-[#A8A29E] block mb-1.5">
                         Games Played In Total:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -790,7 +790,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                           return (
                             <span
                               key={gid}
-                              className="text-[10px] px-2 py-0.5 rounded-md bg-purple-950/40 text-purple-200 border border-purple-800/40"
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-[#24221E] text-[#FFC226] border border-[#36332D]"
                             >
                               {g ? g.name : gid}
                             </span>
@@ -803,10 +803,10 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               );
             })()}
 
-            <div className="pt-4 border-t border-slate-800">
+            <div className="pt-4 border-t border-[#2C2924]">
               <button
                 onClick={() => setSelectedAttendeeDrawer(null)}
-                className="w-full py-2.5 rounded-xl bg-slate-800 text-white font-semibold text-xs hover:bg-slate-700"
+                className="w-full py-2.5 rounded-xl bg-[#24221E] text-[#F5F2EB] font-heading font-bold text-xs hover:bg-[#2C2924] border border-[#36332D]"
               >
                 Close Profile
               </button>
@@ -817,47 +817,47 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
       {/* Door QR & Ticket Scanner Modal */}
       {isQrScannerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#151722] border-2 border-indigo-500/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#1C1B18] border border-[#36332D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+                <div className="p-2 rounded-xl bg-[#FF6036] text-white shadow-md">
                   <QrCode className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">Door QR Scanner & Check-In</h3>
-                  <p className="text-[11px] text-slate-400">
+                  <h3 className="text-base font-heading font-bold text-[#F5F2EB]">Door QR Scanner & Check-In</h3>
+                  <p className="text-[11px] text-[#A8A29E]">
                     {currentEvent?.title} (#{currentEvent?.number})
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsQrScannerOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-[#A8A29E] hover:text-[#F5F2EB] p-1 rounded-lg hover:bg-[#24221E]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Viewfinder Graphic with Laser Scan line */}
-            <div className="relative rounded-2xl bg-[#0b0d14] border-2 border-dashed border-indigo-500/50 p-6 flex flex-col items-center justify-center overflow-hidden">
+            <div className="relative rounded-2xl bg-[#141312] border-2 border-dashed border-[#FF6036]/40 p-6 flex flex-col items-center justify-center overflow-hidden">
               {/* Laser animation bar */}
-              <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#38bdf8] animate-pulse" />
+              <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#FF6036] to-transparent shadow-[0_0_12px_#FF6036] animate-pulse" />
 
-              <div className="w-40 h-40 border-2 border-cyan-500/40 rounded-2xl flex flex-col items-center justify-center relative bg-indigo-950/20">
-                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
-                <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
-                <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
-                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+              <div className="w-40 h-40 border-2 border-[#35C8A8]/40 rounded-2xl flex flex-col items-center justify-center relative bg-[#24221E]/60">
+                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#35C8A8]" />
+                <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#35C8A8]" />
+                <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#35C8A8]" />
+                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#35C8A8]" />
 
-                <Camera className="w-10 h-10 text-cyan-400/80 animate-pulse mb-2" />
-                <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest text-center px-2">
+                <Camera className="w-10 h-10 text-[#35C8A8] animate-pulse mb-2" />
+                <span className="text-[10px] font-bold text-[#35C8A8] uppercase tracking-widest text-center px-2">
                   Scanner Active
                 </span>
               </div>
 
-              <span className="text-[11px] text-slate-400 mt-3 text-center">
+              <span className="text-[11px] text-[#A8A29E] mt-3 text-center">
                 Point device camera at attendee pass or use scanner gun below.
               </span>
             </div>
@@ -877,11 +877,11 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                   value={qrCodeInput}
                   onChange={e => setQrCodeInput(e.target.value)}
                   placeholder="Paste or scan QR code token (e.g., SS-REG-...)..."
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                  className="flex-1 bg-[#141312] border border-[#36332D] rounded-xl px-3.5 py-2.5 text-xs text-[#F5F2EB] placeholder-[#78716C] focus:outline-none focus:border-[#FF6036] font-mono"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all"
+                  className="px-4 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-md shadow-[#FF6036]/20 transition-all"
                 >
                   Verify
                 </button>
@@ -890,7 +890,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
 
             {/* Quick 1-Tap Demo Test Attendees for Testing */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] block">
                 Quick Test with Event Attendees (1-Click Sim):
               </span>
               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
@@ -904,13 +904,13 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                       onClick={() => handleVerifyQr(token)}
                       className={`text-[11px] px-2.5 py-1 rounded-lg border font-medium transition-all flex items-center gap-1 ${
                         isChecked
-                          ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
-                          : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                          ? 'bg-[#35C8A8]/20 border-[#35C8A8]/40 text-[#35C8A8]'
+                          : 'bg-[#24221E] border-[#36332D] text-[#A8A29E] hover:bg-[#2C2924] hover:text-[#F5F2EB]'
                       }`}
                     >
                       <span>{isChecked ? '✓' : '🎲'}</span>
                       <span>{reg.participantName}</span>
-                      <span className="text-[9px] text-slate-400 font-mono">({token.slice(-6)})</span>
+                      <span className="text-[9px] text-[#78716C] font-mono">({token.slice(-6)})</span>
                     </button>
                   );
                 })}
@@ -922,17 +922,17 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               <div
                 className={`p-3.5 rounded-2xl text-xs space-y-1.5 border animate-in fade-in zoom-in-95 duration-150 ${
                   qrScanMessage.type === 'success'
-                    ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+                    ? 'bg-[#35C8A8]/15 border-[#35C8A8]/40 text-[#35C8A8]'
                     : qrScanMessage.type === 'warning'
-                    ? 'bg-amber-950/50 border-amber-500/40 text-amber-200'
+                    ? 'bg-[#FFC226]/15 border-[#FFC226]/40 text-[#FFC226]'
                     : 'bg-rose-950/50 border-rose-500/40 text-rose-200'
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold text-sm">
                   {qrScanMessage.type === 'success' ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-[#35C8A8] shrink-0" />
                   ) : qrScanMessage.type === 'warning' ? (
-                    <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+                    <Clock className="w-5 h-5 text-[#FFC226] shrink-0" />
                   ) : (
                     <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
                   )}
@@ -940,11 +940,11 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 </div>
 
                 {qrScanMessage.reg && (
-                  <div className="pt-2 mt-1 border-t border-white/10 text-[11px] grid grid-cols-2 gap-2">
-                    <div><strong>Participant:</strong> {qrScanMessage.reg.participantName}</div>
-                    <div><strong>Pax:</strong> {qrScanMessage.reg.paxCount} Shuffler(s)</div>
-                    <div><strong>Phone:</strong> {qrScanMessage.reg.participantPhone}</div>
-                    <div><strong>Payment:</strong> {qrScanMessage.reg.paymentStatus}</div>
+                  <div className="pt-2 mt-1 border-t border-white/10 text-[11px] grid grid-cols-2 gap-2 text-[#A8A29E]">
+                    <div><strong className="text-[#F5F2EB]">Participant:</strong> {qrScanMessage.reg.participantName}</div>
+                    <div><strong className="text-[#F5F2EB]">Pax:</strong> {qrScanMessage.reg.paxCount} Shuffler(s)</div>
+                    <div><strong className="text-[#F5F2EB]">Phone:</strong> {qrScanMessage.reg.participantPhone}</div>
+                    <div><strong className="text-[#F5F2EB]">Payment:</strong> {qrScanMessage.reg.paymentStatus}</div>
                   </div>
                 )}
               </div>
@@ -955,7 +955,7 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
               <button
                 type="button"
                 onClick={() => setIsQrScannerOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#24221E] hover:bg-[#2C2924] text-[#F5F2EB] border border-[#36332D] text-xs font-bold transition-colors"
               >
                 Done Scanning
               </button>

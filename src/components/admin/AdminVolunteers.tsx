@@ -16,10 +16,10 @@ export const AdminVolunteers: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight">
+          <h2 className="text-xl font-heading font-bold text-[#F5F2EB] tracking-tight">
             Volunteer Applications ({volunteersList.length})
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#A8A29E] mt-0.5">
             Review community members who want to teach board games and host Pune meetups
           </p>
         </div>
@@ -31,8 +31,8 @@ export const AdminVolunteers: React.FC = () => {
               onClick={() => setFilterStatus(st)}
               className={`px-3 py-1 rounded-xl text-xs font-semibold transition-colors ${
                 filterStatus === st
-                  ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#FF6036] text-white shadow-sm'
+                  : 'bg-[#1C1B18] border border-[#36332D] text-[#A8A29E] hover:text-[#F5F2EB]'
               }`}
             >
               {st}
@@ -46,53 +46,53 @@ export const AdminVolunteers: React.FC = () => {
         {filtered.map(vol => (
           <div
             key={vol.id}
-            className="p-5 rounded-2xl bg-[#161822] border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-xl space-y-4 flex flex-col justify-between"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h4 className="text-base font-black text-white">{vol.name}</h4>
-                  <span className="text-xs text-purple-300 font-semibold">{vol.area}, Pune</span>
+                  <h4 className="text-base font-heading font-bold text-[#F5F2EB]">{vol.name}</h4>
+                  <span className="text-xs text-[#FFC226] font-semibold">{vol.area}, Pune</span>
                 </div>
 
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                     vol.status === 'Accepted'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      ? 'bg-[#35C8A8]/20 text-[#35C8A8] border border-[#35C8A8]/30'
                       : vol.status === 'Under Review'
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      ? 'bg-[#FFC226]/20 text-[#FFC226] border border-[#FFC226]/30'
                       : vol.status === 'New'
-                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                      : 'bg-slate-800 text-slate-400'
+                      ? 'bg-[#FF6036]/20 text-[#FF6036] border border-[#FF6036]/30'
+                      : 'bg-[#24221E] text-[#A8A29E]'
                   }`}
                 >
                   {vol.status}
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#A8A29E]">
                 <span className="flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <Phone className="w-3.5 h-3.5 text-[#35C8A8]" />
                   {vol.phone}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5 text-purple-400" />
+                  <Mail className="w-3.5 h-3.5 text-[#FF6036]" />
                   {vol.email}
                 </span>
               </div>
 
               {/* Motivation */}
               <div className="text-xs space-y-1">
-                <span className="text-slate-400 font-semibold block">Motivation & Love for Games:</span>
-                <p className="text-slate-200 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
+                <span className="text-[#A8A29E] font-semibold block">Motivation & Love for Games:</span>
+                <p className="text-[#F5F2EB] bg-[#24221E] p-2.5 rounded-xl border border-[#36332D] italic">
                   "{vol.reason}"
                 </p>
               </div>
 
               {/* Skills */}
               <div className="text-xs space-y-1">
-                <span className="text-slate-400 font-semibold block">Teaching Strengths & Experience:</span>
-                <p className="text-slate-300 bg-slate-900/40 p-2.5 rounded-xl border border-slate-800">
+                <span className="text-[#A8A29E] font-semibold block">Teaching Strengths & Experience:</span>
+                <p className="text-[#A8A29E] bg-[#24221E]/60 p-2.5 rounded-xl border border-[#36332D]">
                   {vol.skills} • {vol.experience}
                 </p>
               </div>
@@ -100,14 +100,14 @@ export const AdminVolunteers: React.FC = () => {
               {/* Preferred duties */}
               {vol.preferredResponsibilities.length > 0 && (
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block mb-1">
+                  <span className="text-[11px] font-semibold text-[#A8A29E] block mb-1">
                     Preferred Responsibilities:
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {vol.preferredResponsibilities.map((resp, i) => (
                       <span
                         key={i}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-purple-950/40 text-purple-300 border border-purple-800/40 font-medium"
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-[#24221E] text-[#FFC226] border border-[#36332D] font-medium"
                       >
                         {resp}
                       </span>
@@ -118,24 +118,24 @@ export const AdminVolunteers: React.FC = () => {
             </div>
 
             {/* Action buttons */}
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-slate-500">Applied {vol.submittedAt}</span>
+            <div className="pt-3 border-t border-[#2C2924] flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#78716C]">Applied {vol.submittedAt}</span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => updateVolunteerStatus(vol.id, 'Under Review')}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                  className="px-2.5 py-1 rounded-lg bg-[#24221E] hover:bg-[#2C2924] text-[#A8A29E] hover:text-[#F5F2EB] text-xs font-semibold border border-[#36332D]"
                 >
                   Review
                 </button>
                 <button
                   onClick={() => updateVolunteerStatus(vol.id, 'Accepted')}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 text-xs font-bold border border-emerald-500/30"
+                  className="px-2.5 py-1 rounded-lg bg-[#35C8A8]/20 text-[#35C8A8] hover:bg-[#35C8A8]/30 text-xs font-bold border border-[#35C8A8]/40"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => updateVolunteerStatus(vol.id, 'On Hold')}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-semibold"
+                  className="px-2.5 py-1 rounded-lg bg-[#24221E] hover:bg-[#2C2924] text-[#78716C] text-xs font-semibold border border-[#36332D]"
                 >
                   Hold
                 </button>

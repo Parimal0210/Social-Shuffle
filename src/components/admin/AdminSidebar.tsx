@@ -66,14 +66,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   ];
 
   return (
-    <aside className="w-full lg:w-64 bg-[#090F22] border-b lg:border-b-0 lg:border-r border-[#1F305E] p-3 lg:p-4 shrink-0">
+    <aside className="w-full lg:w-64 bg-[#161513] border-b lg:border-b-0 lg:border-r border-[#2C2924] p-3 lg:p-4 shrink-0">
       <div className="mb-3 px-2 hidden lg:flex items-center gap-2.5">
         <SocialShuffleIcon size={22} />
         <div>
-          <span className="text-[11px] font-black uppercase tracking-wider text-[#35C8A8] block">
+          <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-[#35C8A8] block">
             Admin Console
           </span>
-          <span className="text-[11px] text-slate-400">Social Shuffle Pune</span>
+          <span className="text-[11px] text-[#A8A29E]">Social Shuffle Pune</span>
         </div>
       </div>
 
@@ -87,20 +87,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               key={item.id}
               id={`admin-nav-${item.id}`}
               onClick={() => onSelectSection(item.id)}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-left ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-heading font-bold whitespace-nowrap transition-all text-left ${
                 isActive
-                  ? 'bg-gradient-to-r from-[#FF6036] to-[#ff7d59] text-white shadow-lg shadow-[#FF6036]/25 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-[#111C3B]'
+                  ? 'bg-[#FF6036] text-white shadow-sm shadow-[#FF6036]/20'
+                  : 'text-[#A8A29E] hover:text-white hover:bg-[#24221E]'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#78716C]'}`} />
                 <span>{item.label}</span>
               </div>
 
               <div className="flex items-center gap-1.5 ml-2">
                 {item.badge && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                     isActive ? 'bg-white/20 text-white' : 'bg-[#35C8A8]/10 text-[#35C8A8] border border-[#35C8A8]/30'
                   }`}>
                     {item.badge}

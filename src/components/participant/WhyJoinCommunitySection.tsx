@@ -173,51 +173,44 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#0E1630] via-[#0A1128] to-[#090E20] border-2 border-[#1F305E] p-6 sm:p-8 shadow-2xl">
-      {/* Background ambient lighting */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF6036]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#35C8A8]/10 rounded-full blur-3xl pointer-events-none" />
-
+    <section className="relative overflow-hidden rounded-2xl bg-[#1C1B18] border border-[#36332D] p-6 sm:p-8 shadow-sm">
       <div className="relative z-10 space-y-6 sm:space-y-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-2.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF6036]/15 text-[#FF8566] border border-[#FF6036]/30">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF6036]" />
-            <span>Community Member Perks</span>
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <div className="text-xs font-semibold text-[#FF7A59] font-heading uppercase tracking-wider">
+            Community Member Perks
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-heading">
             Why Join Social Shuffle Pune?
           </h2>
 
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-[#A8A29E] leading-relaxed">
             Whether you are rolling dice for the very first time or a seasoned tabletop strategist, registering as a community participant unlocks Pune's premier board gaming ecosystem:
           </p>
         </div>
 
         {/* 3 Top Community Benefits Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {benefits.map(b => (
             <div
               key={b.id}
-              className={`p-6 rounded-2xl bg-[#111C3B]/80 backdrop-blur-sm border border-[#1F305E] transition-all duration-300 flex flex-col justify-between shadow-xl group ${b.accentBorder}`}
+              className="p-5 sm:p-6 rounded-xl bg-[#24221E] border border-[#36332D] transition-all duration-200 flex flex-col justify-between group hover:border-[#FF6036]/50"
             >
               <div className="space-y-4">
                 {/* Custom Icon & Badge */}
                 <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-2xl bg-[#0A1128] border border-[#1F305E] shadow-inner group-hover:scale-105 transition-transform">
+                  <div className="p-2 rounded-xl bg-[#1C1B18] border border-[#36332D] group-hover:scale-105 transition-transform">
                     {b.icon}
                   </div>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${b.badgeColor}`}
-                  >
+                  <span className="text-[11px] font-semibold text-[#FF7A59]">
                     {b.badge}
                   </span>
                 </div>
 
                 {/* Title & Tagline */}
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight group-hover:text-white transition-colors">
+                  <h3 className="text-base font-bold text-white tracking-tight font-heading">
                     {b.title}
                   </h3>
                   <p className="text-xs font-semibold text-[#FFC226] mt-0.5">
@@ -226,14 +219,14 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
                 </div>
 
                 {/* Description */}
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-[#A8A29E] leading-relaxed">
                   {b.description}
                 </p>
 
                 {/* Feature checklist */}
-                <div className="space-y-2 pt-2 border-t border-[#1F305E]/80">
+                <div className="space-y-2 pt-3 border-t border-[#36332D]">
                   {b.bulletPoints.map((bp, i) => (
-                    <div key={i} className="flex items-start gap-2 text-[11px] text-slate-200">
+                    <div key={i} className="flex items-start gap-2 text-xs text-[#D6D3D1]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#35C8A8] shrink-0 mt-0.5" />
                       <span>{bp}</span>
                     </div>
@@ -246,14 +239,14 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
 
         {/* Bottom Curiosity & Action Callout */}
         {showCta && (
-          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#182348] via-[#152044] to-[#121A38] border border-[#FF6036]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+          <div className="p-5 sm:p-6 rounded-xl bg-[#22201C] border border-[#36332D] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-extrabold text-white">
+                <span className="text-base sm:text-lg font-bold text-white font-heading">
                   Ready to experience Pune's friendliest board game haven? 🎲
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-[#A8A29E]">
                 Registering as a participant is 100% free and takes less than 30 seconds. Over 2,400+ Pune shufflers are waiting to welcome you to the table!
               </p>
             </div>
@@ -262,7 +255,7 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
               <button
                 id="btn-why-join-register"
                 onClick={handleCta}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF6036] to-[#ff7d59] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#FF6036]/30 transition-all active:scale-95"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95"
               >
                 <span>Join Community Free</span>
                 <ArrowRight className="w-4 h-4" />

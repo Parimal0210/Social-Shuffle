@@ -71,7 +71,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1128] text-slate-100 flex flex-col font-sans selection:bg-[#FF6036] selection:text-white">
+    <div className="min-h-screen bg-[#141312] text-[#F5F2EB] flex flex-col font-sans selection:bg-[#FF6036] selection:text-white">
       {/* Top Global Header with Role Switcher, Offline status, Persona selector */}
       <Header />
 

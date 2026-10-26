@@ -71,8 +71,13 @@ interface AppContextType {
   isAdminUser: boolean;
   isGuest: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
-  registerParticipant: (data: RegisterCredentials) => Promise<{ success: boolean; message: string }>;
-  loginWithGoogle: (profile?: GoogleUserProfile) => Promise<{ success: boolean; message: string }>;
+  registerParticipant: (data: RegisterCredentials, options?: { verifiedByOtp?: boolean }) => Promise<{ success: boolean; message: string }>;
+  sendRegistrationOtp: (email: string, name?: string) => Promise<{ success: boolean; message: string; otpPreview?: string; expiresInSeconds?: number }>;
+  verifyRegistrationOtp: (email: string, otp: string) => Promise<{ success: boolean; message: string; verified?: boolean }>;
+  checkEmailVerified: (email: string) => Promise<boolean>;
+  loginWithGoogle: (profile?: GoogleUserProfile) => Promise<{ success: boolean; message: string; code?: string }>;
+  signUpWithGoogle: (profile: GoogleUserProfile) => Promise<{ success: boolean; message: string; user?: AuthUser; participant?: Participant }>;
+  continueWithGoogle: (profile: GoogleUserProfile) => Promise<{ success: boolean; message: string; code?: string; user?: AuthUser; participant?: Participant }>;
   logout: () => void;
   switchToGuestView: () => void;
   loginAsDemoParticipant: () => void;
@@ -707,13 +712,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: false, message: 'No registered participant found with this email or phone. Please sign up.' };
   };
 
-  const registerParticipant = async (data: RegisterCredentials): Promise<{ success: boolean; message: string }> => {
+  // --- Email OTP Verification Helpers for Signup ---
+  const sendRegistrationOtp = async (email: string, name?: string): Promise<{
+    success: boolean;
+    message: string;
+    otpPreview?: string;
+    expiresInSeconds?: number;
+  }> => {
+    return await api.sendOtp(email, name);
+  };
+
+  const verifyRegistrationOtp = async (email: string, otp: string): Promise<{
+    success: boolean;
+    message: string;
+    verified?: boolean;
+  }> => {
+    const res = await api.verifyOtp(email, otp);
+    if (res.success && res.verified) {
+      try {
+        const stored: string[] = JSON.parse(localStorage.getItem('social_shuffle_verified_emails') || '[]');
+        const clean = email.trim().toLowerCase();
+        if (!stored.includes(clean)) {
+          stored.push(clean);
+          localStorage.setItem('social_shuffle_verified_emails', JSON.stringify(stored));
+        }
+      } catch {}
+    }
+    return res;
+  };
+
+  const checkEmailVerified = async (email: string): Promise<boolean> => {
+    const clean = email.trim().toLowerCase();
+    try {
+      const stored: string[] = JSON.parse(localStorage.getItem('social_shuffle_verified_emails') || '[]');
+      if (stored.includes(clean)) return true;
+      const res = await api.checkOtpStatus(clean);
+      return res.verified;
+    } catch {
+      return false;
+    }
+  };
+
+  const registerParticipant = async (
+    data: RegisterCredentials,
+    options?: { verifiedByOtp?: boolean }
+  ): Promise<{ success: boolean; message: string }> => {
     if (!data.name.trim() || !data.email.trim() || !data.phone.trim()) {
       return { success: false, message: 'Please provide your full name, email, and phone number.' };
     }
 
     const emailClean = data.email.trim().toLowerCase();
     const phoneClean = data.phone.trim();
+
+    // STRICT REQUIREMENT: Only users with verified emails can finish signup process
+    const isEmailVerified = Boolean(options?.verifiedByOtp) || (await checkEmailVerified(emailClean));
+    if (!isEmailVerified) {
+      return {
+        success: false,
+        message: 'Email not verified. Please verify your email with the 6-digit OTP code before completing signup.'
+      };
+    }
 
     // STRICT ACCESS CONTROL: Registration is strictly for participants only
     if (emailClean === 'admin@socialshuffle.com' || phoneClean.replace(/[^0-9]/g, '') === '9822011223' || emailClean.includes('admin@')) {
@@ -802,8 +860,243 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: `Welcome to Social Shuffle Pune, ${data.name}!` };
   };
 
-  // Google Account Sign-In / Registration
-  const loginWithGoogle = async (googleProfile?: GoogleUserProfile): Promise<{ success: boolean; message: string }> => {
+  // 1. Google Account Sign-Up:
+  // Fetches all details of that Google account, stores in database/participants collection,
+  // logs user in as participant, and displays participant view!
+  const signUpWithGoogle = async (googleProfile: GoogleUserProfile): Promise<{
+    success: boolean;
+    message: string;
+    user?: AuthUser;
+    participant?: Participant;
+  }> => {
+    const emailClean = googleProfile.email.trim().toLowerCase();
+    const nameClean = googleProfile.name.trim();
+
+    try {
+      // 1. Store in backend database via Express REST API
+      const backendRes = await api.googleSignUp({
+        email: emailClean,
+        name: nameClean,
+        avatar: googleProfile.avatar,
+        phone: googleProfile.phone,
+        area: googleProfile.area,
+        googleId: googleProfile.googleId
+      });
+
+      let participantObj: Participant;
+      let authUser: AuthUser;
+
+      if (backendRes && backendRes.success && backendRes.participant && backendRes.user) {
+        participantObj = backendRes.participant;
+        authUser = backendRes.user;
+      } else {
+        // Fallback local participant object
+        const pId = `p-google-${Date.now().toString(36)}`;
+        participantObj = {
+          id: pId,
+          name: nameClean,
+          email: emailClean,
+          phone: googleProfile.phone || '+91 98220 ' + Math.floor(10000 + Math.random() * 90000),
+          area: googleProfile.area || 'Koregaon Park',
+          avatar: googleProfile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nameClean)}`,
+          bio: 'Pune board gamer • Connected via Google Account',
+          joinedDate: new Date().toISOString().slice(0, 10),
+          totalEventsAttended: 0,
+          totalRegistrations: 0,
+          gamesPlayedIds: [],
+          venuesVisited: [],
+          totalPaxBrought: 0
+        };
+        authUser = {
+          id: `u-${pId}`,
+          name: nameClean,
+          email: emailClean,
+          phone: participantObj.phone,
+          role: 'participant', // STRICT PARTICIPANT ROLE
+          area: participantObj.area,
+          participantId: pId,
+          avatar: participantObj.avatar,
+          bio: participantObj.bio,
+          authProvider: 'google',
+          loginAt: new Date().toISOString(),
+          lastActiveAt: new Date().toISOString()
+        };
+      }
+
+      // Add to participants array in local state & localStorage
+      setParticipants(prev => {
+        const idx = prev.findIndex(p => p.email.trim().toLowerCase() === emailClean);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = participantObj;
+          return updated;
+        }
+        return [participantObj, ...prev];
+      });
+
+      // Record in local registered Google emails store
+      try {
+        const storedList: string[] = JSON.parse(localStorage.getItem('social_shuffle_registered_google_emails') || '[]');
+        if (!storedList.includes(emailClean)) {
+          storedList.push(emailClean);
+          localStorage.setItem('social_shuffle_registered_google_emails', JSON.stringify(storedList));
+        }
+      } catch {}
+
+      // Active session initiation
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
+
+      setCurrentUser(authUser);
+      setRoleState('participant');
+      setCurrentParticipantId(participantObj.id);
+      setShowAuthModal(false);
+
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+      } catch {}
+
+      setNotifications(prev => [
+        {
+          id: `notif-google-reg-${Date.now()}`,
+          title: `Welcome to Social Shuffle, ${authUser.name}! 🎲`,
+          message: 'Your Google Account is now registered in our database. You can now use Continue with Google button to log in anytime.',
+          type: 'system',
+          timestamp: 'Just now',
+          read: false
+        },
+        ...prev
+      ]);
+
+      return {
+        success: true,
+        message: `Welcome to Social Shuffle, ${authUser.name}! Account registered successfully.`,
+        user: authUser,
+        participant: participantObj
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err?.message || 'Failed to complete Google sign-up'
+      };
+    }
+  };
+
+  // 2. Continue with Google:
+  // User selects an account from the list of logged in Google accounts in browser or device,
+  // backend checks if same account is used for sign up:
+  // If YES: allow login and show participant view
+  // If NO: show "Username not registered" and redirect them to Register participant
+  const continueWithGoogle = async (googleProfile: GoogleUserProfile): Promise<{
+    success: boolean;
+    message: string;
+    code?: string;
+    user?: AuthUser;
+    participant?: Participant;
+  }> => {
+    const emailClean = googleProfile.email.trim().toLowerCase();
+
+    try {
+      // Query Express backend database to verify if account was used for sign-up
+      const backendRes = await api.googleLoginCheck(emailClean);
+
+      if (!backendRes || !backendRes.success) {
+        // Backend confirms account is not registered
+        // Double check local fallback
+        const storedList: string[] = JSON.parse(localStorage.getItem('social_shuffle_registered_google_emails') || '[]');
+        const isLocallyRegistered = storedList.includes(emailClean);
+
+        if (!isLocallyRegistered) {
+          return {
+            success: false,
+            code: 'USER_NOT_REGISTERED',
+            message: 'Username not registered'
+          };
+        }
+      }
+
+      // Account IS registered!
+      let participantObj: Participant | undefined = backendRes?.participant;
+      let authUser: AuthUser | undefined = backendRes?.user;
+
+      if (!participantObj) {
+        participantObj = participants.find(p => p.email.trim().toLowerCase() === emailClean);
+      }
+
+      if (!participantObj) {
+        return {
+          success: false,
+          code: 'USER_NOT_REGISTERED',
+          message: 'Username not registered'
+        };
+      }
+
+      if (!authUser) {
+        authUser = {
+          id: `u-${participantObj.id}`,
+          name: participantObj.name,
+          email: participantObj.email,
+          phone: participantObj.phone,
+          role: 'participant', // STRICT PARTICIPANT ROLE
+          area: participantObj.area,
+          participantId: participantObj.id,
+          avatar: googleProfile.avatar || participantObj.avatar,
+          bio: participantObj.bio,
+          authProvider: 'google',
+          loginAt: new Date().toISOString(),
+          lastActiveAt: new Date().toISOString()
+        };
+      }
+
+      // Sync participant to local state if needed
+      setParticipants(prev => {
+        if (!prev.some(p => p.id === participantObj!.id)) {
+          return [participantObj!, ...prev];
+        }
+        return prev;
+      });
+
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
+
+      setCurrentUser(authUser);
+      setRoleState('participant');
+      setCurrentParticipantId(participantObj.id);
+      setShowAuthModal(false);
+
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      } catch {}
+
+      return {
+        success: true,
+        message: `Welcome back, ${authUser.name}!`,
+        user: authUser,
+        participant: participantObj
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        code: 'AUTH_ERROR',
+        message: err?.message || 'Failed to authenticate with Google'
+      };
+    }
+  };
+
+  // Google Account helper wrapper
+  const loginWithGoogle = async (googleProfile?: GoogleUserProfile): Promise<{ success: boolean; message: string; code?: string }> => {
     const profile = googleProfile || {
       email: 'parimalmshete@gmail.com',
       name: 'Parimal Shete',
@@ -811,93 +1104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       area: 'Koregaon Park',
       phone: '+91 98220 99887'
     };
-
-    const emailClean = profile.email.trim().toLowerCase();
-
-    // Check if participant already exists by email
-    let matchedParticipant = participants.find(p => p.email.trim().toLowerCase() === emailClean);
-
-    if (!matchedParticipant) {
-      // Automatically register new participant profile from Google Account
-      const newParticipantId = `p-${Date.now().toString(36)}`;
-      matchedParticipant = {
-        id: newParticipantId,
-        name: profile.name,
-        email: emailClean,
-        phone: profile.phone || '+91 98220 ' + Math.floor(10000 + Math.random() * 90000),
-        area: profile.area || 'Koregaon Park',
-        avatar: profile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(profile.name)}`,
-        bio: 'Pune board gamer • Connected via Google Account',
-        joinedDate: new Date().toISOString().slice(0, 10),
-        totalEventsAttended: 0,
-        totalRegistrations: 0,
-        gamesPlayedIds: [],
-        venuesVisited: [],
-        totalPaxBrought: 0
-      };
-      setParticipants(prev => [matchedParticipant!, ...prev]);
-      api.createParticipant(matchedParticipant).catch(() => {});
-    }
-
-    const authUser: AuthUser = {
-      id: `u-${matchedParticipant.id}`,
-      name: matchedParticipant.name,
-      email: matchedParticipant.email,
-      phone: matchedParticipant.phone,
-      role: 'participant', // STRICT PARTICIPANT ROLE
-      area: matchedParticipant.area,
-      participantId: matchedParticipant.id,
-      avatar: profile.avatar || matchedParticipant.avatar,
-      bio: matchedParticipant.bio,
-      authProvider: 'google',
-      loginAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString()
-    };
-
-    const now = Date.now();
-    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
-    setLastActiveTimestamp(now);
-
-    setCurrentUser(authUser);
-    setRoleState('participant');
-    setCurrentParticipantId(matchedParticipant.id);
-    setShowAuthModal(false);
-
-    // Sync to Spring Boot REST backend
-    api.googleLogin({
-      email: authUser.email,
-      name: authUser.name,
-      avatar: authUser.avatar,
-      phone: authUser.phone,
-      area: authUser.area,
-      googleId: profile.googleId || 'g_' + Math.random().toString(36).substring(2)
-    }).catch(() => {});
-
-    try {
-      confetti({
-        particleCount: 120,
-        spread: 90,
-        origin: { y: 0.6 }
-      });
-    } catch {}
-
-    setNotifications(prev => [
-      {
-        id: `notif-google-login-${Date.now()}`,
-        title: `Signed in with Google: ${authUser.name} ✨`,
-        message: 'Welcome to Social Shuffle Pune! Your session will remain active for 30 days of inactivity.',
-        type: 'system',
-        timestamp: 'Just now',
-        read: false
-      },
-      ...prev
-    ]);
-
-    return {
-      success: true,
-      message: `Signed in successfully with Google as ${authUser.name}!`
-    };
+    return continueWithGoogle(profile);
   };
 
   const logout = () => {
@@ -2156,7 +2363,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isGuest,
         login,
         registerParticipant,
+        sendRegistrationOtp,
+        verifyRegistrationOtp,
+        checkEmailVerified,
         loginWithGoogle,
+        signUpWithGoogle,
+        continueWithGoogle,
         logout,
         switchToGuestView,
         loginAsDemoParticipant,

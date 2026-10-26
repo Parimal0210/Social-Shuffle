@@ -42,8 +42,8 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
   return (
     <>
       {/* Desktop & Tablet Tab Bar */}
-      <div className="hidden md:flex items-center justify-center py-4 px-6 border-b border-[#1F305E] bg-[#0A1128]/80 sticky top-[57px] z-30 backdrop-blur-md">
-        <div className="flex items-center p-1.5 rounded-2xl bg-[#090F22] border border-[#1F305E] shadow-xl max-w-xl w-full justify-between">
+      <div className="hidden md:flex items-center justify-center py-3.5 px-6 border-b border-[#2C2924] bg-[#141312]/90 sticky top-[53px] z-30 backdrop-blur-md">
+        <div className="flex items-center p-1 rounded-xl bg-[#1C1B18] border border-[#36332D] shadow-sm max-w-xl w-full justify-between">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -52,10 +52,10 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
                 key={tab.id}
                 id={`tab-participant-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold transition-all ${
+                className={`relative flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-[#FF6036] text-white shadow-lg shadow-[#FF6036]/30 font-bold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#111C3B]'
+                    ? 'bg-[#FF6036] text-white font-bold shadow-sm'
+                    : 'text-[#A8A29E] hover:text-[#F5F2EB] hover:bg-[#252320]'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -70,7 +70,7 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
       </div>
 
       {/* Mobile Bottom Navigation Bar (iOS / Android style) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A1128]/95 backdrop-blur-lg border-t border-[#1F305E] px-3 py-2 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#161513]/95 backdrop-blur-lg border-t border-[#2C2924] px-3 py-2 pb-safe">
         <div className="flex items-center justify-around">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -81,7 +81,7 @@ export const ParticipantNav: React.FC<ParticipantNavProps> = ({
                 id={`mobile-tab-participant-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center justify-center gap-1 py-1 px-2 relative transition-colors ${
-                  isActive ? 'text-[#FF6036] font-bold' : 'text-slate-400 hover:text-slate-200'
+                  isActive ? 'text-[#FF6036] font-bold' : 'text-[#78716C] hover:text-[#D6D3D1]'
                 }`}
               >
                 <div className="relative">

@@ -769,6 +769,136 @@ class ApiService {
     }
     return calculateBadgeLevelLocal(params);
   }
+
+  // --- Backend Google Multi-Account & Registration Verification ---
+  async getGoogleDeviceAccounts(): Promise<{ accounts: any[]; registeredEmails: string[] }> {
+    try {
+      const res = await fetch('/api/auth/google/device-accounts');
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // fallback handled in caller
+    }
+    return { accounts: [], registeredEmails: [] };
+  }
+
+  async addGoogleDeviceAccount(account: {
+    email: string;
+    name: string;
+    avatar?: string;
+    phone?: string;
+    area?: string;
+  }): Promise<{ accounts: any[]; registeredEmails: string[] }> {
+    try {
+      const res = await fetch('/api/auth/google/device-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(account)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // fallback
+    }
+    return { accounts: [], registeredEmails: [] };
+  }
+
+  async googleSignUp(profile: {
+    email: string;
+    name: string;
+    avatar?: string;
+    phone?: string;
+    area?: string;
+    bio?: string;
+    googleId?: string;
+  }): Promise<{ success: boolean; message: string; user?: any; participant?: any }> {
+    try {
+      const res = await fetch('/api/auth/google/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+      const data = await res.json();
+      return data;
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Failed to sign up with Google' };
+    }
+  }
+
+  async googleLoginCheck(email: string): Promise<{
+    success: boolean;
+    message: string;
+    code?: string;
+    user?: any;
+    participant?: any;
+  }> {
+    try {
+      const res = await fetch('/api/auth/google/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      return data;
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Login failed', code: 'NETWORK_ERROR' };
+    }
+  }
+
+  // --- Email OTP Verification API ---
+  async sendOtp(email: string, name?: string): Promise<{
+    success: boolean;
+    message: string;
+    email?: string;
+    otpPreview?: string;
+    expiresInSeconds?: number;
+  }> {
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name })
+      });
+      const data = await res.json();
+      return data;
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Failed to send verification email' };
+    }
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<{
+    success: boolean;
+    message: string;
+    verified?: boolean;
+    email?: string;
+  }> {
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      return data;
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Failed to verify OTP code' };
+    }
+  }
+
+  async checkOtpStatus(email: string): Promise<{ success: boolean; verified: boolean }> {
+    try {
+      const res = await fetch(`/api/auth/otp/status?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // fallback
+    }
+    return { success: true, verified: false };
+  }
 }
 
 export const api = new ApiService();
+

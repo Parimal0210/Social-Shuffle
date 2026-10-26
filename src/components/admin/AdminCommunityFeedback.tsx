@@ -30,8 +30,8 @@ export const AdminCommunityFeedback: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight">Participant Feedback ({feedbackList.length})</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h2 className="text-xl font-heading font-bold text-[#F5F2EB] tracking-tight">Participant Feedback ({feedbackList.length})</h2>
+          <p className="text-xs text-[#A8A29E] mt-0.5">
             Post-meetup ratings and suggestions submitted by Pune Shufflers
           </p>
         </div>
@@ -39,7 +39,7 @@ export const AdminCommunityFeedback: React.FC = () => {
         <select
           value={selectedEventId}
           onChange={e => setSelectedEventId(e.target.value)}
-          className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+          className="bg-[#1C1B18] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
         >
           <option value="all">All Meetups</option>
           {events.map(ev => (
@@ -52,84 +52,84 @@ export const AdminCommunityFeedback: React.FC = () => {
 
       {/* Average Ratings Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-[#161822] border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Overall Rating</span>
-          <div className="flex items-center justify-center gap-1 text-2xl font-black text-amber-400 mt-1">
-            <Star className="w-5 h-5 fill-amber-400" />
+        <div className="p-4 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center">
+          <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider block font-bold">Overall Rating</span>
+          <div className="flex items-center justify-center gap-1 text-2xl font-heading font-bold text-[#FFC226] mt-1">
+            <Star className="w-5 h-5 fill-[#FFC226]" />
             <span>{avgOverall}</span>
           </div>
-          <span className="text-[10px] text-slate-500">out of 5.0</span>
+          <span className="text-[10px] text-[#78716C]">out of 5.0</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#161822] border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Venue & Vibe</span>
-          <div className="flex items-center justify-center gap-1 text-2xl font-black text-amber-400 mt-1">
-            <Star className="w-5 h-5 fill-amber-400" />
+        <div className="p-4 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center">
+          <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider block font-bold">Venue & Vibe</span>
+          <div className="flex items-center justify-center gap-1 text-2xl font-heading font-bold text-[#FFC226] mt-1">
+            <Star className="w-5 h-5 fill-[#FFC226]" />
             <span>{avgVenue}</span>
           </div>
-          <span className="text-[10px] text-slate-500">Comfort & lighting</span>
+          <span className="text-[10px] text-[#78716C]">Comfort & lighting</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#161822] border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Game Selection</span>
-          <div className="flex items-center justify-center gap-1 text-2xl font-black text-amber-400 mt-1">
-            <Star className="w-5 h-5 fill-amber-400" />
+        <div className="p-4 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center">
+          <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider block font-bold">Game Selection</span>
+          <div className="flex items-center justify-center gap-1 text-2xl font-heading font-bold text-[#FFC226] mt-1">
+            <Star className="w-5 h-5 fill-[#FFC226]" />
             <span>{avgGame}</span>
           </div>
-          <span className="text-[10px] text-slate-500">Variety & difficulty</span>
+          <span className="text-[10px] text-[#78716C]">Variety & difficulty</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#161822] border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Host & Explanations</span>
-          <div className="flex items-center justify-center gap-1 text-2xl font-black text-amber-400 mt-1">
-            <Star className="w-5 h-5 fill-amber-400" />
+        <div className="p-4 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center">
+          <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider block font-bold">Host & Explanations</span>
+          <div className="flex items-center justify-center gap-1 text-2xl font-heading font-bold text-[#FFC226] mt-1">
+            <Star className="w-5 h-5 fill-[#FFC226]" />
             <span>{avgHost}</span>
           </div>
-          <span className="text-[10px] text-slate-500">Welcoming & rules</span>
+          <span className="text-[10px] text-[#78716C]">Welcoming & rules</span>
         </div>
       </div>
 
       {/* Submissions List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-[#161822] border border-slate-800 text-center text-xs text-slate-400">
+          <div className="p-8 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center text-xs text-[#A8A29E]">
             No feedback submissions recorded for this selection yet.
           </div>
         ) : (
           filtered.map(fb => (
             <div
               key={fb.id}
-              className="p-5 rounded-2xl bg-[#161822] border border-slate-800 shadow-lg space-y-3"
+              className="p-5 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-lg space-y-3"
             >
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
-                  <span className="text-xs font-bold text-white">
+                  <span className="text-xs font-heading font-bold text-[#F5F2EB]">
                     {fb.isAnonymous ? '🕵️ Anonymous Shuffler' : fb.participantName}
                   </span>
-                  <span className="text-xs text-slate-400 ml-2">• {fb.eventTitle}</span>
+                  <span className="text-xs text-[#A8A29E] ml-2">• {fb.eventTitle}</span>
                 </div>
-                <span className="text-[11px] text-slate-500">{fb.submittedAt}</span>
+                <span className="text-[11px] text-[#78716C]">{fb.submittedAt}</span>
               </div>
 
               {/* Rating Badges */}
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-amber-400 font-bold flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-lg bg-[#24221E] border border-[#36332D] text-[#FFC226] font-bold flex items-center gap-1">
                   ★ Overall: {fb.overallRating}/5
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                <span className="px-2.5 py-1 rounded-lg bg-[#24221E] border border-[#36332D] text-[#A8A29E]">
                   Venue: {fb.venueRating}/5
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                <span className="px-2.5 py-1 rounded-lg bg-[#24221E] border border-[#36332D] text-[#A8A29E]">
                   Games: {fb.gameRating}/5
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                <span className="px-2.5 py-1 rounded-lg bg-[#24221E] border border-[#36332D] text-[#A8A29E]">
                   Hosts: {fb.hostRating}/5
                 </span>
               </div>
 
               {/* Feedback text */}
               {fb.suggestions && (
-                <p className="text-xs text-slate-200 bg-slate-900/60 p-3 rounded-xl border border-slate-800 leading-relaxed italic">
+                <p className="text-xs text-[#F5F2EB] bg-[#24221E] p-3 rounded-xl border border-[#36332D] leading-relaxed italic">
                   "{fb.suggestions}"
                 </p>
               )}
