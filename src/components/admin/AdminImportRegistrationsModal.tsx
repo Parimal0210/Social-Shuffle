@@ -152,7 +152,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-[#121626] border border-[#35C8A8]/30 rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-5 my-8 max-h-[92vh] overflow-y-auto">
+      <div className="bg-[#121626] border border-[#4AB4A4]/30 rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-5 my-8 max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800">
           <div>
@@ -160,13 +160,13 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
               <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-purple-950/60 text-purple-300 border border-purple-800/40">
                 Event #{event.number}
               </span>
-              <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#35C8A8]/15 text-[#35C8A8] border border-[#35C8A8]/30 font-semibold flex items-center gap-1">
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#4AB4A4]/15 text-[#4AB4A4] border border-[#4AB4A4]/30 font-semibold flex items-center gap-1">
                 <QrCode className="w-3 h-3" />
                 Automatic QR Email Dispatch
               </span>
             </div>
             <h3 className="text-lg font-black text-white mt-1 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-[#35C8A8]" />
+              <FileSpreadsheet className="w-5 h-5 text-[#4AB4A4]" />
               <span>Import Registrations — {event.title}</span>
             </h3>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
@@ -242,14 +242,14 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
         ) : (
           <div className="space-y-4">
             {/* Automated Email Notice */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-900/30 to-emerald-950/30 border border-[#35C8A8]/30 flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-[#35C8A8]/20 text-[#35C8A8] shrink-0 mt-0.5">
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-900/30 to-emerald-950/30 border border-[#4AB4A4]/30 flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-[#4AB4A4]/20 text-[#4AB4A4] shrink-0 mt-0.5">
                 <Mail className="w-4 h-4" />
               </div>
               <div className="text-xs space-y-0.5">
                 <h5 className="font-bold text-white flex items-center gap-1.5">
                   <span>Automatic QR Pass Email Delivery</span>
-                  <Sparkles className="w-3.5 h-3.5 text-[#FFC226]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFD230]" />
                 </h5>
                 <p className="text-slate-300 text-[11px] leading-relaxed">
                   Upon clicking import, the platform will automatically generate a digital ticket pass with a check-in QR code and email it directly to every captured participant from your spreadsheet.
@@ -265,7 +265,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                   onClick={() => setInputMode('upload')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
                     inputMode === 'upload'
-                      ? 'bg-[#35C8A8] text-[#0A1128] shadow'
+                      ? 'bg-[#4AB4A4] text-[#0A1128] shadow'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -277,7 +277,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                   onClick={() => setInputMode('paste')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
                     inputMode === 'paste'
-                      ? 'bg-[#35C8A8] text-[#0A1128] shadow'
+                      ? 'bg-[#4AB4A4] text-[#0A1128] shadow'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -289,7 +289,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
               <button
                 type="button"
                 onClick={downloadSampleTemplate}
-                className="text-xs text-[#35C8A8] hover:text-[#52e5c5] font-semibold flex items-center gap-1"
+                className="text-xs text-[#4AB4A4] hover:text-[#52e5c5] font-semibold flex items-center gap-1"
                 title="Download formatted sample CSV file"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
 
             {/* File Upload Dropzone */}
             {inputMode === 'upload' ? (
-              <div className="border-2 border-dashed border-slate-700 hover:border-[#35C8A8] rounded-2xl p-6 text-center transition-colors bg-slate-900/40">
+              <div className="border-2 border-dashed border-slate-700 hover:border-[#4AB4A4] rounded-2xl p-6 text-center transition-colors bg-slate-900/40">
                 <input
                   type="file"
                   id={`file-input-${event.id}`}
@@ -311,7 +311,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                   htmlFor={`file-input-${event.id}`}
                   className="cursor-pointer flex flex-col items-center justify-center space-y-2"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#35C8A8]/10 text-[#35C8A8] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-[#4AB4A4]/10 text-[#4AB4A4] flex items-center justify-center">
                     <Upload className="w-6 h-6" />
                   </div>
                   <div>
@@ -344,7 +344,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                     setImportResult(null);
                   }}
                   placeholder="payment status,full_name,item quantity,email,phone,notes&#10;captured,Rohan Kulkarni,2,rohan@example.com,9822012345,Attending with friend&#10;captured,Pooja Hegde,1,pooja@example.com,9765432199,First timer"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono focus:outline-none focus:border-[#35C8A8]"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs font-mono focus:outline-none focus:border-[#4AB4A4]"
                 />
               </div>
             )}
@@ -405,7 +405,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                           <span className="text-[10px] text-slate-400 truncate hidden sm:inline">• {r.email}</span>
                         </div>
                         <span className="text-[11px] font-semibold text-emerald-400 shrink-0 flex items-center gap-1">
-                          <QrCode className="w-3 h-3 text-[#35C8A8]" />
+                          <QrCode className="w-3 h-3 text-[#4AB4A4]" />
                           <span>Pass Ready</span>
                         </span>
                       </div>
@@ -442,7 +442,7 @@ export const AdminImportRegistrationsModal: React.FC<AdminImportRegistrationsMod
                 id="btn-confirm-import-event"
                 onClick={handleProcessImport}
                 disabled={isProcessing || !previewData || previewData.capturedCount === 0}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#35C8A8] to-[#25ad8e] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-[#0A1128] font-black text-xs shadow-lg shadow-[#35C8A8]/20 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4AB4A4] to-[#25ad8e] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-[#0A1128] font-black text-xs shadow-lg shadow-[#4AB4A4]/20 transition-all flex items-center gap-2"
               >
                 <QrCode className="w-4 h-4 text-[#0A1128]" />
                 <span>

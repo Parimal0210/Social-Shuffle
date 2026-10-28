@@ -64,10 +64,15 @@ async function startServer() {
   // Key: lowercased email, Value: { participant, user, registeredAt }
   const registeredGoogleUsers = new Map<string, any>();
 
+  // In-memory + persistent database map for Admins table
+  // Key: lowercased email, Value: AdminRecord
+  const adminsTable = new Map<string, any>();
+
   // Helper to read and write database to disk
   const fs = await import('fs');
   const path = await import('path');
   const DB_PATH = path.resolve(process.cwd(), 'src/data/registered_google_users.json');
+  const ADMINS_DB_PATH = path.resolve(process.cwd(), 'src/data/admins.json');
 
   const loadRegisteredUsers = () => {
     try {
@@ -100,8 +105,73 @@ async function startServer() {
     }
   };
 
+  const loadAdminsTable = () => {
+    try {
+      if (fs.existsSync(ADMINS_DB_PATH)) {
+        const raw = fs.readFileSync(ADMINS_DB_PATH, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((item: any) => {
+            if (item && item.email) {
+              adminsTable.set(item.email.trim().toLowerCase(), item);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load admins.json:', e);
+    }
+  };
+
+  // Helper to identify if an individual is an admin via the database admins table
+  const findAdminByEmailOrPhone = (ident: string) => {
+    const clean = String(ident).trim().toLowerCase();
+    const cleanDigits = clean.replace(/[^0-9]/g, '');
+    for (const admin of adminsTable.values()) {
+      if (!admin.active) continue;
+      if (admin.email && admin.email.trim().toLowerCase() === clean) {
+        return admin;
+      }
+      if (cleanDigits && admin.phone) {
+        const adminDigits = admin.phone.replace(/[^0-9]/g, '');
+        if (adminDigits && adminDigits === cleanDigits) {
+          return admin;
+        }
+      }
+    }
+    return undefined;
+  };
+
   // Load database on server start
   loadRegisteredUsers();
+  loadAdminsTable();
+
+  // Database Admins Table Endpoints
+  app.get('/api/admins', (_req, res) => {
+    res.json({
+      success: true,
+      admins: Array.from(adminsTable.values())
+    });
+  });
+
+  app.get('/api/admins/check', (req, res) => {
+    const query = String(req.query.email || req.query.phone || req.query.identifier || '').trim();
+    if (!query) {
+      return res.status(400).json({ success: false, message: 'Query is required' });
+    }
+    const admin = findAdminByEmailOrPhone(query);
+    if (admin) {
+      return res.json({
+        success: true,
+        isAdmin: true,
+        admin
+      });
+    }
+    return res.json({
+      success: true,
+      isAdmin: false
+    });
+  });
 
   // 1. GET /api/auth/google/device-accounts: Returns all logged-in Google accounts on device
   app.get('/api/auth/google/device-accounts', (_req, res) => {
@@ -183,15 +253,18 @@ async function startServer() {
       registeredAt: nowIso
     };
 
+    const adminCheck = findAdminByEmailOrPhone(cleanEmail);
+    const assignedRole = (adminCheck && adminCheck.role === 'admin') ? 'admin' : 'participant';
+
     const user = {
-      id: userId,
-      name: cleanName,
+      id: adminCheck ? adminCheck.id : userId,
+      name: adminCheck?.name || cleanName,
       email: cleanEmail,
-      phone: participant.phone,
-      role: 'participant', // Strictly participant view
+      phone: adminCheck?.phone || participant.phone,
+      role: assignedRole, // Uses admins table to identify admin role
       area: participant.area,
-      avatar: participant.avatar,
-      bio: participant.bio,
+      avatar: adminCheck?.avatar || participant.avatar,
+      bio: adminCheck?.bio || participant.bio,
       participantId: participant.id,
       authProvider: 'google',
       loginAt: nowIso,
@@ -210,7 +283,7 @@ async function startServer() {
     registeredGoogleUsers.set(cleanEmail, record);
     saveRegisteredUsers();
 
-    console.log(`[Google Auth] Successfully registered participant in database: ${cleanEmail} (${cleanName})`);
+    console.log(`[Google Auth] Successfully registered ${assignedRole} in database: ${cleanEmail} (${cleanName})`);
 
     res.json({
       success: true,
@@ -221,9 +294,11 @@ async function startServer() {
   });
 
   // 4. POST /api/auth/google/login:
-  // On Continue with Google: checks if same account is used for sign up
-  // If YES: allow login and return participant view
-  // If NO: return HTTP 404 with { code: 'USER_NOT_REGISTERED', message: 'Username not registered' }
+  // On Continue with Google: checks if individual is an admin in database admins table,
+  // or if account was registered as participant:
+  // If Admin: allow login and return admin view (role: 'admin')
+  // If Participant: allow login and return participant view (role: 'participant')
+  // If Not registered: return HTTP 404 with { code: 'USER_NOT_REGISTERED', message: 'Username not registered' }
   app.post('/api/auth/google/login', (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -231,7 +306,33 @@ async function startServer() {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
+    const adminCheck = findAdminByEmailOrPhone(cleanEmail);
     const record = registeredGoogleUsers.get(cleanEmail);
+
+    // If individual is in the database Admins table: identify as admin and show admin view!
+    if (adminCheck && adminCheck.role === 'admin') {
+      const nowIso = new Date().toISOString();
+      const adminUser = {
+        id: adminCheck.id,
+        name: adminCheck.name,
+        email: adminCheck.email,
+        phone: adminCheck.phone,
+        role: 'admin',
+        area: 'Pune',
+        bio: adminCheck.bio,
+        avatar: adminCheck.avatar,
+        authProvider: 'google',
+        loginAt: nowIso,
+        lastActiveAt: nowIso
+      };
+      console.log(`[Google Auth] Successful admin login via database admins table: ${cleanEmail} (${adminCheck.name})`);
+      return res.json({
+        success: true,
+        message: `Welcome back, Admin ${adminCheck.name}!`,
+        user: adminUser,
+        participant: record?.participant
+      });
+    }
 
     if (!record) {
       console.log(`[Google Auth] Login rejected: ${cleanEmail} is not registered in database.`);
@@ -242,19 +343,68 @@ async function startServer() {
       });
     }
 
-    // Account exists and was used for sign up!
+    // Account exists as participant
     const nowIso = new Date().toISOString();
     record.user.lastActiveAt = nowIso;
     record.user.loginAt = nowIso;
+    record.user.role = 'participant';
     saveRegisteredUsers();
 
-    console.log(`[Google Auth] Successful login for registered user: ${cleanEmail}`);
+    console.log(`[Google Auth] Successful login for registered participant: ${cleanEmail}`);
 
     res.json({
       success: true,
       message: `Welcome back, ${record.user.name}!`,
       user: record.user,
       participant: record.participant
+    });
+  });
+
+  // 4b. POST /api/auth/login: Direct login verifying against database admins table
+  app.post('/api/auth/login', (req, res) => {
+    const { emailOrPhone } = req.body;
+    if (!emailOrPhone) {
+      return res.status(400).json({ success: false, message: 'Email or phone is required' });
+    }
+
+    const clean = String(emailOrPhone).trim().toLowerCase();
+    const adminCheck = findAdminByEmailOrPhone(clean);
+
+    if (adminCheck && adminCheck.role === 'admin') {
+      const nowIso = new Date().toISOString();
+      const adminUser = {
+        id: adminCheck.id,
+        name: adminCheck.name,
+        email: adminCheck.email,
+        phone: adminCheck.phone,
+        role: 'admin',
+        area: 'Pune',
+        bio: adminCheck.bio,
+        avatar: adminCheck.avatar,
+        authProvider: 'local',
+        loginAt: nowIso,
+        lastActiveAt: nowIso
+      };
+      return res.json({
+        success: true,
+        message: `Welcome back, Admin ${adminCheck.name}!`,
+        user: adminUser
+      });
+    }
+
+    const record = registeredGoogleUsers.get(clean);
+    if (record) {
+      return res.json({
+        success: true,
+        message: `Welcome back, ${record.user.name}!`,
+        user: record.user,
+        participant: record.participant
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: 'No registered user found with this email or phone'
     });
   });
 

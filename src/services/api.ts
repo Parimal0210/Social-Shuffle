@@ -898,6 +898,28 @@ class ApiService {
     }
     return { success: true, verified: false };
   }
+
+  // --- Database Admins Table Verification ---
+  async getAdmins(): Promise<any[]> {
+    try {
+      const res = await fetch('/api/admins');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.admins) return json.admins;
+      }
+    } catch {}
+    return [];
+  }
+
+  async checkAdmin(emailOrPhone: string): Promise<{ isAdmin: boolean; admin?: any }> {
+    try {
+      const res = await fetch(`/api/admins/check?email=${encodeURIComponent(emailOrPhone)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+    return { isAdmin: false };
+  }
 }
 
 export const api = new ApiService();

@@ -15,7 +15,7 @@ import {
   ExternalLink,
   IdCard
 } from 'lucide-react';
-import { SocialShuffleIcon } from '../SocialShuffleLogo';
+import { SocialShuffleIcon, SocialShuffleLogo } from '../SocialShuffleLogo';
 import { ParticipantTab } from './ParticipantNav';
 
 interface ParticipantFooterProps {
@@ -35,10 +35,10 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
 
   return (
     <>
-      <footer className="w-full bg-[#100F0E] border-t border-[#2C2924] text-[#A8A29E] mt-12 transition-colors">
+      <footer className="w-full bg-[#100F0E] border-t border-[#202B61] text-[#94A3B8] mt-12 transition-colors">
         {/* Top Community Join Banner */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-2xl p-6 sm:p-8 bg-[#1C1B18] border border-[#36332D] relative overflow-hidden shadow-sm">
+          <div className="rounded-2xl p-6 sm:p-8 bg-[#151E4D] border border-[#283677] relative overflow-hidden shadow-sm">
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2 max-w-xl">
                 <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#FF7A59] font-heading uppercase tracking-wider">
@@ -48,7 +48,7 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                 <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-heading">
                   Never miss an offline board game meetup in Pune!
                 </h3>
-                <p className="text-xs sm:text-sm text-[#A8A29E] leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
                   Connect with 2,400+ friendly Pune shufflers on WhatsApp & Instagram. Get instant table RSVP drops, spot alerts, rule walk-throughs, and weekend cafe photos.
                 </p>
               </div>
@@ -85,19 +85,18 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
         </div>
 
         {/* Footer Navigation Grid */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-[#2C2924]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-[#202B61]">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Col 1: Brand & Identity */}
             <div className="space-y-3 md:col-span-1">
               <div className="flex items-center gap-2.5">
-                <SocialShuffleIcon size={32} />
-                <span className="text-base font-bold text-white tracking-tight font-heading">Social Shuffle</span>
+                <SocialShuffleLogo size="sm" showWordmark={true} showTagline={false} />
               </div>
-              <p className="text-xs text-[#A8A29E] leading-relaxed">
+              <p className="text-xs text-[#94A3B8] leading-relaxed">
                 Pune&apos;s premier offline community for board gaming, friendly banter, and screen-free social meetups.
               </p>
-              <div className="flex items-center gap-1.5 text-xs text-[#A8A29E]">
-                <MapPin className="w-3.5 h-3.5 text-[#FF6036] shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                <MapPin className="w-3.5 h-3.5 text-[#FF751F] shrink-0" />
                 <span>Koregaon Park · Baner · Viman Nagar · FC Road</span>
               </div>
             </div>
@@ -111,36 +110,36 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                 <li>
                   <button
                     onClick={() => handleTabClick('events')}
-                    className="text-[#A8A29E] hover:text-white transition-colors flex items-center gap-1.5"
+                    className="text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    <Calendar className="w-3.5 h-3.5 text-[#35C8A8]" />
+                    <Calendar className="w-3.5 h-3.5 text-[#4AB4A4]" />
                     <span>Upcoming Meetups</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleTabClick('profile')}
-                    className="text-[#A8A29E] hover:text-white transition-colors flex items-center gap-1.5"
+                    className="text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    <IdCard className="w-3.5 h-3.5 text-[#FFC226]" />
+                    <IdCard className="w-3.5 h-3.5 text-[#FFD230]" />
                     <span>My Profile</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleTabClick('community')}
-                    className="text-[#A8A29E] hover:text-white transition-colors flex items-center gap-1.5"
+                    className="text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    <Users className="w-3.5 h-3.5 text-[#8F43EE]" />
+                    <Users className="w-3.5 h-3.5 text-[#9440DD]" />
                     <span>Community & Safety</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleTabClick('community')}
-                    className="text-[#A8A29E] hover:text-white transition-colors flex items-center gap-1.5"
+                    className="text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    <Heart className="w-3.5 h-3.5 text-[#FF6036]" />
+                    <Heart className="w-3.5 h-3.5 text-[#FF751F]" />
                     <span>Volunteer as Table Host</span>
                   </button>
                 </li>
@@ -152,21 +151,21 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               <h4 className="text-xs font-bold text-white uppercase tracking-wider font-heading">
                 Safety & Standards
               </h4>
-              <ul className="space-y-2 text-xs text-[#A8A29E]">
+              <ul className="space-y-2 text-xs text-[#94A3B8]">
                 <li className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
                   <span>Strict Zero-Harassment Policy</span>
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
                   <span>Verified QR Door Passes</span>
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <Heart className="w-3.5 h-3.5 text-[#FF6036] shrink-0" />
+                  <Heart className="w-3.5 h-3.5 text-[#FF751F] shrink-0" />
                   <span>First-Timer & Solo Friendly</span>
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />
+                  <Lock className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
                   <span>Verified Community Passes</span>
                 </li>
               </ul>
@@ -177,9 +176,9 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               <h4 className="text-xs font-bold text-white uppercase tracking-wider font-heading">
                 Host Desk & Contact
               </h4>
-              <ul className="space-y-2 text-xs text-[#A8A29E]">
+              <ul className="space-y-2 text-xs text-[#94A3B8]">
                 <li className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-[#A8A29E] shrink-0" />
+                  <Mail className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
                   <a
                     href="mailto:admin@socialshuffle.com"
                     className="hover:text-white transition-colors"
@@ -188,10 +187,10 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-[#A8A29E] shrink-0" />
+                  <Phone className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
                   <span>+91 98220 11223 (Host Aman)</span>
                 </li>
-                <li className="text-[11px] text-[#78716C] pt-1 leading-relaxed">
+                <li className="text-[11px] text-[#64748B] pt-1 leading-relaxed">
                   Pune, Maharashtra 411001 · Every Saturday & Sunday afternoon
                 </li>
               </ul>
@@ -200,8 +199,8 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
         </div>
 
         {/* Bottom Legal & Copyright Bar */}
-        <div className="bg-[#0C0B0A] border-t border-[#2C2924] py-5">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#A8A29E]">
+        <div className="bg-[#0C0B0A] border-t border-[#202B61] py-5">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#94A3B8]">
             {/* All rights reserved */}
             <div className="flex items-center gap-2 text-center sm:text-left">
               <span>© {new Date().getFullYear()} Social Shuffle Pune. All rights reserved.</span>
@@ -242,26 +241,26 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
       {/* Privacy Policy Modal */}
       {showPrivacyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl bg-[#1C1B18] border border-[#36332D] rounded-2xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-5 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924] shrink-0">
+          <div className="w-full max-w-2xl bg-[#151E4D] border border-[#283677] rounded-2xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-5 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-[#202B61] shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-[#35C8A8]/10 text-[#35C8A8]">
+                <div className="p-2 rounded-xl bg-[#4AB4A4]/10 text-[#4AB4A4]">
                   <Lock className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-base font-heading">Privacy Policy</h3>
-                  <p className="text-xs text-[#A8A29E]">Social Shuffle Community Pune · Effective 2026</p>
+                  <p className="text-xs text-[#94A3B8]">Social Shuffle Community Pune · Effective 2026</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowPrivacyModal(false)}
-                className="p-1.5 text-[#A8A29E] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                className="p-1.5 text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="overflow-y-auto space-y-4 text-xs text-[#D6D3D1] pr-1 leading-relaxed">
+            <div className="overflow-y-auto space-y-4 text-xs text-[#CBD5E1] pr-1 leading-relaxed">
               <section className="space-y-1.5">
                 <h4 className="font-bold text-white text-sm font-heading">1. Commitment to Participant Privacy</h4>
                 <p>
@@ -272,7 +271,7 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               <section className="space-y-1.5">
                 <h4 className="font-bold text-white text-sm font-heading">2. Information We Collect</h4>
                 <p>When you register for a meetup or create a player profile, we collect:</p>
-                <ul className="list-disc pl-5 space-y-1 text-[#D6D3D1]">
+                <ul className="list-disc pl-5 space-y-1 text-[#CBD5E1]">
                   <li><strong>Personal Identifiers:</strong> Name, email address, and phone number.</li>
                   <li><strong>Event Bookings:</strong> Meetup date, venue selected, ticket pax count, and payment transaction status.</li>
                   <li><strong>Gameplay Progress:</strong> Games played, titles tried, and optional feedback submitted to help us curate better game tables.</li>
@@ -281,7 +280,7 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
 
               <section className="space-y-1.5">
                 <h4 className="font-bold text-white text-sm font-heading">3. How Your Information Is Used</h4>
-                <ul className="list-disc pl-5 space-y-1 text-[#D6D3D1]">
+                <ul className="list-disc pl-5 space-y-1 text-[#CBD5E1]">
                   <li>Generating your personalized QR entry pass for check-in at Pune cafe entrances.</li>
                   <li>Sending confirmation emails with directions and meetup updates.</li>
                   <li>Community announcements on WhatsApp for RSVP spots and table allocations.</li>
@@ -306,15 +305,15 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               <section className="space-y-1.5">
                 <h4 className="font-bold text-white text-sm font-heading">6. Your Rights & Data Deletion</h4>
                 <p>
-                  You have the right to inspect, correct, or permanently delete your profile and registration history at any time. Simply email our host desk at <a href="mailto:admin@socialshuffle.com" className="text-[#35C8A8] underline">admin@socialshuffle.com</a> with your registered email or phone number.
+                  You have the right to inspect, correct, or permanently delete your profile and registration history at any time. Simply email our host desk at <a href="mailto:admin@socialshuffle.com" className="text-[#4AB4A4] underline">admin@socialshuffle.com</a> with your registered email or phone number.
                 </p>
               </section>
             </div>
 
-            <div className="pt-3 border-t border-[#2C2924] flex justify-end shrink-0">
+            <div className="pt-3 border-t border-[#202B61] flex justify-end shrink-0">
               <button
                 onClick={() => setShowPrivacyModal(false)}
-                className="px-5 py-2 rounded-xl bg-[#35C8A8] hover:bg-[#2EB899] text-[#141312] font-bold text-xs transition-colors"
+                className="px-5 py-2 rounded-xl bg-[#4AB4A4] hover:bg-[#2EB899] text-[#10173E] font-bold text-xs transition-colors"
               >
                 Close Privacy Policy
               </button>
@@ -326,26 +325,26 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
       {/* Community Terms & Guidelines Modal */}
       {showTermsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-xl bg-[#1C1B18] border border-[#36332D] rounded-2xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924] shrink-0">
+          <div className="w-full max-w-xl bg-[#151E4D] border border-[#283677] rounded-2xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-[#202B61] shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-[#FF6036]/10 text-[#FF6036]">
+                <div className="p-2 rounded-xl bg-[#FF751F]/10 text-[#FF751F]">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-base font-heading">Community Guidelines</h3>
-                  <p className="text-xs text-[#A8A29E]">Social Shuffle Pune Code of Conduct</p>
+                  <p className="text-xs text-[#94A3B8]">Social Shuffle Pune Code of Conduct</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowTermsModal(false)}
-                className="p-1.5 text-[#A8A29E] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                className="p-1.5 text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="overflow-y-auto space-y-3 text-xs text-[#D6D3D1] pr-1 leading-relaxed">
+            <div className="overflow-y-auto space-y-3 text-xs text-[#CBD5E1] pr-1 leading-relaxed">
               <p>
                 Social Shuffle is an inclusive, respectful space for adults in Pune to unwind, discover new tabletop board games, and make genuine friends.
               </p>
@@ -357,10 +356,10 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               </ul>
             </div>
 
-            <div className="pt-3 border-t border-[#2C2924] flex justify-end shrink-0">
+            <div className="pt-3 border-t border-[#202B61] flex justify-end shrink-0">
               <button
                 onClick={() => setShowTermsModal(false)}
-                className="px-5 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-bold text-xs transition-colors"
+                className="px-5 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-bold text-xs transition-colors"
               >
                 Understood & Agreed
               </button>

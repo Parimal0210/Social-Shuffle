@@ -53,6 +53,19 @@ export interface AuthResponse {
 
 export type AdminRole = 'Super Admin' | 'Event Organizer' | 'Volunteer/Staff';
 
+export interface AdminRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'admin';
+  designation: string;
+  avatar?: string;
+  bio?: string;
+  active: boolean;
+  createdAt: string;
+}
+
 export type EventCategory =
   | 'Regular Meetup'
   | 'Tournament'

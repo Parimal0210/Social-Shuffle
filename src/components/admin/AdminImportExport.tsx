@@ -211,7 +211,7 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-[#35C8A8]" />
+              <FileSpreadsheet className="w-5 h-5 text-[#4AB4A4]" />
               <span>Import Excel / CSV to Event</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -223,7 +223,7 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
             onClick={downloadSampleTemplate}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white text-xs font-semibold self-start sm:self-center transition-all"
           >
-            <Download className="w-3.5 h-3.5 text-[#35C8A8]" />
+            <Download className="w-3.5 h-3.5 text-[#4AB4A4]" />
             <span>Download Formatted Template</span>
           </button>
         </div>
@@ -236,7 +236,7 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
           <select
             value={targetEventId}
             onChange={e => setTargetEventId(e.target.value)}
-            className="w-full sm:max-w-md bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#35C8A8]"
+            className="w-full sm:max-w-md bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#4AB4A4]"
           >
             {events.map(ev => (
               <option key={ev.id} value={ev.id}>
@@ -250,11 +250,11 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
         <div
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-slate-700 hover:border-[#35C8A8]/60 rounded-2xl p-6 text-center space-y-3 bg-slate-900/40 transition-colors"
+          className="border-2 border-dashed border-slate-700 hover:border-[#4AB4A4]/60 rounded-2xl p-6 text-center space-y-3 bg-slate-900/40 transition-colors"
         >
-          <Upload className="w-8 h-8 text-[#35C8A8] mx-auto" />
+          <Upload className="w-8 h-8 text-[#4AB4A4] mx-auto" />
           <div>
-            <label className="text-xs font-bold text-[#35C8A8] hover:underline cursor-pointer">
+            <label className="text-xs font-bold text-[#4AB4A4] hover:underline cursor-pointer">
               <span>Choose an Excel (.xlsx, .xls) or CSV file</span>
               <input
                 type="file"
@@ -289,7 +289,7 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
               setImportResult(null);
             }}
             placeholder="payment status,full_name,item quantity,email,phone&#10;captured,Rohan Mehra,2,rohan@gmail.com,9890011223&#10;failed,Vikram Singh,1,vikram@gmail.com,9811122334"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-[#35C8A8]"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-[#4AB4A4]"
           />
         </div>
 
@@ -464,7 +464,7 @@ export const AdminImportExport: React.FC<AdminImportExportProps> = ({ initialEve
           id="btn-process-import"
           onClick={handleProcessImport}
           disabled={!previewData || previewData.capturedCount === 0}
-          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#35C8A8] to-[#20B2AA] hover:opacity-95 disabled:opacity-40 text-[#0A1128] font-bold text-xs shadow-lg shadow-[#35C8A8]/20 transition-all flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#4AB4A4] to-[#20B2AA] hover:opacity-95 disabled:opacity-40 text-[#0A1128] font-bold text-xs shadow-lg shadow-[#4AB4A4]/20 transition-all flex items-center justify-center gap-2"
         >
           <FileCheck className="w-4 h-4" />
           <span>

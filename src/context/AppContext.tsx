@@ -19,7 +19,8 @@ import {
   LoginCredentials,
   RegisterCredentials,
   GoogleUserProfile,
-  EventEmailBroadcastRequest
+  EventEmailBroadcastRequest,
+  AdminRecord
 } from '../types';
 import {
   dispatchEventEmailBatch,
@@ -28,6 +29,7 @@ import {
   triggerBrowserPushNotification
 } from '../services/notificationEmailService';
 import {
+  INITIAL_ADMINS,
   INITIAL_GAMES,
   INITIAL_EVENTS,
   INITIAL_PARTICIPANTS,

@@ -46,6 +46,13 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, participantTab]);
 
+  // For every tab change, screen should be loaded from the top only
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [participantTab, adminSection]);
+
   const pendingReportsCount = reportsList.filter(r => r.status === 'New').length;
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
 
@@ -71,7 +78,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#141312] text-[#F5F2EB] flex flex-col font-sans selection:bg-[#FF6036] selection:text-white">
+    <div className="min-h-screen bg-[#10173E] text-[#F8FAFC] flex flex-col font-sans selection:bg-[#FF751F] selection:text-white">
       {/* Top Global Header with Role Switcher, Offline status, Persona selector */}
       <Header />
 

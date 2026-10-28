@@ -530,14 +530,14 @@ export const AuthModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
       <div
-        className="w-full sm:max-w-md bg-[#1C1B18] border border-[#36332D] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="w-full sm:max-w-md bg-[#151E4D] border border-[#283677] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="relative p-5 pb-4 bg-[#22201C] border-b border-[#2C2924]">
+        <div className="relative p-5 pb-4 bg-[#182255] border-b border-[#202B61]">
           <button
             onClick={closeAuthModal}
-            className="absolute top-4 right-4 p-2 text-[#A8A29E] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+            className="absolute top-4 right-4 p-2 text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -548,7 +548,7 @@ export const AuthModal: React.FC = () => {
               <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2 font-heading">
                 {activeTab === 'login' ? 'Sign In to Social Shuffle' : 'Join Pune Board Game Community'}
               </h2>
-              <p className="text-xs text-[#A8A29E]">
+              <p className="text-xs text-[#94A3B8]">
                 {activeTab === 'login'
                   ? 'Access your RSVPs, badges, and games'
                   : (regStep === 'otp_verify' ? 'Step 2 of 2: Verify email address' : 'Register free with Google or email verification')}
@@ -557,7 +557,7 @@ export const AuthModal: React.FC = () => {
           </div>
 
           {/* Tab Selector */}
-          <div className="flex bg-[#141312] p-1 rounded-xl mt-4 border border-[#36332D]">
+          <div className="flex bg-[#10173E] p-1 rounded-xl mt-4 border border-[#283677]">
             <button
               type="button"
               onClick={() => {
@@ -570,8 +570,8 @@ export const AuthModal: React.FC = () => {
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === 'login'
-                  ? 'bg-[#FF6036] text-white font-bold shadow-sm'
-                  : 'text-[#A8A29E] hover:text-white'
+                  ? 'bg-[#FF751F] text-white font-bold shadow-sm'
+                  : 'text-[#94A3B8] hover:text-white'
               }`}
             >
               Sign In
@@ -586,8 +586,8 @@ export const AuthModal: React.FC = () => {
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === 'register'
-                  ? 'bg-[#35C8A8] text-[#141312] font-bold shadow-sm'
-                  : 'text-[#A8A29E] hover:text-white'
+                  ? 'bg-[#4AB4A4] text-[#10173E] font-bold shadow-sm'
+                  : 'text-[#94A3B8] hover:text-white'
               }`}
             >
               Register Participant
@@ -604,13 +604,13 @@ export const AuthModal: React.FC = () => {
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>Username not registered: {unregisteredAccountNotice.email}</span>
               </div>
-              <p className="text-[11px] text-[#D6D3D1] leading-relaxed">
-                This Google account is not registered in our database yet. You have been redirected to <strong className="text-white">Register participant</strong>. Complete registration below or click <strong className="text-[#35C8A8]">Sign up with Google Account</strong> to register with 1 tap.
+              <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
+                This Google account is not registered in our database yet. You have been redirected to <strong className="text-white">Register participant</strong>. Complete registration below or click <strong className="text-[#4AB4A4]">Sign up with Google Account</strong> to register with 1 tap.
               </p>
               <button
                 type="button"
                 onClick={() => handleAccountSelection(unregisteredAccountNotice)}
-                className="w-full py-2 px-3 rounded-lg bg-[#35C8A8] hover:bg-[#2EB899] text-[#141312] font-bold text-xs flex items-center justify-center gap-2 shadow transition-all"
+                className="w-full py-2 px-3 rounded-lg bg-[#4AB4A4] hover:bg-[#2EB899] text-[#10173E] font-bold text-xs flex items-center justify-center gap-2 shadow transition-all"
               >
                 <GoogleLogoSvg className="w-3.5 h-3.5" />
                 <span>Register with {unregisteredAccountNotice.name} now</span>
@@ -643,19 +643,19 @@ export const AuthModal: React.FC = () => {
 
               {/* Divider */}
               <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-[#36332D]"></div>
-                <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] font-heading">
+                <div className="flex-grow border-t border-[#283677]"></div>
+                <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] font-heading">
                   {activeTab === 'login' ? 'Or sign in with details' : 'Or fill in your details with Email OTP'}
                 </span>
-                <div className="flex-grow border-t border-[#36332D]"></div>
+                <div className="flex-grow border-t border-[#283677]"></div>
               </div>
             </div>
           ) : null}
 
           {/* GOOGLE ACCOUNT CHOOSER DIALOG */}
           {showGoogleChooser && (
-            <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-3.5 animate-in fade-in shadow-sm">
-              <div className="flex items-center justify-between pb-2 border-b border-[#2C2924]">
+            <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-3.5 animate-in fade-in shadow-sm">
+              <div className="flex items-center justify-between pb-2 border-b border-[#202B61]">
                 <div className="flex items-center gap-2">
                   <GoogleLogoSvg className="w-4 h-4" />
                   <span className="text-xs font-bold text-white font-heading">
@@ -665,7 +665,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowGoogleChooser(false)}
-                  className="text-[11px] text-[#A8A29E] hover:text-white"
+                  className="text-[11px] text-[#94A3B8] hover:text-white"
                 >
                   Cancel
                 </button>
@@ -677,7 +677,7 @@ export const AuthModal: React.FC = () => {
                     ? 'Select an account to register your participant profile'
                     : 'Choose an account to continue to Social Shuffle Pune'}
                 </p>
-                <p className="text-[11px] text-[#A8A29E] mt-0.5">
+                <p className="text-[11px] text-[#94A3B8] mt-0.5">
                   Logged-in Google accounts detected on this browser/device:
                 </p>
               </div>
@@ -691,13 +691,13 @@ export const AuthModal: React.FC = () => {
                       type="button"
                       onClick={() => handleAccountSelection(account)}
                       disabled={loading}
-                      className="w-full p-2.5 rounded-xl bg-[#1C1B18] hover:bg-[#2C2A25] border border-[#36332D] hover:border-[#FF6036]/50 flex items-center justify-between text-left transition-all group disabled:opacity-50"
+                      className="w-full p-2.5 rounded-xl bg-[#151E4D] hover:bg-[#202D6E] border border-[#283677] hover:border-[#FF751F]/50 flex items-center justify-between text-left transition-all group disabled:opacity-50"
                     >
                       <div className="flex items-center gap-3">
                         <img
                           src={account.avatar}
                           alt={account.name}
-                          className="w-9 h-9 rounded-full border border-[#36332D] object-cover shrink-0"
+                          className="w-9 h-9 rounded-full border border-[#283677] object-cover shrink-0"
                         />
                         <div>
                           <div className="flex items-center gap-2">
@@ -714,16 +714,16 @@ export const AuthModal: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-[#A8A29E] font-mono mt-0.5">{account.email}</div>
+                          <div className="text-[11px] text-[#94A3B8] font-mono mt-0.5">{account.email}</div>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#78716C] group-hover:text-[#FF6036] group-hover:translate-x-0.5 transition-all shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-[#64748B] group-hover:text-[#FF751F] group-hover:translate-x-0.5 transition-all shrink-0" />
                     </button>
                   );
                 })}
               </div>
 
-              <div className="pt-2 border-t border-[#2C2924]">
+              <div className="pt-2 border-t border-[#202B61]">
                 {!showAddAccountForm ? (
                   <button
                     type="button"
@@ -734,13 +734,13 @@ export const AuthModal: React.FC = () => {
                     <span>Use another Google account on this device</span>
                   </button>
                 ) : (
-                  <form onSubmit={handleCustomGoogleSubmit} className="space-y-2.5 mt-2 bg-[#1C1B18] p-3 rounded-lg border border-[#36332D]">
+                  <form onSubmit={handleCustomGoogleSubmit} className="space-y-2.5 mt-2 bg-[#151E4D] p-3 rounded-lg border border-[#283677]">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-semibold text-white font-heading">Add Device Google Account</span>
                       <button
                         type="button"
                         onClick={() => setShowAddAccountForm(false)}
-                        className="text-[10px] text-[#A8A29E] hover:text-white"
+                        className="text-[10px] text-[#94A3B8] hover:text-white"
                       >
                         Hide
                       </button>
@@ -752,7 +752,7 @@ export const AuthModal: React.FC = () => {
                         value={customGoogleName}
                         onChange={e => setCustomGoogleName(e.target.value)}
                         placeholder="Google Account Full Name"
-                        className="w-full bg-[#24221E] border border-[#36332D] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#78716C] outline-none focus:border-[#FF6036]"
+                        className="w-full bg-[#1A255C] border border-[#283677] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#64748B] outline-none focus:border-[#FF751F]"
                       />
                     </div>
                     <div>
@@ -762,7 +762,7 @@ export const AuthModal: React.FC = () => {
                         value={customGoogleEmail}
                         onChange={e => setCustomGoogleEmail(e.target.value)}
                         placeholder="yourname@gmail.com"
-                        className="w-full bg-[#24221E] border border-[#36332D] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#78716C] outline-none focus:border-[#FF6036]"
+                        className="w-full bg-[#1A255C] border border-[#283677] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#64748B] outline-none focus:border-[#FF751F]"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -771,15 +771,15 @@ export const AuthModal: React.FC = () => {
                         value={customGooglePhone}
                         onChange={e => setCustomGooglePhone(e.target.value)}
                         placeholder="Phone (optional)"
-                        className="w-full bg-[#24221E] border border-[#36332D] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#78716C] outline-none focus:border-[#FF6036]"
+                        className="w-full bg-[#1A255C] border border-[#283677] rounded-lg px-3 py-1.5 text-xs text-white placeholder-[#64748B] outline-none focus:border-[#FF751F]"
                       />
                       <select
                         value={customGoogleArea}
                         onChange={e => setCustomGoogleArea(e.target.value)}
-                        className="w-full bg-[#24221E] border border-[#36332D] rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#FF6036]"
+                        className="w-full bg-[#1A255C] border border-[#283677] rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#FF751F]"
                       >
                         {puneAreas.map(area => (
-                          <option key={area} value={area} className="bg-[#1C1B18] text-white">
+                          <option key={area} value={area} className="bg-[#151E4D] text-white">
                             {area}
                           </option>
                         ))}
@@ -788,7 +788,7 @@ export const AuthModal: React.FC = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-2 px-3 rounded-lg bg-[#FF6036] hover:bg-[#E85127] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                      className="w-full py-2 px-3 rounded-lg bg-[#FF751F] hover:bg-[#E66310] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
                     >
                       <GoogleLogoSvg className="w-3.5 h-3.5" />
                       <span>{loading ? 'Processing...' : (googleChooserMode === 'register' ? 'Sign up with this Google Account' : 'Continue with this Google Account')}</span>
@@ -798,8 +798,8 @@ export const AuthModal: React.FC = () => {
               </div>
 
               {loading && (
-                <div className="text-center py-2 text-xs text-[#A8A29E] flex items-center justify-center gap-2">
-                  <div className="w-3.5 h-3.5 border-2 border-[#FF6036] border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-center py-2 text-xs text-[#94A3B8] flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#FF751F] border-t-transparent rounded-full animate-spin"></div>
                   <span>{loadingMessage || 'Processing...'}</span>
                 </div>
               )}
@@ -810,34 +810,34 @@ export const AuthModal: React.FC = () => {
           {activeTab === 'login' && !showGoogleChooser && (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-[#D6D3D1] mb-1.5">
+                <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
                   Email Address or Mobile Number
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
                     type="text"
                     required
                     value={loginIdentifier}
                     onChange={e => setLoginIdentifier(e.target.value)}
                     placeholder="e.g. rohan.kulkarni@example.com or 9822012345"
-                    className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#FF6036] focus:ring-1 focus:ring-[#FF6036] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#D6D3D1] mb-1.5">
+                <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                  <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     placeholder="Enter your password (optional for demo accounts)"
-                    className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#FF6036] focus:ring-1 focus:ring-[#FF6036] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -845,40 +845,40 @@ export const AuthModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#FF6036] hover:bg-[#E85127] text-white active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#FF751F] hover:bg-[#E66310] text-white active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
                 {loading ? 'Signing in...' : 'Sign In as Participant'}
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               {/* Quick Demo Logins */}
-              <div className="pt-3 border-t border-[#2C2924]">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#A8A29E] mb-2 font-heading">
+              <div className="pt-3 border-t border-[#202B61]">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8] mb-2 font-heading">
                   1-Tap Demo Access:
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('priya.nair@example.com', 'shuffler123')}
-                    className="p-2 text-left rounded-lg bg-[#24221E] border border-[#36332D] hover:border-[#FF6036] transition-all text-xs"
+                    className="p-2 text-left rounded-lg bg-[#1A255C] border border-[#283677] hover:border-[#FF751F] transition-all text-xs"
                   >
                     <div className="font-semibold text-white flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#FF6036]"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#FF751F]"></span>
                       Priya Nair
                     </div>
-                    <div className="text-[10px] text-[#A8A29E]">Participant (Wakad)</div>
+                    <div className="text-[10px] text-[#94A3B8]">Participant (Wakad)</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('rohan.kulkarni@example.com', 'shuffler123')}
-                    className="p-2 text-left rounded-lg bg-[#24221E] border border-[#36332D] hover:border-[#35C8A8] transition-all text-xs"
+                    className="p-2 text-left rounded-lg bg-[#1A255C] border border-[#283677] hover:border-[#4AB4A4] transition-all text-xs"
                   >
                     <div className="font-semibold text-white flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#35C8A8]"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#4AB4A4]"></span>
                       Rohan K.
                     </div>
-                    <div className="text-[10px] text-[#A8A29E]">Participant (KP)</div>
+                    <div className="text-[10px] text-[#94A3B8]">Participant (KP)</div>
                   </button>
                 </div>
 
@@ -886,13 +886,13 @@ export const AuthModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('admin@socialshuffle.com', 'admin123')}
-                    className="w-full p-2 text-left rounded-lg bg-[#24221E] border border-[#36332D] hover:border-[#FF6036] transition-all text-xs flex items-center justify-between"
+                    className="w-full p-2 text-left rounded-lg bg-[#1A255C] border border-[#283677] hover:border-[#FF751F] transition-all text-xs flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#FF6036]" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#FF751F]" />
                       <span className="font-semibold text-white">Aman Joshi</span>
                     </div>
-                    <span className="text-[10px] bg-[#FF6036]/15 text-[#FF7A59] px-1.5 py-0.5 rounded font-mono">
+                    <span className="text-[10px] bg-[#FF751F]/15 text-[#FF7A59] px-1.5 py-0.5 rounded font-mono">
                       Organizer / Admin
                     </span>
                   </button>
@@ -905,18 +905,18 @@ export const AuthModal: React.FC = () => {
           {activeTab === 'register' && !showGoogleChooser && regStep === 'form' && (
             <form onSubmit={handleInitiateEmailOtp} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-medium text-[#D6D3D1] mb-1">
-                  Full Name <span className="text-[#FF6036]">*</span>
+                <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
+                  Full Name <span className="text-[#FF751F]">*</span>
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
                     type="text"
                     required
                     value={regName}
                     onChange={e => setRegName(e.target.value)}
                     placeholder="e.g. Priya Sharma"
-                    className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -924,17 +924,17 @@ export const AuthModal: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-medium text-[#D6D3D1]">
-                      Email Address <span className="text-[#FF6036]">*</span>
+                    <label className="block text-xs font-medium text-[#CBD5E1]">
+                      Email Address <span className="text-[#FF751F]">*</span>
                     </label>
                     {isEmailVerified && (
-                      <span className="text-[10px] text-[#35C8A8] font-bold flex items-center gap-1">
+                      <span className="text-[10px] text-[#4AB4A4] font-bold flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Verified
                       </span>
                     )}
                   </div>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                    <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                     <input
                       type="email"
                       required
@@ -944,24 +944,24 @@ export const AuthModal: React.FC = () => {
                         setIsEmailVerified(false);
                       }}
                       placeholder="priya@example.com"
-                      className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                      className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#D6D3D1] mb-1">
-                    Phone / WhatsApp <span className="text-[#FF6036]">*</span>
+                  <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
+                    Phone / WhatsApp <span className="text-[#FF751F]">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                    <Phone className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                     <input
                       type="tel"
                       required
                       value={regPhone}
                       onChange={e => setRegPhone(e.target.value)}
                       placeholder="+91 98220 54321"
-                      className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                      className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -969,18 +969,18 @@ export const AuthModal: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#D6D3D1] mb-1">
+                  <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
                     Pune Locality
                   </label>
                   <div className="relative">
-                    <MapPin className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                    <MapPin className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                     <select
                       value={regArea}
                       onChange={e => setRegArea(e.target.value)}
-                      className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white outline-none transition-all"
+                      className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white outline-none transition-all"
                     >
                       {puneAreas.map(area => (
-                        <option key={area} value={area} className="bg-[#1C1B18] text-white">
+                        <option key={area} value={area} className="bg-[#151E4D] text-white">
                           {area}
                         </option>
                       ))}
@@ -989,41 +989,41 @@ export const AuthModal: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#D6D3D1] mb-1">
+                  <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                    <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                     <input
                       type="password"
                       value={regPassword}
                       onChange={e => setRegPassword(e.target.value)}
                       placeholder="Create a password"
-                      className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                      className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#D6D3D1] mb-1">
+                <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
                   About you & Favorite Games (Optional)
                 </label>
                 <div className="relative">
-                  <Dices className="w-4 h-4 text-[#A8A29E] absolute left-3 top-3" />
+                  <Dices className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
                     type="text"
                     value={regBio}
                     onChange={e => setRegBio(e.target.value)}
                     placeholder="e.g. Love Catan, Codenames, Secret Hitler! Looking to play on weekends."
-                    className="w-full bg-[#24221E] border border-[#36332D] focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#78716C] outline-none transition-all"
+                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>
               </div>
 
               {/* Requirement reminder notice */}
-              <div className="p-3 bg-[#24221E] border border-[#36332D] rounded-xl flex items-start gap-2.5 text-xs text-[#D6D3D1]">
-                <ShieldCheck className="w-4 h-4 text-[#35C8A8] shrink-0 mt-0.5" />
+              <div className="p-3 bg-[#1A255C] border border-[#283677] rounded-xl flex items-start gap-2.5 text-xs text-[#CBD5E1]">
+                <ShieldCheck className="w-4 h-4 text-[#4AB4A4] shrink-0 mt-0.5" />
                 <span>
                   <strong>Email Verification Required:</strong> An OTP will be sent to your email to verify ownership before finishing signup.
                 </span>
@@ -1032,7 +1032,7 @@ export const AuthModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={otpSending || loading}
-                className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#35C8A8] hover:bg-[#2EB899] text-[#141312] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#4AB4A4] hover:bg-[#2EB899] text-[#10173E] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {otpSending ? (
                   <>
@@ -1053,16 +1053,16 @@ export const AuthModal: React.FC = () => {
           {activeTab === 'register' && !showGoogleChooser && regStep === 'otp_verify' && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
               {/* OTP Header Card */}
-              <div className="text-center p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-full bg-[#35C8A8]/15 border border-[#35C8A8]/30 flex items-center justify-center text-[#35C8A8]">
+              <div className="text-center p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2">
+                <div className="w-12 h-12 mx-auto rounded-full bg-[#4AB4A4]/15 border border-[#4AB4A4]/30 flex items-center justify-center text-[#4AB4A4]">
                   <KeyRound className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-bold text-white tracking-tight font-heading">Verify Your Email Address</h3>
-                <p className="text-xs text-[#A8A29E]">
+                <p className="text-xs text-[#94A3B8]">
                   We sent a 6-digit verification code to:
                 </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1C1B18] border border-[#36332D] rounded-lg text-xs font-mono text-[#35C8A8]">
-                  <Mail className="w-3.5 h-3.5 text-[#35C8A8]" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#151E4D] border border-[#283677] rounded-lg text-xs font-mono text-[#4AB4A4]">
+                  <Mail className="w-3.5 h-3.5 text-[#4AB4A4]" />
                   <span>{regEmail}</span>
                   <button
                     type="button"
@@ -1071,7 +1071,7 @@ export const AuthModal: React.FC = () => {
                       setError(null);
                     }}
                     title="Change Email"
-                    className="ml-1 text-[#A8A29E] hover:text-white"
+                    className="ml-1 text-[#94A3B8] hover:text-white"
                   >
                     <Edit2 className="w-3 h-3" />
                   </button>
@@ -1080,15 +1080,15 @@ export const AuthModal: React.FC = () => {
 
               {/* DEMO TEST HELPER: Quick 1-tap fill for generated OTP */}
               {otpPreview && (
-                <div className="p-3 bg-[#1C1B18] border border-[#36332D] rounded-xl text-xs space-y-1.5 animate-in fade-in">
-                  <div className="flex items-center justify-between text-[#A8A29E] font-semibold">
+                <div className="p-3 bg-[#151E4D] border border-[#283677] rounded-xl text-xs space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center justify-between text-[#94A3B8] font-semibold">
                     <span className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-[#FF6036]" />
+                      <Mail className="w-3.5 h-3.5 text-[#FF751F]" />
                       Email Dispatched (Demo Preview):
                     </span>
-                    <span className="text-[10px] text-[#A8A29E] font-mono">10 min expiry</span>
+                    <span className="text-[10px] text-[#94A3B8] font-mono">10 min expiry</span>
                   </div>
-                  <div className="flex items-center justify-between bg-[#24221E] px-3 py-1.5 rounded-lg border border-[#36332D]">
+                  <div className="flex items-center justify-between bg-[#1A255C] px-3 py-1.5 rounded-lg border border-[#283677]">
                     <span className="font-mono text-white tracking-widest font-bold text-sm">{otpPreview}</span>
                     <button
                       type="button"
@@ -1097,7 +1097,7 @@ export const AuthModal: React.FC = () => {
                         setOtpDigits(split);
                         setError(null);
                       }}
-                      className="px-2.5 py-1 bg-[#FF6036] hover:bg-[#E85127] text-white font-bold text-[10px] rounded transition-all cursor-pointer"
+                      className="px-2.5 py-1 bg-[#FF751F] hover:bg-[#E66310] text-white font-bold text-[10px] rounded transition-all cursor-pointer"
                     >
                       Auto-fill Code
                     </button>
@@ -1107,7 +1107,7 @@ export const AuthModal: React.FC = () => {
 
               {/* 6-DIGIT OTP INPUT BOXES */}
               <div className="space-y-2">
-                <label className="block text-center text-xs font-medium text-[#D6D3D1]">
+                <label className="block text-center text-xs font-medium text-[#CBD5E1]">
                   Enter 6-Digit OTP Code
                 </label>
                 <div className="flex justify-center gap-2 sm:gap-2.5">
@@ -1126,8 +1126,8 @@ export const AuthModal: React.FC = () => {
                       onKeyDown={e => handleOtpKeyDown(idx, e)}
                       className={`w-11 h-13 text-center text-xl font-bold font-mono rounded-xl border transition-all outline-none ${
                         digit
-                          ? 'border-[#35C8A8] bg-[#24221E] text-white shadow-sm ring-1 ring-[#35C8A8]'
-                          : 'border-[#36332D] bg-[#24221E] text-white focus:border-[#35C8A8] focus:ring-1 focus:ring-[#35C8A8]'
+                          ? 'border-[#4AB4A4] bg-[#1A255C] text-white shadow-sm ring-1 ring-[#4AB4A4]'
+                          : 'border-[#283677] bg-[#1A255C] text-white focus:border-[#4AB4A4] focus:ring-1 focus:ring-[#4AB4A4]'
                       }`}
                     />
                   ))}
@@ -1140,7 +1140,7 @@ export const AuthModal: React.FC = () => {
                   type="button"
                   onClick={handleVerifyOtpAndFinish}
                   disabled={loading || otpDigits.join('').length < 6}
-                  className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#35C8A8] hover:bg-[#2EB899] text-[#141312] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#4AB4A4] hover:bg-[#2EB899] text-[#10173E] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -1156,7 +1156,7 @@ export const AuthModal: React.FC = () => {
                 </button>
 
                 {/* Resend OTP & Back Controls */}
-                <div className="flex items-center justify-between text-xs text-[#A8A29E] px-1 pt-1">
+                <div className="flex items-center justify-between text-xs text-[#94A3B8] px-1 pt-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -1174,8 +1174,8 @@ export const AuthModal: React.FC = () => {
                     disabled={otpTimer > 0 || otpSending}
                     className={`font-semibold transition-colors flex items-center gap-1 ${
                       otpTimer > 0
-                        ? 'text-[#78716C] cursor-not-allowed'
-                        : 'text-[#35C8A8] hover:underline cursor-pointer'
+                        ? 'text-[#64748B] cursor-not-allowed'
+                        : 'text-[#4AB4A4] hover:underline cursor-pointer'
                     }`}
                   >
                     <RefreshCw className={`w-3 h-3 ${otpSending ? 'animate-spin' : ''}`} />
@@ -1190,8 +1190,8 @@ export const AuthModal: React.FC = () => {
         </div>
 
         {/* Footer info */}
-        <div className="p-3 bg-[#141312] border-t border-[#2C2924] text-center text-[10px] text-[#A8A29E] flex items-center justify-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#35C8A8]" />
+        <div className="p-3 bg-[#10173E] border-t border-[#202B61] text-center text-[10px] text-[#94A3B8] flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#4AB4A4]" />
           <span>Email Verification Required · Secured with PBKDF2</span>
         </div>
       </div>

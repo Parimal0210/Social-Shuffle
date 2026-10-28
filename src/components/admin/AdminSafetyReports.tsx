@@ -13,11 +13,11 @@ export const AdminSafetyReports: React.FC = () => {
       <div>
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-rose-500" />
-          <h2 className="text-xl font-heading font-bold text-[#F5F2EB] tracking-tight">
+          <h2 className="text-xl font-heading font-bold text-[#F8FAFC] tracking-tight">
             Safety & Incident Reports ({reportsList.length})
           </h2>
         </div>
-        <p className="text-xs text-[#A8A29E] mt-0.5">
+        <p className="text-xs text-[#94A3B8] mt-0.5">
           Strictly confidential reports submitted by participants regarding conduct, discomfort, or safety
         </p>
       </div>
@@ -25,7 +25,7 @@ export const AdminSafetyReports: React.FC = () => {
       {/* Reports List */}
       <div className="space-y-3">
         {reportsList.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center text-xs text-[#A8A29E]">
+          <div className="p-8 rounded-2xl bg-[#151E4D] border border-[#283677] text-center text-xs text-[#94A3B8]">
             No incidents or concerns reported. The community is safe and respectful!
           </div>
         ) : (
@@ -34,8 +34,8 @@ export const AdminSafetyReports: React.FC = () => {
               key={report.id}
               className={`p-5 rounded-2xl border transition-all space-y-3 ${
                 report.status === 'New'
-                  ? 'bg-[#1C1B18] border-rose-500/40'
-                  : 'bg-[#1C1B18] border-[#36332D]'
+                  ? 'bg-[#151E4D] border-rose-500/40'
+                  : 'bg-[#151E4D] border-[#283677]'
               }`}
             >
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -43,11 +43,11 @@ export const AdminSafetyReports: React.FC = () => {
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-rose-950/60 text-rose-300 border border-rose-800/40">
                     {report.type}
                   </span>
-                  <span className="text-xs text-[#F5F2EB] font-semibold">
+                  <span className="text-xs text-[#F8FAFC] font-semibold">
                     {report.isAnonymous ? '🔒 Anonymous Report' : `Reported by ${report.reporterName}`}
                   </span>
                   {report.eventTitle && (
-                    <span className="text-xs text-[#A8A29E]">• {report.eventTitle}</span>
+                    <span className="text-xs text-[#94A3B8]">• {report.eventTitle}</span>
                   )}
                 </div>
 
@@ -57,40 +57,40 @@ export const AdminSafetyReports: React.FC = () => {
                       report.status === 'New'
                         ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                         : report.status === 'Investigating'
-                        ? 'bg-[#FFC226]/20 text-[#FFC226] border border-[#FFC226]/30'
-                        : 'bg-[#35C8A8]/20 text-[#35C8A8] border border-[#35C8A8]/30'
+                        ? 'bg-[#FFD230]/20 text-[#FFD230] border border-[#FFD230]/30'
+                        : 'bg-[#4AB4A4]/20 text-[#4AB4A4] border border-[#4AB4A4]/30'
                     }`}
                   >
                     {report.status}
                   </span>
-                  <span className="text-[11px] text-[#78716C]">{report.submittedAt}</span>
+                  <span className="text-[11px] text-[#64748B]">{report.submittedAt}</span>
                 </div>
               </div>
 
-              <p className="text-xs text-[#F5F2EB] bg-[#24221E] p-3 rounded-xl border border-[#36332D] leading-relaxed">
+              <p className="text-xs text-[#F8FAFC] bg-[#1A255C] p-3 rounded-xl border border-[#283677] leading-relaxed">
                 "{report.description}"
               </p>
 
               {report.personInvolved && (
-                <div className="text-xs text-[#A8A29E]">
-                  <span className="font-semibold text-[#F5F2EB]">Person Involved: </span>
+                <div className="text-xs text-[#94A3B8]">
+                  <span className="font-semibold text-[#F8FAFC]">Person Involved: </span>
                   {report.personInvolved}
                 </div>
               )}
 
               {/* Status Update Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#2C2924]">
-                <span className="text-[11px] text-[#78716C]">Report ID #{report.id}</span>
+              <div className="flex items-center justify-between pt-2 border-t border-[#202B61]">
+                <span className="text-[11px] text-[#64748B]">Report ID #{report.id}</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateReportStatus(report.id, 'Investigating')}
-                    className="px-3 py-1.5 rounded-lg bg-[#FFC226]/10 text-[#FFC226] hover:bg-[#FFC226]/20 text-xs font-semibold border border-[#FFC226]/20"
+                    className="px-3 py-1.5 rounded-lg bg-[#FFD230]/10 text-[#FFD230] hover:bg-[#FFD230]/20 text-xs font-semibold border border-[#FFD230]/20"
                   >
                     Mark Investigating
                   </button>
                   <button
                     onClick={() => updateReportStatus(report.id, 'Resolved')}
-                    className="px-3 py-1.5 rounded-lg bg-[#35C8A8]/10 text-[#35C8A8] hover:bg-[#35C8A8]/20 text-xs font-semibold border border-[#35C8A8]/20"
+                    className="px-3 py-1.5 rounded-lg bg-[#4AB4A4]/10 text-[#4AB4A4] hover:bg-[#4AB4A4]/20 text-xs font-semibold border border-[#4AB4A4]/20"
                   >
                     Mark Resolved
                   </button>

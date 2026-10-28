@@ -104,8 +104,8 @@ export const AdminParticipants: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-heading font-bold text-[#F5F2EB] tracking-tight">Participant Directory & CRM</h2>
-          <p className="text-xs text-[#A8A29E] mt-0.5">
+          <h2 className="text-xl font-heading font-bold text-[#F8FAFC] tracking-tight">Participant Directory & CRM</h2>
+          <p className="text-xs text-[#94A3B8] mt-0.5">
             Manage customer records, lifetime attendance, game mastery, and deduplication
           </p>
         </div>
@@ -115,11 +115,11 @@ export const AdminParticipants: React.FC = () => {
             onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
               showDuplicatesOnly
-                ? 'bg-[#FFC226] text-[#141312] shadow-md shadow-[#FFC226]/30'
-                : 'bg-[#FFC226]/15 border border-[#FFC226]/30 text-[#FFC226] hover:bg-[#FFC226]/25'
+                ? 'bg-[#FFD230] text-[#10173E] shadow-md shadow-[#FFD230]/30'
+                : 'bg-[#FFD230]/15 border border-[#FFD230]/30 text-[#FFD230] hover:bg-[#FFD230]/25'
             }`}
           >
-            <AlertTriangle className="w-4 h-4 text-[#FFC226]" />
+            <AlertTriangle className="w-4 h-4 text-[#FFD230]" />
             <span>{showDuplicatesOnly ? 'Showing Duplicates' : `Detect Duplicates (${duplicateIds.size})`}</span>
           </button>
         )}
@@ -128,20 +128,20 @@ export const AdminParticipants: React.FC = () => {
       {/* Search & Area Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-[#78716C]" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-[#64748B]" />
           <input
             type="text"
             placeholder="Search by participant name, phone, or email..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1C1B18] border border-[#36332D] rounded-xl pl-9 pr-3 py-2 text-xs text-[#F5F2EB] placeholder-[#78716C] focus:outline-none focus:border-[#FF6036]"
+            className="w-full bg-[#151E4D] border border-[#283677] rounded-xl pl-9 pr-3 py-2 text-xs text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#FF751F]"
           />
         </div>
 
         <select
           value={selectedArea}
           onChange={e => setSelectedArea(e.target.value)}
-          className="bg-[#1C1B18] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
+          className="bg-[#151E4D] border border-[#283677] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#FF751F]"
         >
           {areas.map(a => (
             <option key={a} value={a}>
@@ -163,74 +163,74 @@ export const AdminParticipants: React.FC = () => {
               onClick={() => setSelectedParticipant(participant)}
               className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 shadow-lg ${
                 isDuplicate
-                  ? 'bg-[#1C1B18] border-[#FFC226]/50 hover:border-[#FFC226]'
-                  : 'bg-[#1C1B18] border-[#36332D] hover:border-[#FF6036]/50'
+                  ? 'bg-[#151E4D] border-[#FFD230]/50 hover:border-[#FFD230]'
+                  : 'bg-[#151E4D] border-[#283677] hover:border-[#FF751F]/50'
               }`}
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-xl bg-[#FF6036] flex items-center justify-center font-heading font-bold text-sm text-white shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-[#FF751F] flex items-center justify-center font-heading font-bold text-sm text-white shadow-sm">
                       {participant.name[0]}
                     </div>
                     <div>
-                      <h4 className="text-sm font-heading font-bold text-[#F5F2EB] tracking-tight">
+                      <h4 className="text-sm font-heading font-bold text-[#F8FAFC] tracking-tight">
                         {participant.name}
                       </h4>
-                      <span className="text-[10px] text-[#A8A29E] block">{participant.area}</span>
+                      <span className="text-[10px] text-[#94A3B8] block">{participant.area}</span>
                     </div>
                   </div>
 
                   {isDuplicate && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFC226]/15 text-[#FFC226] border border-[#FFC226]/30 flex items-center gap-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFD230]/15 text-[#FFD230] border border-[#FFD230]/30 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" /> Potential Dup
                     </span>
                   )}
                 </div>
 
-                <div className="space-y-1 text-xs text-[#A8A29E] pt-1">
+                <div className="space-y-1 text-xs text-[#94A3B8] pt-1">
                   <div className="flex items-center gap-1.5 truncate">
-                    <Phone className="w-3.5 h-3.5 text-[#35C8A8] shrink-0" />
+                    <Phone className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
                     <span>{participant.phone}</span>
                   </div>
                   <div className="flex items-center gap-1.5 truncate">
-                    <Mail className="w-3.5 h-3.5 text-[#FF6036] shrink-0" />
+                    <Mail className="w-3.5 h-3.5 text-[#FF751F] shrink-0" />
                     <span className="truncate">{participant.email}</span>
                   </div>
                 </div>
 
                 {/* Stats chips */}
                 <div className="grid grid-cols-3 gap-1 pt-1 text-center text-[10px]">
-                  <div className="p-1.5 rounded-lg bg-[#24221E] border border-[#36332D]">
-                    <span className="text-[#78716C] block">Attended</span>
-                    <span className="font-heading font-bold text-[#FF6036] text-xs">{participant.totalEventsAttended}</span>
+                  <div className="p-1.5 rounded-lg bg-[#1A255C] border border-[#283677]">
+                    <span className="text-[#64748B] block">Attended</span>
+                    <span className="font-heading font-bold text-[#FF751F] text-xs">{participant.totalEventsAttended}</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-[#24221E] border border-[#36332D]">
-                    <span className="text-[#78716C] block">Games</span>
-                    <span className="font-heading font-bold text-[#35C8A8] text-xs">{participant.gamesPlayedIds.length}</span>
+                  <div className="p-1.5 rounded-lg bg-[#1A255C] border border-[#283677]">
+                    <span className="text-[#64748B] block">Games</span>
+                    <span className="font-heading font-bold text-[#4AB4A4] text-xs">{participant.gamesPlayedIds.length}</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-[#24221E] border border-[#36332D]">
-                    <span className="text-[#78716C] block">Guests</span>
-                    <span className="font-heading font-bold text-[#FFC226] text-xs">{participant.totalPaxBrought}</span>
+                  <div className="p-1.5 rounded-lg bg-[#1A255C] border border-[#283677]">
+                    <span className="text-[#64748B] block">Guests</span>
+                    <span className="font-heading font-bold text-[#FFD230] text-xs">{participant.totalPaxBrought}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#2C2924] flex items-center justify-between text-xs">
-                <span className="text-[11px] text-[#78716C]">Joined {participant.joinedDate}</span>
+              <div className="pt-2 border-t border-[#202B61] flex items-center justify-between text-xs">
+                <span className="text-[11px] text-[#64748B]">Joined {participant.joinedDate}</span>
                 {isDuplicate ? (
                   <button
                     onClick={e => {
                       e.stopPropagation();
                       openMergeModal(participant);
                     }}
-                    className="text-[#FFC226] font-bold hover:underline flex items-center gap-1"
+                    className="text-[#FFD230] font-bold hover:underline flex items-center gap-1"
                   >
                     <Merge className="w-3.5 h-3.5" />
                     <span>Merge</span>
                   </button>
                 ) : (
-                  <span className="text-[#FF6036] font-semibold group-hover:underline">
+                  <span className="text-[#FF751F] font-semibold group-hover:underline">
                     View CRM →
                   </span>
                 )}
@@ -243,46 +243,46 @@ export const AdminParticipants: React.FC = () => {
       {/* PARTICIPANT DETAIL MODAL / DRAWER */}
       {selectedParticipant && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#FF6036]">
+          <div className="bg-[#151E4D] border border-[#283677] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#202B61]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#FF751F]">
                 Participant History & Profile
               </span>
-              <button onClick={() => setSelectedParticipant(null)} className="text-[#A8A29E] hover:text-[#F5F2EB]">
+              <button onClick={() => setSelectedParticipant(null)} className="text-[#94A3B8] hover:text-[#F8FAFC]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[#FF6036] flex items-center justify-center text-white font-heading font-black text-lg">
+              <div className="w-12 h-12 rounded-xl bg-[#FF751F] flex items-center justify-center text-white font-heading font-black text-lg">
                 {selectedParticipant.name[0]}
               </div>
               <div>
-                <h3 className="text-base font-heading font-bold text-[#F5F2EB]">{selectedParticipant.name}</h3>
-                <p className="text-xs text-[#A8A29E]">
+                <h3 className="text-base font-heading font-bold text-[#F8FAFC]">{selectedParticipant.name}</h3>
+                <p className="text-xs text-[#94A3B8]">
                   {selectedParticipant.phone} • {selectedParticipant.email}
                 </p>
-                <span className="text-xs text-[#FFC226] font-semibold">{selectedParticipant.area}, Pune</span>
+                <span className="text-xs text-[#FFD230] font-semibold">{selectedParticipant.area}, Pune</span>
               </div>
             </div>
 
             {/* Lifetime stats */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D]">
-                <span className="text-[#78716C] text-[10px] block">Attended</span>
-                <span className="text-base font-heading font-bold text-[#FF6036]">
+              <div className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                <span className="text-[#64748B] text-[10px] block">Attended</span>
+                <span className="text-base font-heading font-bold text-[#FF751F]">
                   {selectedParticipant.totalEventsAttended}
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D]">
-                <span className="text-[#78716C] text-[10px] block">Total Bookings</span>
-                <span className="text-base font-heading font-bold text-[#35C8A8]">
+              <div className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                <span className="text-[#64748B] text-[10px] block">Total Bookings</span>
+                <span className="text-base font-heading font-bold text-[#4AB4A4]">
                   {selectedParticipant.totalRegistrations}
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D]">
-                <span className="text-[#78716C] text-[10px] block">Pax Brought</span>
-                <span className="text-base font-heading font-bold text-[#FFC226]">
+              <div className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                <span className="text-[#64748B] text-[10px] block">Pax Brought</span>
+                <span className="text-base font-heading font-bold text-[#FFD230]">
                   {selectedParticipant.totalPaxBrought}
                 </span>
               </div>
@@ -290,19 +290,19 @@ export const AdminParticipants: React.FC = () => {
 
             {/* Games Mastered */}
             <div>
-              <span className="text-xs font-bold text-[#F5F2EB] block mb-1.5">
+              <span className="text-xs font-bold text-[#F8FAFC] block mb-1.5">
                 Games Played ({selectedParticipant.gamesPlayedIds.length})
               </span>
-              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 rounded-xl bg-[#24221E] border border-[#36332D]">
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 rounded-xl bg-[#1A255C] border border-[#283677]">
                 {selectedParticipant.gamesPlayedIds.length === 0 ? (
-                  <span className="text-xs text-[#78716C] italic">No games logged yet</span>
+                  <span className="text-xs text-[#64748B] italic">No games logged yet</span>
                 ) : (
                   selectedParticipant.gamesPlayedIds.map(gid => {
                     const g = games.find(item => item.id === gid);
                     return (
                       <span
                         key={gid}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-[#1C1B18] text-[#FFC226] border border-[#36332D]"
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-[#151E4D] text-[#FFD230] border border-[#283677]"
                       >
                         {g ? g.name : gid}
                       </span>
@@ -314,27 +314,27 @@ export const AdminParticipants: React.FC = () => {
 
             {/* Venues Visited */}
             <div>
-              <span className="text-xs font-bold text-[#F5F2EB] block mb-1">Venues Visited in Pune</span>
+              <span className="text-xs font-bold text-[#F8FAFC] block mb-1">Venues Visited in Pune</span>
               <div className="flex flex-wrap gap-1.5">
                 {selectedParticipant.venuesVisited.map((v, i) => (
-                  <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-[#24221E] text-[#A8A29E] border border-[#36332D]">
+                  <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-[#1A255C] text-[#94A3B8] border border-[#283677]">
                     📍 {v}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="flex gap-2 pt-3 border-t border-[#2C2924]">
+            <div className="flex gap-2 pt-3 border-t border-[#202B61]">
               <button
                 onClick={() => openMergeModal(selectedParticipant)}
-                className="flex-1 py-2 rounded-xl border border-[#FFC226]/40 text-[#FFC226] font-bold text-xs hover:bg-[#FFC226]/10 flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 rounded-xl border border-[#FFD230]/40 text-[#FFD230] font-bold text-xs hover:bg-[#FFD230]/10 flex items-center justify-center gap-1.5"
               >
                 <Merge className="w-3.5 h-3.5" />
                 <span>Merge with Duplicate</span>
               </button>
               <button
                 onClick={() => setSelectedParticipant(null)}
-                className="flex-1 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-md shadow-[#FF6036]/20"
+                className="flex-1 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-md shadow-[#FF751F]/20"
               >
                 Close Profile
               </button>
@@ -346,23 +346,23 @@ export const AdminParticipants: React.FC = () => {
       {/* INTERACTIVE MERGE DUPLICATE TOOL MODAL */}
       {mergeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#2C2924]">
+          <div className="bg-[#151E4D] border border-[#283677] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#202B61]">
               <div className="flex items-center gap-2">
-                <Merge className="w-5 h-5 text-[#FFC226]" />
-                <h3 className="text-base font-heading font-bold text-[#F5F2EB]">Merge Duplicate Shufflers</h3>
+                <Merge className="w-5 h-5 text-[#FFD230]" />
+                <h3 className="text-base font-heading font-bold text-[#F8FAFC]">Merge Duplicate Shufflers</h3>
               </div>
-              <button onClick={() => setMergeModalOpen(false)} className="text-[#A8A29E] hover:text-[#F5F2EB]">
+              <button onClick={() => setMergeModalOpen(false)} className="text-[#94A3B8] hover:text-[#F8FAFC]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-[#A8A29E]">
+            <p className="text-xs text-[#94A3B8]">
               Select the primary customer record to keep. All event attendances, games played, guest referrals, and history will be safely consolidated into the primary profile, and the duplicate will be cleanly removed.
             </p>
 
             {mergeSuccessMsg && (
-              <div className="p-3 rounded-xl bg-[#35C8A8]/15 border border-[#35C8A8]/30 text-[#35C8A8] text-xs font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-[#4AB4A4]/15 border border-[#4AB4A4]/30 text-[#4AB4A4] text-xs font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{mergeSuccessMsg}</span>
               </div>
@@ -370,13 +370,13 @@ export const AdminParticipants: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#A8A29E] font-semibold mb-1">
+                <label className="block text-[#94A3B8] font-semibold mb-1">
                   1. Keep this as Primary Profile (Master Record)
                 </label>
                 <select
                   value={primaryMergeId}
                   onChange={e => setPrimaryMergeId(e.target.value)}
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-[#F8FAFC] focus:outline-none focus:border-[#FF751F]"
                 >
                   {participants.map(p => (
                     <option key={p.id} value={p.id}>
@@ -387,13 +387,13 @@ export const AdminParticipants: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[#A8A29E] font-semibold mb-1">
+                <label className="block text-[#94A3B8] font-semibold mb-1">
                   2. Merge & Delete this Duplicate Record
                 </label>
                 <select
                   value={duplicateMergeId}
                   onChange={e => setDuplicateMergeId(e.target.value)}
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-[#F5F2EB] focus:outline-none focus:border-[#FF6036]"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-[#F8FAFC] focus:outline-none focus:border-[#FF751F]"
                 >
                   <option value="">-- Choose duplicate to merge --</option>
                   {participants
@@ -407,11 +407,11 @@ export const AdminParticipants: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-3 border-t border-[#2C2924]">
+            <div className="flex gap-2 pt-3 border-t border-[#202B61]">
               <button
                 type="button"
                 onClick={() => setMergeModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-[#36332D] text-[#A8A29E] font-semibold text-xs hover:bg-[#24221E] hover:text-[#F5F2EB]"
+                className="flex-1 py-2.5 rounded-xl border border-[#283677] text-[#94A3B8] font-semibold text-xs hover:bg-[#1A255C] hover:text-[#F8FAFC]"
               >
                 Cancel
               </button>
@@ -419,7 +419,7 @@ export const AdminParticipants: React.FC = () => {
                 type="button"
                 onClick={handleExecuteMerge}
                 disabled={!duplicateMergeId || duplicateMergeId === primaryMergeId}
-                className="flex-1 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-lg shadow-[#FF6036]/20 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-lg shadow-[#FF751F]/20 disabled:opacity-50"
               >
                 Confirm & Merge Records
               </button>

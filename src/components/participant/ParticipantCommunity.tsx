@@ -130,14 +130,14 @@ export const ParticipantCommunity: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-8">
       {/* Navigation sub-tabs */}
-      <div className="flex items-center gap-2 border-b border-[#2C2924] pb-3 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-2 border-b border-[#202B61] pb-3 overflow-x-auto scrollbar-none">
         <button
           id="tab-community-feedback"
           onClick={() => setActiveTab('feedback')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-heading font-bold transition-all whitespace-nowrap ${
             activeTab === 'feedback'
-              ? 'bg-[#FF6036] text-white shadow-sm shadow-[#FF6036]/20'
-              : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+              ? 'bg-[#FF751F] text-white shadow-sm shadow-[#FF751F]/20'
+              : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
           }`}
         >
           <MessageSquare className="w-4 h-4" />
@@ -150,7 +150,7 @@ export const ParticipantCommunity: React.FC = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-heading font-bold transition-all whitespace-nowrap ${
             activeTab === 'report'
               ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/20'
-              : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+              : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
           }`}
         >
           <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -162,8 +162,8 @@ export const ParticipantCommunity: React.FC = () => {
           onClick={() => setActiveTab('contacts')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-heading font-bold transition-all whitespace-nowrap ${
             activeTab === 'contacts'
-              ? 'bg-[#FF6036] text-white shadow-sm shadow-[#FF6036]/20'
-              : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+              ? 'bg-[#FF751F] text-white shadow-sm shadow-[#FF751F]/20'
+              : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
           }`}
         >
           <PhoneCall className="w-4 h-4" />
@@ -175,8 +175,8 @@ export const ParticipantCommunity: React.FC = () => {
           onClick={() => setActiveTab('volunteer')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-heading font-bold transition-all whitespace-nowrap ${
             activeTab === 'volunteer'
-              ? 'bg-[#35C8A8] text-[#141312] shadow-sm shadow-[#35C8A8]/20'
-              : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+              ? 'bg-[#4AB4A4] text-[#10173E] shadow-sm shadow-[#4AB4A4]/20'
+              : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
           }`}
         >
           <HeartHandshake className="w-4 h-4" />
@@ -186,16 +186,16 @@ export const ParticipantCommunity: React.FC = () => {
 
       {/* 1. FEEDBACK SUB-TAB */}
       {activeTab === 'feedback' && (
-        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-sm space-y-5">
+        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-sm space-y-5">
           <div>
             <h3 className="text-lg font-heading font-bold text-white">Share Your Meetup Feedback</h3>
-            <p className="text-xs text-[#A8A29E] mt-1 leading-relaxed">
+            <p className="text-xs text-[#94A3B8] mt-1 leading-relaxed">
               Help us craft better board game weekends in Pune! Your honest thoughts guide our game choices, venues, and hosting style.
             </p>
           </div>
 
           {feedbackSuccess && (
-            <div className="p-3.5 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 text-[#35C8A8] text-xs font-semibold flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/30 text-[#4AB4A4] text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               <span>Thank you! Your feedback has been shared with the Social Shuffle host team.</span>
             </div>
@@ -207,7 +207,7 @@ export const ParticipantCommunity: React.FC = () => {
               <select
                 value={feedbackEventId}
                 onChange={e => setFeedbackEventId(e.target.value)}
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FF6036]"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FF751F]"
               >
                 {events.map(ev => (
                   <option key={ev.id} value={ev.id}>
@@ -218,9 +218,9 @@ export const ParticipantCommunity: React.FC = () => {
             </div>
 
             {/* Star ratings */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-[#24221E] border border-[#36332D]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-[#1A255C] border border-[#283677]">
               <div>
-                <span className="block text-[#A8A29E] font-medium mb-1">Overall Experience</span>
+                <span className="block text-[#94A3B8] font-medium mb-1">Overall Experience</span>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -231,7 +231,7 @@ export const ParticipantCommunity: React.FC = () => {
                     >
                       <Star
                         className={`w-5 h-5 ${
-                          star <= overallRating ? 'text-[#FFC226] fill-[#FFC226]' : 'text-[#78716C]'
+                          star <= overallRating ? 'text-[#FFD230] fill-[#FFD230]' : 'text-[#64748B]'
                         }`}
                       />
                     </button>
@@ -240,7 +240,7 @@ export const ParticipantCommunity: React.FC = () => {
               </div>
 
               <div>
-                <span className="block text-[#A8A29E] font-medium mb-1">Venue & Atmosphere</span>
+                <span className="block text-[#94A3B8] font-medium mb-1">Venue & Atmosphere</span>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -251,7 +251,7 @@ export const ParticipantCommunity: React.FC = () => {
                     >
                       <Star
                         className={`w-5 h-5 ${
-                          star <= venueRating ? 'text-[#FFC226] fill-[#FFC226]' : 'text-[#78716C]'
+                          star <= venueRating ? 'text-[#FFD230] fill-[#FFD230]' : 'text-[#64748B]'
                         }`}
                       />
                     </button>
@@ -260,7 +260,7 @@ export const ParticipantCommunity: React.FC = () => {
               </div>
 
               <div>
-                <span className="block text-[#A8A29E] font-medium mb-1">Board Game Selection</span>
+                <span className="block text-[#94A3B8] font-medium mb-1">Board Game Selection</span>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -271,7 +271,7 @@ export const ParticipantCommunity: React.FC = () => {
                     >
                       <Star
                         className={`w-5 h-5 ${
-                          star <= gameRating ? 'text-[#FFC226] fill-[#FFC226]' : 'text-[#78716C]'
+                          star <= gameRating ? 'text-[#FFD230] fill-[#FFD230]' : 'text-[#64748B]'
                         }`}
                       />
                     </button>
@@ -280,7 +280,7 @@ export const ParticipantCommunity: React.FC = () => {
               </div>
 
               <div>
-                <span className="block text-[#A8A29E] font-medium mb-1">Host Explanations & Energy</span>
+                <span className="block text-[#94A3B8] font-medium mb-1">Host Explanations & Energy</span>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -291,7 +291,7 @@ export const ParticipantCommunity: React.FC = () => {
                     >
                       <Star
                         className={`w-5 h-5 ${
-                          star <= hostRating ? 'text-[#FFC226] fill-[#FFC226]' : 'text-[#78716C]'
+                          star <= hostRating ? 'text-[#FFD230] fill-[#FFD230]' : 'text-[#64748B]'
                         }`}
                       />
                     </button>
@@ -310,24 +310,24 @@ export const ParticipantCommunity: React.FC = () => {
                 value={feedbackText}
                 onChange={e => setFeedbackText(e.target.value)}
                 placeholder="What did you love? Which games should we bring to the next meetup?"
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl p-3 text-white focus:outline-none focus:border-[#FF6036]"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl p-3 text-white focus:outline-none focus:border-[#FF751F]"
               />
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-[#A8A29E]">
+              <label className="flex items-center gap-2 cursor-pointer text-[#94A3B8]">
                 <input
                   type="checkbox"
                   checked={isAnonymousFeedback}
                   onChange={e => setIsAnonymousFeedback(e.target.checked)}
-                  className="rounded border-[#36332D] text-[#FF6036] focus:ring-0"
+                  className="rounded border-[#283677] text-[#FF751F] focus:ring-0"
                 />
                 <span>Submit anonymously</span>
               </label>
 
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold flex items-center gap-2 shadow-sm shadow-[#FF6036]/25 transition-all"
+                className="px-6 py-2.5 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold flex items-center gap-2 shadow-sm shadow-[#FF751F]/25 transition-all"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Submit Feedback</span>
@@ -339,21 +339,21 @@ export const ParticipantCommunity: React.FC = () => {
 
       {/* 2. REPORT AN ISSUE SUB-TAB */}
       {activeTab === 'report' && (
-        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#1C1B18] border border-rose-500/30 shadow-sm space-y-5">
+        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#151E4D] border border-rose-500/30 shadow-sm space-y-5">
           <div className="flex items-start gap-3">
             <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
               <ShieldAlert className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-lg font-heading font-bold text-white">Safe Community Reporting</h3>
-              <p className="text-xs text-[#A8A29E] mt-1 leading-relaxed">
+              <p className="text-xs text-[#94A3B8] mt-1 leading-relaxed">
                 Social Shuffle is dedicated to zero tolerance for harassment, discomfort, or disrespectful conduct. All reports go directly to our executive organizers and are strictly confidential.
               </p>
             </div>
           </div>
 
           {reportSuccess && (
-            <div className="p-3.5 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 text-[#35C8A8] text-xs font-semibold flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/30 text-[#4AB4A4] text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               <span>Report submitted safely. Our organizers will investigate with utmost discretion.</span>
             </div>
@@ -365,7 +365,7 @@ export const ParticipantCommunity: React.FC = () => {
               <select
                 value={reportType}
                 onChange={e => setReportType(e.target.value as ReportCategory)}
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
               >
                 <option value="Uncomfortable interaction">Uncomfortable interaction</option>
                 <option value="Harassment">Harassment / Boundary violation</option>
@@ -381,7 +381,7 @@ export const ParticipantCommunity: React.FC = () => {
               <select
                 value={reportEventId}
                 onChange={e => setReportEventId(e.target.value)}
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
               >
                 <option value="">General / Not tied to specific event</option>
                 {events.map(ev => (
@@ -402,7 +402,7 @@ export const ParticipantCommunity: React.FC = () => {
                 value={reportDesc}
                 onChange={e => setReportDesc(e.target.value)}
                 placeholder="Please describe what happened, the approximate time, and how we can support you."
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl p-3 text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl p-3 text-white focus:outline-none focus:border-rose-500"
               />
             </div>
 
@@ -415,17 +415,17 @@ export const ParticipantCommunity: React.FC = () => {
                 value={personInvolved}
                 onChange={e => setPersonInvolved(e.target.value)}
                 placeholder="Name or table location if known"
-                className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <label className="flex items-center gap-2 cursor-pointer text-[#A8A29E]">
+              <label className="flex items-center gap-2 cursor-pointer text-[#94A3B8]">
                 <input
                   type="checkbox"
                   checked={isAnonymousReport}
                   onChange={e => setIsAnonymousReport(e.target.checked)}
-                  className="rounded border-[#36332D] text-rose-600 focus:ring-0"
+                  className="rounded border-[#283677] text-rose-600 focus:ring-0"
                 />
                 <span className="flex items-center gap-1">
                   <Lock className="w-3 h-3 text-rose-400" />
@@ -448,25 +448,25 @@ export const ParticipantCommunity: React.FC = () => {
       {/* 3. HOST CONTACTS SUB-TAB */}
       {activeTab === 'contacts' && (
         <div className="max-w-2xl mx-auto space-y-4">
-          <div className="p-6 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-sm space-y-4">
+          <div className="p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-sm space-y-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#FF6036] block mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#FF751F] block mb-1">
                 Direct Channels
               </span>
               <h3 className="text-xl font-heading font-bold text-white">Social Shuffle Pune Hosts</h3>
-              <p className="text-xs text-[#A8A29E] mt-1 leading-relaxed">
+              <p className="text-xs text-[#94A3B8] mt-1 leading-relaxed">
                 Have questions before coming alone? Want to suggest a venue or collaborate? Reach out to us anytime!
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {/* WhatsApp Community */}
-              <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2">
-                <div className="flex items-center gap-2 text-[#35C8A8] font-bold text-sm">
+              <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2">
+                <div className="flex items-center gap-2 text-[#4AB4A4] font-bold text-sm">
                   <MessageCircle className="w-5 h-5" />
                   <span>WhatsApp Community</span>
                 </div>
-                <p className="text-xs text-[#A8A29E]">
+                <p className="text-xs text-[#94A3B8]">
                   Join our official WhatsApp group for weekly RSVP announcements, table chats, and spot drops.
                 </p>
                 <div className="pt-1">
@@ -474,7 +474,7 @@ export const ParticipantCommunity: React.FC = () => {
                     href="https://chat.whatsapp.com/demo"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block text-xs font-bold text-[#35C8A8] hover:underline"
+                    className="inline-block text-xs font-bold text-[#4AB4A4] hover:underline"
                   >
                     Join 1,200+ Pune Shufflers →
                   </a>
@@ -482,12 +482,12 @@ export const ParticipantCommunity: React.FC = () => {
               </div>
 
               {/* Instagram */}
-              <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2">
-                <div className="flex items-center gap-2 text-[#FF6036] font-bold text-sm">
+              <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2">
+                <div className="flex items-center gap-2 text-[#FF751F] font-bold text-sm">
                   <Instagram className="w-5 h-5" />
                   <span>Instagram</span>
                 </div>
-                <p className="text-xs text-[#A8A29E]">
+                <p className="text-xs text-[#94A3B8]">
                   Catch event reels, winner spotlights, photos, and game tutorials.
                 </p>
                 <div className="pt-1">
@@ -495,7 +495,7 @@ export const ParticipantCommunity: React.FC = () => {
                     href="https://instagram.com/socialshufflepune"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block text-xs font-bold text-[#FF6036] hover:underline"
+                    className="inline-block text-xs font-bold text-[#FF751F] hover:underline"
                   >
                     @socialshufflepune →
                   </a>
@@ -503,29 +503,29 @@ export const ParticipantCommunity: React.FC = () => {
               </div>
 
               {/* Email */}
-              <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2">
-                <div className="flex items-center gap-2 text-[#35C8A8] font-bold text-sm">
+              <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2">
+                <div className="flex items-center gap-2 text-[#4AB4A4] font-bold text-sm">
                   <Mail className="w-5 h-5" />
                   <span>Official Email</span>
                 </div>
-                <p className="text-xs text-[#A8A29E]">
+                <p className="text-xs text-[#94A3B8]">
                   For venue partnerships, corporate game nights, and official inquiries.
                 </p>
-                <div className="pt-1 text-xs font-bold text-[#35C8A8]">
+                <div className="pt-1 text-xs font-bold text-[#4AB4A4]">
                   hello@socialshuffle.in
                 </div>
               </div>
 
               {/* Lead Host */}
-              <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2">
-                <div className="flex items-center gap-2 text-[#FFC226] font-bold text-sm">
+              <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2">
+                <div className="flex items-center gap-2 text-[#FFD230] font-bold text-sm">
                   <Sparkles className="w-5 h-5" />
                   <span>Main Host</span>
                 </div>
                 <p className="text-xs text-white">
                   <strong>Aman Joshi</strong> — Founder & Head Game Explainer
                 </p>
-                <div className="pt-1 text-xs text-[#A8A29E]">
+                <div className="pt-1 text-xs text-[#94A3B8]">
                   Direct: +91 98200 54321
                 </div>
               </div>
@@ -533,7 +533,7 @@ export const ParticipantCommunity: React.FC = () => {
           </div>
 
           {/* First Timer FAQ card */}
-          <div className="p-5 rounded-2xl bg-[#1C1B18] border border-[#36332D] space-y-2 text-xs text-[#A8A29E]">
+          <div className="p-5 rounded-2xl bg-[#151E4D] border border-[#283677] space-y-2 text-xs text-[#94A3B8]">
             <h4 className="font-heading font-bold text-white text-sm">Coming to Social Shuffle for the first time?</h4>
             <p>• <strong className="text-white">Do I need to know board games?</strong> Not at all! Our hosts explain every single game rule patiently before you play.</p>
             <p>• <strong className="text-white">Can I come solo?</strong> Over 60% of our shufflers come solo. We seat you with friendly people immediately!</p>
@@ -543,51 +543,51 @@ export const ParticipantCommunity: React.FC = () => {
 
       {/* 4. JOIN AS VOLUNTEER SUB-TAB */}
       {activeTab === 'volunteer' && (
-        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-sm space-y-5">
+        <div className="max-w-2xl mx-auto p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-sm space-y-5">
           <div>
             <div className="flex items-center gap-2">
-              <HeartHandshake className="w-5 h-5 text-[#35C8A8]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#35C8A8]">Community Crew</span>
+              <HeartHandshake className="w-5 h-5 text-[#4AB4A4]" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4AB4A4]">Community Crew</span>
             </div>
             <h3 className="text-xl font-heading font-bold text-white mt-1">Become a Social Shuffle Volunteer</h3>
-            <p className="text-xs text-[#A8A29E] mt-0.5 leading-relaxed">
+            <p className="text-xs text-[#94A3B8] mt-0.5 leading-relaxed">
               Passionate about board games and meeting great people in Pune? Help us welcome newcomers, teach games, and run epic meetup tables!
             </p>
           </div>
 
           {existingApp ? (
-            <div className="p-4 rounded-xl bg-[#24221E] border border-[#36332D] space-y-2 text-xs">
+            <div className="p-4 rounded-xl bg-[#1A255C] border border-[#283677] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-white">Your Volunteer Application</span>
                 <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
                   existingApp.status === 'Accepted'
-                    ? 'bg-[#35C8A8]/20 text-[#35C8A8]'
+                    ? 'bg-[#4AB4A4]/20 text-[#4AB4A4]'
                     : existingApp.status === 'Under Review'
-                    ? 'bg-[#FFC226]/20 text-[#FFC226]'
-                    : 'bg-[#141312] text-[#A8A29E]'
+                    ? 'bg-[#FFD230]/20 text-[#FFD230]'
+                    : 'bg-[#10173E] text-[#94A3B8]'
                 }`}>
                   {existingApp.status}
                 </span>
               </div>
-              <p className="text-[#A8A29E]">
+              <p className="text-[#94A3B8]">
                 Submitted on {existingApp.submittedAt}. Our organizing team is reviewing your profile and will connect with you via WhatsApp!
               </p>
             </div>
           ) : volSuccess ? (
-            <div className="p-4 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 text-[#35C8A8] text-xs font-semibold flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/30 text-[#4AB4A4] text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               <span>Application received! We'll reach out to schedule a meetup coffee chat.</span>
             </div>
           ) : (
             <form onSubmit={handleVolunteerSubmit} className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-xl bg-[#24221E] border border-[#36332D] flex justify-between">
+              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] flex justify-between">
                 <div>
-                  <span className="text-[#A8A29E] block font-medium">Applicant</span>
+                  <span className="text-[#94A3B8] block font-medium">Applicant</span>
                   <span className="font-heading font-bold text-white text-sm">{currentParticipant.name}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[#A8A29E] block font-medium">Contact</span>
-                  <span className="text-[#D6D3D1]">{currentParticipant.phone} • {currentParticipant.area}</span>
+                  <span className="text-[#94A3B8] block font-medium">Contact</span>
+                  <span className="text-[#CBD5E1]">{currentParticipant.phone} • {currentParticipant.area}</span>
                 </div>
               </div>
 
@@ -601,7 +601,7 @@ export const ParticipantCommunity: React.FC = () => {
                   value={volReason}
                   onChange={e => setVolReason(e.target.value)}
                   placeholder="Tell us what you love about board games and community building..."
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl p-3 text-white focus:outline-none focus:border-[#35C8A8]"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl p-3 text-white focus:outline-none focus:border-[#4AB4A4]"
                 />
               </div>
 
@@ -615,7 +615,7 @@ export const ParticipantCommunity: React.FC = () => {
                   value={volExperience}
                   onChange={e => setVolExperience(e.target.value)}
                   placeholder="e.g. Hosted game nights, college fest organizer, hospitality..."
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#35C8A8]"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#4AB4A4]"
                 />
               </div>
 
@@ -629,7 +629,7 @@ export const ParticipantCommunity: React.FC = () => {
                   value={volSkills}
                   onChange={e => setVolSkills(e.target.value)}
                   placeholder="e.g. Can teach Catan, Avalon, Coup, high energy, rules clarity"
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#35C8A8]"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#4AB4A4]"
                 />
               </div>
 
@@ -651,8 +651,8 @@ export const ParticipantCommunity: React.FC = () => {
                       onClick={() => toggleResponsibility(roleName)}
                       className={`p-2.5 rounded-xl border text-left font-semibold transition-all ${
                         selectedResponsibilities.includes(roleName)
-                          ? 'bg-[#35C8A8]/15 border-[#35C8A8]/40 text-[#35C8A8]'
-                          : 'bg-[#141312] border-[#36332D] text-[#A8A29E] hover:text-white'
+                          ? 'bg-[#4AB4A4]/15 border-[#4AB4A4]/40 text-[#4AB4A4]'
+                          : 'bg-[#10173E] border-[#283677] text-[#94A3B8] hover:text-white'
                       }`}
                     >
                       {roleName}
@@ -664,7 +664,7 @@ export const ParticipantCommunity: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-[#35C8A8] hover:bg-[#2cb295] text-[#141312] font-heading font-bold flex items-center justify-center gap-2 shadow-sm shadow-[#35C8A8]/25 transition-all"
+                  className="w-full py-3 rounded-xl bg-[#4AB4A4] hover:bg-[#2cb295] text-[#10173E] font-heading font-bold flex items-center justify-center gap-2 shadow-sm shadow-[#4AB4A4]/25 transition-all"
                 >
                   <HeartHandshake className="w-4 h-4" />
                   <span>Submit Volunteer Application</span>

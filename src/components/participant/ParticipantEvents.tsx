@@ -33,6 +33,7 @@ import { ShuffleEvent, GuestInfo, Registration } from '../../types';
 import { openGoogleCalendar, downloadIcsFile } from '../../utils/calendarUtils';
 import { GuestRegistrationPromptModal } from '../auth/GuestRegistrationPromptModal';
 import { LogAttendedGamesModal } from './LogAttendedGamesModal';
+import confetti from 'canvas-confetti';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
@@ -79,6 +80,8 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   const [notes, setNotes] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [regFeedback, setRegFeedback] = useState<{ message: string; success: boolean } | null>(null);
+  // Track recently registered event for smooth RSVP button transition animation
+  const [recentlyRegisteredEventId, setRecentlyRegisteredEventId] = useState<string | null>(null);
 
   const samplePuneNames = ['Tanvi Joshi', 'Rahul Kulkarni', 'Aditi Patil', 'Rohan Shinde', 'Sneha Deshpande', 'Siddharth More'];
 
@@ -212,6 +215,44 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     // Close the intake form modal
     setShowRegisterModal(false);
 
+    // Direct registration for free events
+    if (totalAmount === 0) {
+      const result = registerForEvent(
+        registeringEvent.id,
+        totalParticipants,
+        sanitizedAdditional,
+        notes
+      );
+      const targetEventId = registeringEvent.id;
+      setActiveSubTab('upcoming');
+      setSelectedEvent(null);
+      setRecentlyRegisteredEventId(targetEventId);
+
+      try {
+        confetti({
+          particleCount: 85,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FF751F', '#4AB4A4', '#FFD230', '#9440DD']
+        });
+      } catch (err) {
+        console.error(err);
+      }
+
+      setTimeout(() => {
+        setRecentlyRegisteredEventId(null);
+      }, 6000);
+
+      if (result.success && result.registration) {
+        const reg = result.registration;
+        setTimeout(() => {
+          setActiveTicketReg(reg);
+          setShowTicketModal(true);
+        }, 1400);
+      }
+      return;
+    }
+
     // Redirect to Razorpay Payment Gateway
     setRazorpayGatewayModal({
       event: registeringEvent,
@@ -254,7 +295,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     }
   };
 
-  // Step 2: Razorpay confirms payment was successfully done -> Only then register attendee and redirect to event page
+  // Step 2: Razorpay confirms payment was successfully done -> Only then register attendee and trigger smooth RSVP animation
   const handleCompleteRazorpayPayment = (customPaymentId?: string) => {
     if (!razorpayGatewayModal) return;
 
@@ -280,23 +321,49 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
           }
         );
 
+        const targetEventId = razorpayGatewayModal.event.id;
+
         setPaymentSuccessAlert({
           eventName: razorpayGatewayModal.event.title,
           paymentId: paymentId,
           amount: razorpayGatewayModal.totalAmount
         });
 
-        // Close Razorpay gateway modal
+        // Close Razorpay gateway modal and details modal
         setRazorpayGatewayModal(null);
         setPaymentProcessing(false);
+        setSelectedEvent(null);
 
-        // Redirect back to event page ("My Registrations")
-        setActiveSubTab('my-events');
+        // Keep activeSubTab on 'upcoming' so user sees the RSVP button smoothly transition right on the card
+        setActiveSubTab('upcoming');
 
-        // Show you are registered! Open digital ticket pass
+        // Trigger smooth transition animation state on the RSVP button
+        setRecentlyRegisteredEventId(targetEventId);
+
+        // Fire celebratory confetti in Social Shuffle colors
+        try {
+          confetti({
+            particleCount: 85,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FF751F', '#4AB4A4', '#FFD230', '#9440DD']
+          });
+        } catch (err) {
+          console.error(err);
+        }
+
+        // Auto-clear transition state after celebration
+        setTimeout(() => {
+          setRecentlyRegisteredEventId(null);
+        }, 6000);
+
+        // Open digital ticket pass after the user has watched the smooth RSVP button animation
         if (result.success && result.registration) {
-          setActiveTicketReg(result.registration);
-          setShowTicketModal(true);
+          const reg = result.registration;
+          setTimeout(() => {
+            setActiveTicketReg(reg);
+            setShowTicketModal(true);
+          }, 1400);
         }
       }, 700);
     }, 1000);
@@ -316,26 +383,26 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     <div className="space-y-6 pb-20 md:pb-8">
       {/* Payment Success Alert on Event Page */}
       {paymentSuccessAlert && (
-        <div className="p-4 rounded-2xl bg-[#1C1B18] border border-[#35C8A8]/40 shadow-xl flex items-center justify-between gap-4 animate-in fade-in duration-300">
+        <div className="p-4 rounded-2xl bg-[#151E4D] border border-[#4AB4A4]/40 shadow-xl flex items-center justify-between gap-4 animate-in fade-in duration-300">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#35C8A8]/15 border border-[#35C8A8]/30 flex items-center justify-center text-[#35C8A8] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#4AB4A4]/15 border border-[#4AB4A4]/30 flex items-center justify-center text-[#4AB4A4] shrink-0">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-heading font-bold text-sm text-white">Payment Confirmed via Razorpay! 🎉</span>
-                <span className="text-[10px] font-mono text-[#35C8A8] bg-[#141312] px-2 py-0.5 rounded border border-[#36332D]">
+                <span className="text-[10px] font-mono text-[#4AB4A4] bg-[#10173E] px-2 py-0.5 rounded border border-[#283677]">
                   {paymentSuccessAlert.paymentId}
                 </span>
               </div>
-              <p className="text-xs text-[#A8A29E] mt-0.5">
+              <p className="text-xs text-[#94A3B8] mt-0.5">
                 You are registered for <strong className="text-white">{paymentSuccessAlert.eventName}</strong> (₹{paymentSuccessAlert.amount} paid). Your digital QR check-in pass has been generated!
               </p>
             </div>
           </div>
           <button
             onClick={() => setPaymentSuccessAlert(null)}
-            className="text-xs text-[#78716C] hover:text-white px-2 py-1 rounded-lg hover:bg-[#24221E] shrink-0"
+            className="text-xs text-[#64748B] hover:text-white px-2 py-1 rounded-lg hover:bg-[#1A255C] shrink-0"
           >
             ✕
           </button>
@@ -343,15 +410,15 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       )}
 
       {/* Sub Tabs */}
-      <div className="flex items-center justify-between border-b border-[#2C2924] pb-3">
+      <div className="flex items-center justify-between border-b border-[#202B61] pb-3">
         <div className="flex items-center gap-2">
           <button
             id="tab-sub-upcoming"
             onClick={() => setActiveSubTab('upcoming')}
             className={`px-4 py-2 rounded-xl text-xs font-heading font-bold tracking-tight transition-all ${
               activeSubTab === 'upcoming'
-                ? 'bg-[#FF6036] text-white shadow-sm shadow-[#FF6036]/20'
-                : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+                ? 'bg-[#FF751F] text-white shadow-sm shadow-[#FF751F]/20'
+                : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
             }`}
           >
             Upcoming Meetups ({events.filter(e => e.status === 'upcoming').length})
@@ -361,16 +428,16 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
             onClick={() => setActiveSubTab('my-events')}
             className={`px-4 py-2 rounded-xl text-xs font-heading font-bold tracking-tight transition-all ${
               activeSubTab === 'my-events'
-                ? 'bg-[#FF6036] text-white shadow-sm shadow-[#FF6036]/20'
-                : 'text-[#A8A29E] hover:text-white hover:bg-[#1C1B18]'
+                ? 'bg-[#FF751F] text-white shadow-sm shadow-[#FF751F]/20'
+                : 'text-[#94A3B8] hover:text-white hover:bg-[#151E4D]'
             }`}
           >
             My Registrations ({myRegistrations.length})
           </button>
         </div>
 
-        <div className="text-xs text-[#A8A29E] hidden sm:flex items-center gap-1.5 font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#35C8A8]"></span>
+        <div className="text-xs text-[#94A3B8] hidden sm:flex items-center gap-1.5 font-medium">
+          <span className="w-2 h-2 rounded-full bg-[#4AB4A4]"></span>
           <span>Pune Meetup Hub</span>
         </div>
       </div>
@@ -395,14 +462,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               return (
                 <div
                   key={event.id}
-                  className="rounded-2xl bg-[#1C1B18] border border-[#36332D] hover:border-[#FF6036]/50 transition-all p-5 flex flex-col justify-between gap-4 shadow-sm"
+                  className="rounded-2xl bg-[#151E4D] border border-[#283677] hover:border-[#FF751F]/50 transition-all p-5 flex flex-col justify-between gap-4 shadow-sm"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FF6036]/10 text-[#FF6036] border border-[#FF6036]/20">
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FF751F]/10 text-[#FF751F] border border-[#FF751F]/20">
                         {event.category}
                       </span>
-                      <span className="text-[11px] text-[#A8A29E] font-medium">
+                      <span className="text-[11px] text-[#94A3B8] font-medium">
                         {availableSeats > 0 ? `${availableSeats} seats left` : 'Fully Booked'}
                       </span>
                     </div>
@@ -411,18 +478,18 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <h3 className="text-lg font-heading font-bold text-white tracking-tight">
                         {event.title}
                       </h3>
-                      <p className="text-xs text-[#A8A29E] mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-[#94A3B8] mt-1 line-clamp-2 leading-relaxed">
                         {event.description}
                       </p>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-[#D6D3D1] pt-1">
+                    <div className="space-y-1.5 text-xs text-[#CBD5E1] pt-1">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#FF6036] shrink-0" />
+                        <Calendar className="w-4 h-4 text-[#FF751F] shrink-0" />
                         <span>{event.time}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-[#35C8A8] shrink-0" />
+                        <MapPin className="w-4 h-4 text-[#4AB4A4] shrink-0" />
                         <span>{event.venue}, {event.area}</span>
                       </div>
                     </div>
@@ -430,8 +497,8 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     {/* Planned Games chips - do not show for guest view */}
                     {isAuthenticated && event.plannedGames.length > 0 && (
                       <div className="pt-2">
-                        <span className="text-[11px] uppercase font-bold tracking-wider text-[#A8A29E] mb-1.5 flex items-center gap-1.5">
-                          <Dices className="w-3.5 h-3.5 text-[#FFC226]" />
+                        <span className="text-[11px] uppercase font-bold tracking-wider text-[#94A3B8] mb-1.5 flex items-center gap-1.5">
+                          <Dices className="w-3.5 h-3.5 text-[#FFD230]" />
                           Featured Tables
                         </span>
                         <div className="flex flex-wrap gap-1.5">
@@ -440,7 +507,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                             return (
                               <span
                                 key={gameId}
-                                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#24221E] text-[#F5F2EB] border border-[#36332D] font-medium"
+                                className="text-[11px] px-2.5 py-1 rounded-lg bg-[#1A255C] text-[#F8FAFC] border border-[#283677] font-medium"
                               >
                                 {game ? game.name : gameId}
                               </span>
@@ -451,10 +518,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-[#2C2924] flex items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-[#202B61] flex items-center justify-between gap-3">
                     <button
                       onClick={() => setSelectedEvent(event)}
-                      className="text-xs font-semibold text-[#A8A29E] hover:text-white transition-colors"
+                      className="text-xs font-semibold text-[#94A3B8] hover:text-white transition-colors"
                     >
                       View Full Details
                     </button>
@@ -463,32 +530,77 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <button
                         id={`btn-register-participant-first-${event.id}`}
                         onClick={() => openAuthModal('register', event.id)}
-                        className="px-4 py-2 rounded-xl text-xs font-heading font-bold bg-[#FF6036] text-white hover:bg-[#E85127] shadow-sm shadow-[#FF6036]/25 transition-all flex items-center gap-1.5 active:scale-95"
+                        className="px-4 py-2 rounded-xl text-xs font-heading font-bold bg-[#FF751F] text-white hover:bg-[#E66310] shadow-sm shadow-[#FF751F]/25 transition-all flex items-center gap-1.5 active:scale-95"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
                         <span>Join our community</span>
                       </button>
-                    ) : isRegistered ? (
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#35C8A8] bg-[#35C8A8]/10 px-3 py-1.5 rounded-xl border border-[#35C8A8]/20">
-                        <CheckCircle2 className="w-4 h-4 text-[#35C8A8]" />
-                        <span>Registered</span>
-                      </div>
                     ) : (
                       <button
-                        id={`btn-register-ev-${event.id}`}
-                        onClick={() => openRegistration(event)}
-                        disabled={event.status !== 'upcoming' || availableSeats <= 0}
-                        className={`px-4 py-2 rounded-xl text-xs font-heading font-bold transition-all ${
-                          event.status === 'upcoming' && availableSeats > 0
-                            ? 'bg-[#FF6036] hover:bg-[#E85127] text-white shadow-sm shadow-[#FF6036]/25'
-                            : 'bg-[#24221E] text-[#78716C] cursor-not-allowed border border-[#36332D]'
+                        id={`btn-rsvp-${event.id}`}
+                        data-testid={`btn-register-ev-${event.id}`}
+                        onClick={() => {
+                          if (isRegistered) {
+                            const existingReg = registrations.find(
+                              r => r.eventId === event.id && r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
+                            );
+                            if (existingReg) {
+                              setActiveTicketReg(existingReg);
+                              setShowTicketModal(true);
+                            }
+                          } else {
+                            openRegistration(event);
+                          }
+                        }}
+                        disabled={!isRegistered && (event.status !== 'upcoming' || availableSeats <= 0)}
+                        className={`relative px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center justify-center gap-2 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) transform select-none active:scale-95 ${
+                          recentlyRegisteredEventId === event.id
+                            ? 'bg-[#4AB4A4] text-[#10173E] animate-rsvp-success scale-105 shadow-xl shadow-[#4AB4A4]/40 ring-4 ring-[#4AB4A4]/60 ring-offset-2 ring-offset-[#151E4D]'
+                            : isRegistered
+                            ? 'bg-[#4AB4A4]/15 hover:bg-[#4AB4A4]/25 text-[#4AB4A4] border border-[#4AB4A4]/30 shadow-sm hover:scale-[1.02]'
+                            : event.status === 'upcoming' && availableSeats > 0
+                            ? 'bg-[#FF751F] hover:bg-[#E66310] text-white shadow-sm shadow-[#FF751F]/25 hover:shadow-[#FF751F]/40 hover:scale-[1.02]'
+                            : 'bg-[#1A255C] text-[#64748B] cursor-not-allowed border border-[#283677]'
                         }`}
+                        title={isRegistered ? 'View your digital QR pass' : 'RSVP for this meetup'}
                       >
-                        {event.status !== 'upcoming'
-                          ? 'Event Completed'
-                          : availableSeats <= 0
-                          ? 'Sold Out'
-                          : 'Register Now'}
+                        {/* Animated pulsing dot on recent success */}
+                        {recentlyRegisteredEventId === event.id && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4AB4A4] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#FFD230]"></span>
+                          </span>
+                        )}
+
+                        {/* Icon with smooth rotate/scale morph */}
+                        <span
+                          className={`inline-flex items-center justify-center transition-all duration-500 transform ${
+                            recentlyRegisteredEventId === event.id
+                              ? 'scale-125 rotate-[360deg] text-[#10173E]'
+                              : isRegistered
+                              ? 'scale-100 text-[#4AB4A4]'
+                              : 'scale-100 text-white'
+                          }`}
+                        >
+                          {isRegistered ? (
+                            <CheckCircle2 className="w-4 h-4" />
+                          ) : (
+                            <Ticket className="w-3.5 h-3.5 opacity-90" />
+                          )}
+                        </span>
+
+                        {/* Label with smooth text morph */}
+                        <span className="transition-all duration-300 whitespace-nowrap">
+                          {recentlyRegisteredEventId === event.id
+                            ? '🎉 RSVP Confirmed!'
+                            : isRegistered
+                            ? '✓ Registered • View Pass'
+                            : event.status !== 'upcoming'
+                            ? 'Event Completed'
+                            : availableSeats <= 0
+                            ? 'Sold Out'
+                            : 'RSVP Now'}
+                        </span>
                       </button>
                     )}
                   </div>
@@ -502,13 +614,13 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       {activeSubTab === 'my-events' && (
         <div className="space-y-4">
           {!isAuthenticated ? (
-            <div className="p-8 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center space-y-4 shadow-sm">
-              <div className="w-14 h-14 rounded-2xl bg-[#FF6036]/15 text-[#FF6036] flex items-center justify-center mx-auto border border-[#FF6036]/25">
+            <div className="p-8 rounded-2xl bg-[#151E4D] border border-[#283677] text-center space-y-4 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF751F]/15 text-[#FF751F] flex items-center justify-center mx-auto border border-[#FF751F]/25">
                 <Ticket className="w-7 h-7" />
               </div>
               <div className="space-y-1">
                 <h4 className="text-lg font-heading font-bold text-white">Guest Visitor Mode</h4>
-                <p className="text-xs text-[#A8A29E] max-w-md mx-auto leading-relaxed">
+                <p className="text-xs text-[#94A3B8] max-w-md mx-auto leading-relaxed">
                   You are exploring as a guest visitor. Register as a participant to reserve your spots at upcoming Pune cafes, unlock your personalized digital QR entry passes, and track all your event bookings.
                 </p>
               </div>
@@ -516,29 +628,29 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 <button
                   id="btn-guest-events-register"
                   onClick={() => openAuthModal('register')}
-                  className="px-5 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white text-xs font-heading font-bold shadow-sm shadow-[#FF6036]/20 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white text-xs font-heading font-bold shadow-sm shadow-[#FF751F]/20 transition-all"
                 >
                   Join Community — Register Free
                 </button>
                 <button
                   id="btn-guest-events-login"
                   onClick={() => openAuthModal('login')}
-                  className="px-4 py-2.5 rounded-xl bg-[#24221E] border border-[#36332D] text-[#A8A29E] text-xs font-semibold hover:text-white transition-colors"
+                  className="px-4 py-2.5 rounded-xl bg-[#1A255C] border border-[#283677] text-[#94A3B8] text-xs font-semibold hover:text-white transition-colors"
                 >
                   Existing Member Sign In
                 </button>
               </div>
             </div>
           ) : myRegistrations.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-[#1C1B18] border border-[#36332D] text-center space-y-3">
-              <Calendar className="w-10 h-10 text-[#78716C] mx-auto" />
+            <div className="p-8 rounded-2xl bg-[#151E4D] border border-[#283677] text-center space-y-3">
+              <Calendar className="w-10 h-10 text-[#64748B] mx-auto" />
               <h4 className="text-base font-heading font-bold text-white">No active registrations</h4>
-              <p className="text-xs text-[#A8A29E] max-w-sm mx-auto">
+              <p className="text-xs text-[#94A3B8] max-w-sm mx-auto">
                 You haven't registered for any upcoming Social Shuffle meetups yet. Browse upcoming events to reserve your spot!
               </p>
               <button
                 onClick={() => setActiveSubTab('upcoming')}
-                className="px-4 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white text-xs font-heading font-bold shadow-sm transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white text-xs font-heading font-bold shadow-sm transition-colors"
               >
                 Browse Upcoming Meetups
               </button>
@@ -549,17 +661,17 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               return (
                 <div
                   key={reg.id}
-                  className="p-5 rounded-2xl bg-[#1C1B18] border border-[#36332D] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
+                  className="p-5 rounded-2xl bg-[#151E4D] border border-[#283677] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold text-[#FF6036]">
+                      <span className="text-xs font-bold text-[#FF751F]">
                         Registration #{reg.id}
                       </span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-[#35C8A8]/10 text-[#35C8A8] border border-[#35C8A8]/20">
+                      <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-[#4AB4A4]/10 text-[#4AB4A4] border border-[#4AB4A4]/20">
                         {reg.attendanceStatus === 'Checked In' ? '✓ Checked In' : 'Confirmed Booking'}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-[#24221E] text-[#D6D3D1] border border-[#36332D]">
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-[#1A255C] text-[#CBD5E1] border border-[#283677]">
                         {reg.paxCount} {reg.paxCount > 1 ? 'Participants' : 'Participant (Solo)'}
                       </span>
                     </div>
@@ -568,35 +680,35 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       {event?.title || `Event #${reg.eventId}`}
                     </h3>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#A8A29E]">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#94A3B8]">
                       <span>📅 {event?.time}</span>
                       <span>📍 {event?.venue}, {event?.area}</span>
                       <span>💳 Payment: {reg.paymentStatus}</span>
                     </div>
 
                     {reg.guests.length > 0 && (
-                      <div className="text-xs text-[#A8A29E] pt-1">
+                      <div className="text-xs text-[#94A3B8] pt-1">
                         <span className="font-semibold text-white">Additional Participants: </span>
                         {reg.guests.map(g => g.name || 'Participant').join(', ')}
                       </div>
                     )}
 
                     {reg.notes && (
-                      <div className="text-xs text-[#A8A29E] italic">
+                      <div className="text-xs text-[#94A3B8] italic">
                         Notes: "{reg.notes}"
                       </div>
                     )}
 
                     {/* Attended Meetup: Games Played Chips */}
                     {(reg.attendanceStatus === 'Checked In' || event?.status === 'completed') && (
-                      <div className="pt-2 border-t border-[#2C2924]">
+                      <div className="pt-2 border-t border-[#202B61]">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-[11px] font-bold text-[#A8A29E] flex items-center gap-1 mr-1">
-                            <Dices className="w-3.5 h-3.5 text-[#FFC226]" />
+                          <span className="text-[11px] font-bold text-[#94A3B8] flex items-center gap-1 mr-1">
+                            <Dices className="w-3.5 h-3.5 text-[#FFD230]" />
                             Games Played ({(reg.gamesPlayed || []).length}):
                           </span>
                           {(reg.gamesPlayed || []).length === 0 ? (
-                            <span className="text-[11px] text-[#78716C] italic">
+                            <span className="text-[11px] text-[#64748B] italic">
                               No games logged yet — click Log Games Played!
                             </span>
                           ) : (
@@ -605,7 +717,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                               return (
                                 <span
                                   key={gid}
-                                  className="text-[11px] px-2 py-0.5 rounded-md bg-[#24221E] text-[#D6D3D1] border border-[#36332D] font-medium"
+                                  className="text-[11px] px-2 py-0.5 rounded-md bg-[#1A255C] text-[#CBD5E1] border border-[#283677] font-medium"
                                 >
                                   {g ? g.name : gid}
                                 </span>
@@ -622,10 +734,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <button
                         id={`btn-reg-log-games-${reg.id}`}
                         onClick={() => setLoggingGamesReg({ registration: reg, event })}
-                        className="px-3 py-1.5 rounded-lg bg-[#35C8A8]/10 hover:bg-[#35C8A8]/20 text-[#35C8A8] border border-[#35C8A8]/25 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-[#4AB4A4]/10 hover:bg-[#4AB4A4]/20 text-[#4AB4A4] border border-[#4AB4A4]/25 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                         title="Add which board games you played during this meetup"
                       >
-                        <Dices className="w-3.5 h-3.5 text-[#35C8A8]" />
+                        <Dices className="w-3.5 h-3.5 text-[#4AB4A4]" />
                         <span>{(reg.gamesPlayed || []).length > 0 ? 'Edit Games Played' : 'Log Games Played'}</span>
                       </button>
                     )}
@@ -635,19 +747,19 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                         setActiveTicketReg(reg);
                         setShowTicketModal(true);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[#24221E] hover:bg-[#2C2924] text-white border border-[#36332D] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-[#1A255C] hover:bg-[#202B61] text-white border border-[#283677] text-xs font-semibold flex items-center gap-1.5 transition-colors"
                     >
-                      <QrCode className="w-3.5 h-3.5 text-[#FFC226]" />
+                      <QrCode className="w-3.5 h-3.5 text-[#FFD230]" />
                       <span>QR Ticket</span>
                     </button>
 
                     {event && (
                       <button
                         onClick={() => openGoogleCalendar(event, reg)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#24221E] hover:bg-[#2C2924] text-[#A8A29E] hover:text-white border border-[#36332D] text-xs font-semibold flex items-center gap-1 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#1A255C] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center gap-1 transition-colors"
                         title="Add this event to Google Calendar for automatic reminders"
                       >
-                        <Calendar className="w-3.5 h-3.5 text-[#FF6036]" />
+                        <Calendar className="w-3.5 h-3.5 text-[#FF751F]" />
                         <span>Google Calendar</span>
                       </button>
                     )}
@@ -662,15 +774,15 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       {/* Registration Modal (Interactive Flow with Pax count & guest names) */}
       {showRegisterModal && registeringEvent && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2C2924]">
+          <div className="bg-[#151E4D] border border-[#283677] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#202B61]">
               <div>
                 <h3 className="text-lg font-heading font-bold text-white">Register for Social Shuffle</h3>
-                <p className="text-xs text-[#A8A29E] mt-0.5">{registeringEvent.title}</p>
+                <p className="text-xs text-[#94A3B8] mt-0.5">{registeringEvent.title}</p>
               </div>
               <button
                 onClick={() => setShowRegisterModal(false)}
-                className="text-[#78716C] hover:text-white p-1 rounded-lg"
+                className="text-[#64748B] hover:text-white p-1 rounded-lg"
               >
                 ✕
               </button>
@@ -680,7 +792,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               <div
                 className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
                   regFeedback.success
-                    ? 'bg-[#35C8A8]/15 border border-[#35C8A8]/30 text-[#35C8A8]'
+                    ? 'bg-[#4AB4A4]/15 border border-[#4AB4A4]/30 text-[#4AB4A4]'
                     : 'bg-rose-500/15 border border-rose-500/30 text-rose-300'
                 }`}
               >
@@ -691,18 +803,18 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
             <form onSubmit={handleConfirmRegistration} className="space-y-4 text-xs">
               {/* Event snapshot */}
-              <div className="p-3.5 rounded-xl bg-[#24221E] border border-[#36332D] space-y-1">
-                <div className="flex justify-between font-medium text-[#A8A29E]">
+              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] space-y-1">
+                <div className="flex justify-between font-medium text-[#94A3B8]">
                   <span>Venue & Locality:</span>
                   <span className="text-white font-bold">{registeringEvent.venue}, {registeringEvent.area}</span>
                 </div>
-                <div className="flex justify-between font-medium text-[#A8A29E]">
+                <div className="flex justify-between font-medium text-[#94A3B8]">
                   <span>Date & Time:</span>
                   <span className="text-white">{registeringEvent.time}</span>
                 </div>
-                <div className="flex justify-between font-medium text-[#A8A29E]">
+                <div className="flex justify-between font-medium text-[#94A3B8]">
                   <span>Ticket Price:</span>
-                  <span className="text-[#FFC226] font-bold">₹{registeringEvent.ticketPrice} per person</span>
+                  <span className="text-[#FFD230] font-bold">₹{registeringEvent.ticketPrice} per person</span>
                 </div>
               </div>
 
@@ -710,21 +822,21 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-white font-heading font-bold text-xs flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#FF6036]" />
+                    <Users className="w-3.5 h-3.5 text-[#FF751F]" />
                     <span>Total Number of Participants</span>
                   </label>
-                  <span className="text-[11px] font-bold text-[#FF6036] bg-[#FF6036]/10 px-2 py-0.5 rounded-md border border-[#FF6036]/25">
+                  <span className="text-[11px] font-bold text-[#FF751F] bg-[#FF751F]/10 px-2 py-0.5 rounded-md border border-[#FF751F]/25">
                     {totalParticipants} {totalParticipants === 1 ? 'Participant (Solo)' : 'Participants'}
                   </span>
                 </div>
 
                 {/* Stepper with custom counter - Default and Minimum is 1 */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#141312] border border-[#36332D]">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#10173E] border border-[#283677]">
                   <div>
                     <span className="text-xs text-white font-medium block">
                       Number of Participants
                     </span>
-                    <span className="text-[10px] text-[#A8A29E]">
+                    <span className="text-[10px] text-[#94A3B8]">
                       Default & minimum: 1 (Includes you as Participant #1)
                     </span>
                   </div>
@@ -733,7 +845,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       type="button"
                       onClick={() => handleTotalParticipantsChange(totalParticipants - 1)}
                       disabled={totalParticipants <= 1}
-                      className="w-8 h-8 rounded-lg bg-[#24221E] hover:bg-[#2C2924] disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors border border-[#36332D]"
+                      className="w-8 h-8 rounded-lg bg-[#1A255C] hover:bg-[#202B61] disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors border border-[#283677]"
                       title="Decrease participants (minimum 1)"
                     >
                       <Minus className="w-3.5 h-3.5" />
@@ -744,13 +856,13 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       max={12}
                       value={totalParticipants}
                       onChange={e => handleTotalParticipantsChange(parseInt(e.target.value, 10) || 1)}
-                      className="w-12 text-center bg-[#1C1B18] border border-[#36332D] rounded-lg py-1.5 text-xs text-white font-bold focus:border-[#FF6036] focus:outline-none"
+                      className="w-12 text-center bg-[#151E4D] border border-[#283677] rounded-lg py-1.5 text-xs text-white font-bold focus:border-[#FF751F] focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => handleTotalParticipantsChange(totalParticipants + 1)}
                       disabled={totalParticipants >= 12}
-                      className="w-8 h-8 rounded-lg bg-[#FF6036] hover:bg-[#E85127] disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
+                      className="w-8 h-8 rounded-lg bg-[#FF751F] hover:bg-[#E66310] disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
                       title="Increase participants"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -768,19 +880,19 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               )}
 
               {/* Participant #1 (You / Lead) Profile */}
-              <div className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D] text-[#D6D3D1]">
+              <div className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677] text-[#CBD5E1]">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#FF6036] flex items-center gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/30 text-[9px] flex items-center justify-center text-[#FF6036] font-bold">
+                  <span className="font-semibold text-[#FF751F] flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-[#FF751F]/20 border border-[#FF751F]/30 text-[9px] flex items-center justify-center text-[#FF751F] font-bold">
                       1
                     </span>
                     Participant #1 (Lead / You)
                   </span>
-                  <span className="text-[10px] text-[#35C8A8] font-medium flex items-center gap-1">
+                  <span className="text-[10px] text-[#4AB4A4] font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Confirmed
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-1 text-[11px] text-[#A8A29E] pl-5">
+                <div className="flex justify-between items-center mt-1 text-[11px] text-[#94A3B8] pl-5">
                   <span className="font-bold text-white">{currentParticipant.name}</span>
                   <span>{currentParticipant.phone} • {currentParticipant.area}</span>
                 </div>
@@ -788,9 +900,9 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
               {/* If value is 1 (Solo) */}
               {totalParticipants === 1 ? (
-                <div className="p-3.5 rounded-xl bg-[#24221E] border border-[#36332D] flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-[#FFC226] shrink-0 mt-0.5" />
-                  <div className="text-[11px] text-[#A8A29E] leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-[#FFD230] shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-[#94A3B8] leading-relaxed">
                     <strong className="text-white">Attending Solo:</strong> 1 seat reserved for <strong className="text-white">{currentParticipant.name}</strong>. No additional names required. Aman and Parimal will welcome you and seat you at a fun table with friendly people!
                   </div>
                 </div>
@@ -799,11 +911,11 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 <div className="space-y-2.5 pt-1">
                   <div>
                     <label className="text-white font-heading font-bold text-xs flex items-center gap-1.5">
-                      <UserPlus className="w-3.5 h-3.5 text-[#FF6036]" />
+                      <UserPlus className="w-3.5 h-3.5 text-[#FF751F]" />
                       <span>Names for Additional Participants ({totalParticipants - 1})</span>
-                      <span className="text-[#FF6036] font-normal">*Required</span>
+                      <span className="text-[#FF751F] font-normal">*Required</span>
                     </label>
-                    <span className="text-[10px] text-[#A8A29E]">
+                    <span className="text-[10px] text-[#94A3B8]">
                       Please enter the full name for each additional participant joining with you.
                     </span>
                   </div>
@@ -816,25 +928,25 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                           key={p.id || idx}
                           className={`p-2.5 rounded-xl border transition-all ${
                             p.name.trim()
-                              ? 'bg-[#141312] border-[#36332D]'
+                              ? 'bg-[#10173E] border-[#283677]'
                               : validationError
-                              ? 'bg-[#141312] border-rose-500/60 ring-1 ring-rose-500/40'
-                              : 'bg-[#141312] border-[#36332D]'
+                              ? 'bg-[#10173E] border-rose-500/60 ring-1 ring-rose-500/40'
+                              : 'bg-[#10173E] border-[#283677]'
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[11px] font-bold text-[#FF6036] flex items-center gap-1.5">
-                              <span className="w-4 h-4 rounded-full bg-[#FF6036]/20 border border-[#FF6036]/30 text-[9px] flex items-center justify-center text-[#FF6036] font-bold">
+                            <span className="text-[11px] font-bold text-[#FF751F] flex items-center gap-1.5">
+                              <span className="w-4 h-4 rounded-full bg-[#FF751F]/20 border border-[#FF751F]/30 text-[9px] flex items-center justify-center text-[#FF751F] font-bold">
                                 {participantNumber}
                               </span>
                               Participant #{participantNumber}
                             </span>
                             {p.name.trim() ? (
-                              <span className="text-[10px] text-[#35C8A8] flex items-center gap-1 font-medium">
+                              <span className="text-[10px] text-[#4AB4A4] flex items-center gap-1 font-medium">
                                 <CheckCircle2 className="w-3 h-3" /> Name entered
                               </span>
                             ) : (
-                              <span className="text-[10px] text-[#FFC226] font-medium">
+                              <span className="text-[10px] text-[#FFD230] font-medium">
                                 Name required *
                               </span>
                             )}
@@ -847,10 +959,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                               placeholder={`Participant #${participantNumber} Full Name * (e.g. ${samplePuneNames[idx % samplePuneNames.length]})`}
                               value={p.name}
                               onChange={e => handleAdditionalParticipantNameChange(idx, e.target.value)}
-                              className={`w-full bg-[#1C1B18] border rounded-lg px-3 py-2 text-white text-xs focus:outline-none transition-colors ${
+                              className={`w-full bg-[#151E4D] border rounded-lg px-3 py-2 text-white text-xs focus:outline-none transition-colors ${
                                 validationError && !p.name.trim()
                                   ? 'border-rose-500 focus:border-rose-400'
-                                  : 'border-[#36332D] focus:border-[#FF6036]'
+                                  : 'border-[#283677] focus:border-[#FF751F]'
                               }`}
                             />
                           </div>
@@ -863,7 +975,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
               {/* Special Game Requests or Seating Notes */}
               <div>
-                <label className="block text-[#A8A29E] font-medium mb-1">
+                <label className="block text-[#94A3B8] font-medium mb-1">
                   Board Game Wishlist / Seating Notes (Optional)
                 </label>
                 <textarea
@@ -871,22 +983,22 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="e.g. Please seat us at Catan, Coup, or Secret Hitler! First time playing modern board games."
-                  className="w-full bg-[#141312] border border-[#36332D] rounded-xl p-2.5 text-white text-xs focus:border-[#FF6036] focus:outline-none"
+                  className="w-full bg-[#10173E] border border-[#283677] rounded-xl p-2.5 text-white text-xs focus:border-[#FF751F] focus:outline-none"
                 />
               </div>
 
               {/* Total Calculation */}
-              <div className="p-3.5 rounded-xl bg-[#24221E] border border-[#36332D] text-xs space-y-1">
-                <div className="flex items-center justify-between text-[#A8A29E]">
+              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] text-xs space-y-1">
+                <div className="flex items-center justify-between text-[#94A3B8]">
                   <span>Total Participants:</span>
                   <span className="font-bold text-white">{totalParticipants} {totalParticipants === 1 ? 'Participant' : 'Participants'} (PAX)</span>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-[#36332D]">
+                <div className="flex items-center justify-between pt-1 border-t border-[#283677]">
                   <div>
                     <span className="text-white block font-medium">Total Amount Due</span>
-                    <span className="text-[10px] text-[#A8A29E]">{totalParticipants} ticket(s) × ₹{registeringEvent.ticketPrice}</span>
+                    <span className="text-[10px] text-[#94A3B8]">{totalParticipants} ticket(s) × ₹{registeringEvent.ticketPrice}</span>
                   </div>
-                  <div className="text-base font-heading font-black text-[#FFC226]">
+                  <div className="text-base font-heading font-black text-[#FFD230]">
                     ₹{totalParticipants * registeringEvent.ticketPrice}
                   </div>
                 </div>
@@ -896,14 +1008,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 <button
                   type="button"
                   onClick={() => setShowRegisterModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#36332D] text-[#A8A29E] font-semibold hover:bg-[#24221E] hover:text-white transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-[#283677] text-[#94A3B8] font-semibold hover:bg-[#1A255C] hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   id="btn-confirm-registration"
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold shadow-sm shadow-[#FF6036]/25 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold shadow-sm shadow-[#FF751F]/25 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>Proceed to Pay ₹{totalParticipants * registeringEvent.ticketPrice} via Razorpay</span>
@@ -918,9 +1030,9 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       {/* Razorpay Payment Gateway Modal */}
       {razorpayGatewayModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-[#1C1B18] border border-[#36332D] rounded-3xl max-w-md w-full shadow-2xl overflow-hidden relative text-[#F5F2EB] flex flex-col max-h-[92vh]">
+          <div className="bg-[#151E4D] border border-[#283677] rounded-3xl max-w-md w-full shadow-2xl overflow-hidden relative text-[#F8FAFC] flex flex-col max-h-[92vh]">
             {/* Razorpay Brand Header */}
-            <div className="bg-gradient-to-r from-[#002970] via-[#022c6b] to-[#0b2447] p-4 text-white border-b border-[#36332D]">
+            <div className="bg-gradient-to-r from-[#002970] via-[#022c6b] to-[#0b2447] p-4 text-white border-b border-[#283677]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-blue-500 text-white font-black flex items-center justify-center text-base shadow-lg shadow-blue-500/40">
@@ -930,7 +1042,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     <div className="flex items-center gap-1.5">
                       <span className="font-heading font-bold text-sm tracking-wider text-white">RAZORPAY</span>
                       <span className="text-[9px] bg-blue-400/20 text-blue-200 font-bold px-1.5 py-0.5 rounded border border-blue-400/30 flex items-center gap-0.5">
-                        <ShieldCheck className="w-2.5 h-2.5 text-[#35C8A8]" />
+                        <ShieldCheck className="w-2.5 h-2.5 text-[#4AB4A4]" />
                         TRUSTED
                       </span>
                     </div>
@@ -939,10 +1051,10 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] text-blue-300 flex items-center justify-end gap-1 font-semibold">
-                    <Lock className="w-2.5 h-2.5 text-[#35C8A8]" />
+                    <Lock className="w-2.5 h-2.5 text-[#4AB4A4]" />
                     <span>256-Bit SSL Secured</span>
                   </div>
-                  <div className="text-lg font-heading font-bold text-[#FFC226]">
+                  <div className="text-lg font-heading font-bold text-[#FFD230]">
                     ₹{razorpayGatewayModal.totalAmount}
                   </div>
                 </div>
@@ -950,27 +1062,27 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
             </div>
 
             {/* Order snapshot */}
-            <div className="p-3 bg-[#141312] border-b border-[#36332D] text-xs flex items-center justify-between">
+            <div className="p-3 bg-[#10173E] border-b border-[#283677] text-xs flex items-center justify-between">
               <div>
                 <span className="font-heading font-bold text-white block">{razorpayGatewayModal.event.title}</span>
-                <span className="text-[11px] text-[#A8A29E]">
+                <span className="text-[11px] text-[#94A3B8]">
                   {razorpayGatewayModal.totalParticipants} Participant{razorpayGatewayModal.totalParticipants > 1 ? 's' : ''} • {razorpayGatewayModal.event.time}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-[#78716C] block">Order Ref:</span>
-                <span className="font-mono text-[10px] text-[#FF6036] font-bold">{razorpayGatewayModal.orderId}</span>
+                <span className="text-[10px] text-[#64748B] block">Order Ref:</span>
+                <span className="font-mono text-[10px] text-[#FF751F] font-bold">{razorpayGatewayModal.orderId}</span>
               </div>
             </div>
 
             {/* Payment Method Selector & Interactive Gateway */}
             <div className="p-4 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="flex rounded-xl bg-[#141312] p-1 border border-[#36332D]">
+              <div className="flex rounded-xl bg-[#10173E] p-1 border border-[#283677]">
                 <button
                   type="button"
                   onClick={() => setSelectedMethod('upi')}
                   className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
-                    selectedMethod === 'upi' ? 'bg-[#FF6036] text-white shadow-sm' : 'text-[#A8A29E] hover:text-white'
+                    selectedMethod === 'upi' ? 'bg-[#FF751F] text-white shadow-sm' : 'text-[#94A3B8] hover:text-white'
                   }`}
                 >
                   <Smartphone className="w-3.5 h-3.5" />
@@ -980,7 +1092,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   type="button"
                   onClick={() => setSelectedMethod('card')}
                   className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
-                    selectedMethod === 'card' ? 'bg-[#FF6036] text-white shadow-sm' : 'text-[#A8A29E] hover:text-white'
+                    selectedMethod === 'card' ? 'bg-[#FF751F] text-white shadow-sm' : 'text-[#94A3B8] hover:text-white'
                   }`}
                 >
                   <CreditCard className="w-3.5 h-3.5" />
@@ -990,7 +1102,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                   type="button"
                   onClick={() => setSelectedMethod('netbanking')}
                   className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all ${
-                    selectedMethod === 'netbanking' ? 'bg-[#FF6036] text-white shadow-sm' : 'text-[#A8A29E] hover:text-white'
+                    selectedMethod === 'netbanking' ? 'bg-[#FF751F] text-white shadow-sm' : 'text-[#94A3B8] hover:text-white'
                   }`}
                 >
                   <Building className="w-3.5 h-3.5" />
@@ -1006,34 +1118,34 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       <div
                         key={app}
                         onClick={() => setUpiIdInput(`${currentParticipant.phone || '9876543210'}@${app.toLowerCase().replace(/\s+/g, '')}`)}
-                        className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D] hover:border-[#FF6036] cursor-pointer transition-all hover:bg-[#2C2924] flex flex-col items-center"
+                        className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677] hover:border-[#FF751F] cursor-pointer transition-all hover:bg-[#202B61] flex flex-col items-center"
                       >
-                        <div className="w-7 h-7 rounded-full bg-[#FF6036]/15 text-[#FF6036] flex items-center justify-center mb-1 text-xs">
+                        <div className="w-7 h-7 rounded-full bg-[#FF751F]/15 text-[#FF751F] flex items-center justify-center mb-1 text-xs">
                           ⚡
                         </div>
-                        <span className="text-[10px] text-[#D6D3D1]">{app}</span>
+                        <span className="text-[10px] text-[#CBD5E1]">{app}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#A8A29E]">UPI ID / VPA</label>
+                    <label className="text-[11px] font-semibold text-[#94A3B8]">UPI ID / VPA</label>
                     <input
                       type="text"
                       value={upiIdInput}
                       onChange={e => setUpiIdInput(e.target.value)}
                       placeholder="e.g. shuffler@okhdfcbank"
-                      className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-white focus:border-[#FF6036] focus:outline-none"
+                      className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-xs text-white focus:border-[#FF751F] focus:outline-none"
                     />
                   </div>
 
-                  <div className="p-3 rounded-xl bg-[#24221E] border border-[#36332D] flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-[#1A255C] border border-[#283677] flex items-center gap-3">
                     <div className="w-12 h-12 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center">
                       <QrCode className="w-10 h-10 text-slate-900" />
                     </div>
                     <div>
                       <span className="font-heading font-bold text-white text-xs block">Instant Razorpay UPI QR</span>
-                      <span className="text-[10px] text-[#A8A29E]">Accepts Google Pay, PhonePe, Paytm, CRED or any BHIM app</span>
+                      <span className="text-[10px] text-[#94A3B8]">Accepts Google Pay, PhonePe, Paytm, CRED or any BHIM app</span>
                     </div>
                   </div>
                 </div>
@@ -1043,31 +1155,31 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               {selectedMethod === 'card' && (
                 <div className="space-y-2.5">
                   <div>
-                    <label className="text-[11px] font-semibold text-[#A8A29E]">Card Number</label>
+                    <label className="text-[11px] font-semibold text-[#94A3B8]">Card Number</label>
                     <input
                       type="text"
                       readOnly
                       value="•••• •••• •••• 4242  (Razorpay Test Card)"
-                      className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-white"
+                      className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-xs text-white"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[11px] font-semibold text-[#A8A29E]">Expiry</label>
+                      <label className="text-[11px] font-semibold text-[#94A3B8]">Expiry</label>
                       <input
                         type="text"
                         readOnly
                         value="12 / 28"
-                        className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-white"
+                        className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-xs text-white"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold text-[#A8A29E]">CVV</label>
+                      <label className="text-[11px] font-semibold text-[#94A3B8]">CVV</label>
                       <input
                         type="text"
                         readOnly
                         value="•••"
-                        className="w-full bg-[#141312] border border-[#36332D] rounded-xl px-3 py-2 text-xs text-white"
+                        className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-xs text-white"
                       />
                     </div>
                   </div>
@@ -1078,8 +1190,8 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               {selectedMethod === 'netbanking' && (
                 <div className="grid grid-cols-3 gap-2">
                   {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Bank', 'Punjab National'].map(b => (
-                    <div key={b} className="p-2.5 rounded-xl bg-[#24221E] border border-[#36332D] text-center hover:border-[#FF6036] cursor-pointer">
-                      <span className="text-[11px] font-semibold text-[#D6D3D1]">{b}</span>
+                    <div key={b} className="p-2.5 rounded-xl bg-[#1A255C] border border-[#283677] text-center hover:border-[#FF751F] cursor-pointer">
+                      <span className="text-[11px] font-semibold text-[#CBD5E1]">{b}</span>
                     </div>
                   ))}
                 </div>
@@ -1087,25 +1199,25 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
               {/* Status processing message when authorizing */}
               {paymentProcessing && (
-                <div className="p-3.5 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/30 flex items-center gap-3 animate-pulse text-xs text-[#35C8A8]">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#35C8A8] shrink-0" />
+                <div className="p-3.5 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/30 flex items-center gap-3 animate-pulse text-xs text-[#4AB4A4]">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#4AB4A4] shrink-0" />
                   <div>
                     <span className="font-bold block text-white text-xs">
                       {paymentStep === 'authorizing' ? 'Verifying payment with Razorpay gateway...' : 'Payment Confirmed! Finalizing meetup registration...'}
                     </span>
-                    <span className="text-[10px] text-[#A8A29E]">Secured 256-bit bank handshake in progress</span>
+                    <span className="text-[10px] text-[#94A3B8]">Secured 256-bit bank handshake in progress</span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Footer action buttons */}
-            <div className="p-4 bg-[#141312] border-t border-[#36332D] flex gap-2.5">
+            <div className="p-4 bg-[#10173E] border-t border-[#283677] flex gap-2.5">
               <button
                 type="button"
                 onClick={handleCancelPayment}
                 disabled={paymentProcessing}
-                className="flex-1 py-2.5 rounded-xl border border-[#36332D] text-[#A8A29E] font-semibold text-xs hover:bg-[#24221E] hover:text-white transition-colors disabled:opacity-40"
+                className="flex-1 py-2.5 rounded-xl border border-[#283677] text-[#94A3B8] font-semibold text-xs hover:bg-[#1A255C] hover:text-white transition-colors disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -1113,7 +1225,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 type="button"
                 onClick={() => handleCompleteRazorpayPayment()}
                 disabled={paymentProcessing}
-                className="flex-[2] py-2.5 px-4 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF6036]/25 flex items-center justify-center gap-1.5 transition-all disabled:opacity-60"
+                className="flex-[2] py-2.5 px-4 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF751F]/25 flex items-center justify-center gap-1.5 transition-all disabled:opacity-60"
               >
                 {paymentProcessing ? (
                   <>
@@ -1141,14 +1253,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
         return (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-[#1C1B18] border border-[#36332D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-[#2C2924]">
-                <span className="text-xs font-bold text-[#FF6036] uppercase tracking-wider">
+            <div className="bg-[#151E4D] border border-[#283677] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-2 border-b border-[#202B61]">
+                <span className="text-xs font-bold text-[#FF751F] uppercase tracking-wider">
                   Event #{selectedEvent.number}
                 </span>
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="text-[#78716C] hover:text-white p-1 rounded-lg"
+                  className="text-[#64748B] hover:text-white p-1 rounded-lg"
                 >
                   ✕
                 </button>
@@ -1156,9 +1268,9 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
               <h3 className="text-xl font-heading font-bold text-white">{selectedEvent.title}</h3>
 
-              <p className="text-xs text-[#A8A29E] leading-relaxed">{selectedEvent.description}</p>
+              <p className="text-xs text-[#94A3B8] leading-relaxed">{selectedEvent.description}</p>
 
-              <div className="space-y-2 text-xs text-[#D6D3D1] p-3.5 rounded-xl bg-[#24221E] border border-[#36332D]">
+              <div className="space-y-2 text-xs text-[#CBD5E1] p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
                 <div>📍 <strong className="text-white">Venue:</strong> {selectedEvent.venue} ({selectedEvent.address})</div>
                 <div>📅 <strong className="text-white">Schedule:</strong> {selectedEvent.time}</div>
                 <div>🏷️ <strong className="text-white">Category:</strong> {selectedEvent.category}</div>
@@ -1166,9 +1278,9 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               </div>
 
               {isRegistered && eventRegistration && (
-                <div className="p-3 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/20 flex items-center justify-between gap-2 text-xs text-[#35C8A8]">
+                <div className="p-3 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/20 flex items-center justify-between gap-2 text-xs text-[#4AB4A4]">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#35C8A8] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#4AB4A4] shrink-0" />
                     <span>Pass confirmed ({eventRegistration.paxCount} pax • Reg #{eventRegistration.id})</span>
                   </div>
                   <button
@@ -1177,7 +1289,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       setActiveTicketReg(eventRegistration);
                       setShowTicketModal(true);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#35C8A8]/20 hover:bg-[#35C8A8]/30 text-[#35C8A8] font-bold text-[11px] shrink-0"
+                    className="px-2.5 py-1 rounded-lg bg-[#4AB4A4]/20 hover:bg-[#4AB4A4]/30 text-[#4AB4A4] font-bold text-[11px] shrink-0"
                   >
                     View Pass
                   </button>
@@ -1187,7 +1299,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="py-2.5 px-4 rounded-xl border border-[#36332D] text-[#A8A29E] font-semibold hover:bg-[#24221E] hover:text-white transition-colors"
+                  className="py-2.5 px-4 rounded-xl border border-[#283677] text-[#94A3B8] font-semibold hover:bg-[#1A255C] hover:text-white transition-colors"
                 >
                   Close
                 </button>
@@ -1198,26 +1310,39 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       setSelectedEvent(null);
                       openAuthModal('register', ev.id);
                     }}
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs sm:text-sm shadow-sm shadow-[#FF6036]/25 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs sm:text-sm shadow-sm shadow-[#FF751F]/25 transition-all flex items-center justify-center gap-2"
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>Join our community</span>
                   </button>
                 ) : isRegistered ? (
-                  <div className="flex-1 py-2 px-3 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/20 text-[#35C8A8] font-bold text-xs flex items-center justify-center gap-1.5 shadow">
-                    <CheckCircle2 className="w-4 h-4 text-[#35C8A8] shrink-0" />
-                    <span>You are registered</span>
-                  </div>
+                  <button
+                    onClick={() => {
+                      if (eventRegistration) {
+                        setSelectedEvent(null);
+                        setActiveTicketReg(eventRegistration);
+                        setShowTicketModal(true);
+                      }
+                    }}
+                    className={`flex-1 py-2.5 px-4 rounded-xl font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) transform select-none ${
+                      recentlyRegisteredEventId === selectedEvent.id
+                        ? 'bg-[#4AB4A4] text-[#10173E] animate-rsvp-success scale-105 shadow-xl shadow-[#4AB4A4]/40 ring-4 ring-[#4AB4A4]/60'
+                        : 'bg-[#4AB4A4]/15 hover:bg-[#4AB4A4]/25 text-[#4AB4A4] border border-[#4AB4A4]/30 hover:scale-[1.02]'
+                    }`}
+                  >
+                    <CheckCircle2 className={`w-4 h-4 ${recentlyRegisteredEventId === selectedEvent.id ? 'text-[#10173E]' : 'text-[#4AB4A4]'}`} />
+                    <span>{recentlyRegisteredEventId === selectedEvent.id ? '🎉 RSVP Confirmed!' : '✓ Registered • View Pass'}</span>
+                  </button>
                 ) : selectedEvent.status === 'upcoming' ? (
                   <button
                     onClick={() => {
                       const ev = selectedEvent;
-                      setSelectedEvent(null);
                       openRegistration(ev);
                     }}
-                    className="flex-1 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold shadow-sm transition-colors"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs sm:text-sm shadow-sm shadow-[#FF751F]/25 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                   >
-                    Register Spot
+                    <Ticket className="w-4 h-4 opacity-90" />
+                    <span>RSVP Now</span>
                   </button>
                 ) : null}
               </div>
@@ -1234,17 +1359,17 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
         return (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#1C1B18] border border-[#36332D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#151E4D] border border-[#283677] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setShowTicketModal(false)}
-                className="absolute top-4 right-4 text-[#78716C] hover:text-white p-1 rounded-lg hover:bg-[#24221E]"
+                className="absolute top-4 right-4 text-[#64748B] hover:text-white p-1 rounded-lg hover:bg-[#1A255C]"
               >
                 ✕
               </button>
 
               {/* Gratitude Header */}
               <div className="text-center space-y-2 pt-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFC226] text-[#141312] font-black text-[11px] uppercase tracking-wider shadow-sm">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD230] text-[#10173E] font-black text-[11px] uppercase tracking-wider shadow-sm">
                   <Sparkles className="w-3.5 h-3.5" />
                   VIP Board Gamer Pass Confirmed
                 </div>
@@ -1254,22 +1379,22 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               </div>
 
               {/* Warm Message Box */}
-              <div className="p-4 rounded-2xl bg-[#24221E] border border-[#36332D] text-xs leading-relaxed space-y-2">
-                <p className="font-heading font-bold text-[#FF6036] flex items-center gap-1.5 text-sm">
+              <div className="p-4 rounded-2xl bg-[#1A255C] border border-[#283677] text-xs leading-relaxed space-y-2">
+                <p className="font-heading font-bold text-[#FF751F] flex items-center gap-1.5 text-sm">
                   <span>💃🕺 Prepare your victory dance!</span>
                 </p>
-                <p className="text-[#D6D3D1]">
+                <p className="text-[#CBD5E1]">
                   We are downright stoked that you're joining the <strong className="text-white">Social Shuffle Pune</strong> tribe.
                   Whether you're looking to trade sheep for ore in Catan, bluff your closest friends into oblivion during Avalon, or roll non-stop natural 20s, a table is officially reserved for you!
                 </p>
-                <p className="text-[11px] text-[#FFC226] font-medium italic">
+                <p className="text-[11px] text-[#FFD230] font-medium italic">
                   ⚠️ Mild Warning: Side effects may include uncontrolled giggles, sudden cravings for 20 new board games, and making life-long friends in Pune!
                 </p>
               </div>
 
               {/* High-def Scannable QR Code Pass */}
-              <div className="p-5 rounded-2xl bg-[#141312] border-2 border-dashed border-[#36332D] text-center space-y-3">
-                <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#FF6036]">
+              <div className="p-5 rounded-2xl bg-[#10173E] border-2 border-dashed border-[#283677] text-center space-y-3">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#FF751F]">
                   <QrCode className="w-4 h-4" />
                   <span>Scan at Venue for Instant Check-In</span>
                 </div>
@@ -1286,49 +1411,49 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 </div>
 
                 <div className="space-y-1">
-                  <div className="font-mono text-sm font-black text-[#FFC226] tracking-wider">
+                  <div className="font-mono text-sm font-black text-[#FFD230] tracking-wider">
                     {qrToken}
                   </div>
-                  <p className="text-[11px] text-[#A8A29E]">
+                  <p className="text-[11px] text-[#94A3B8]">
                     Flash this pass on your phone or let Aman / Parimal scan it at the entrance.
                   </p>
                 </div>
               </div>
 
               {/* Event Details Grid */}
-              <div className="space-y-2 p-3.5 rounded-xl bg-[#24221E] border border-[#36332D] text-xs">
+              <div className="space-y-2 p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] text-xs">
                 <div className="flex justify-between">
-                  <span className="text-[#A8A29E]">Meetup:</span>
+                  <span className="text-[#94A3B8]">Meetup:</span>
                   <span className="text-white font-bold text-right">{ticketEvent?.title || 'Social Shuffle'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A8A29E]">When:</span>
+                  <span className="text-[#94A3B8]">When:</span>
                   <span className="text-white font-medium">{ticketEvent?.time}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A8A29E]">Venue:</span>
+                  <span className="text-[#94A3B8]">Venue:</span>
                   <span className="text-white font-medium text-right">{ticketEvent?.venue} ({ticketEvent?.area})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#A8A29E]">Seats Reserved:</span>
-                  <span className="text-[#35C8A8] font-bold">{activeTicketReg.paxCount} Shuffler(s)</span>
+                  <span className="text-[#94A3B8]">Seats Reserved:</span>
+                  <span className="text-[#4AB4A4] font-bold">{activeTicketReg.paxCount} Shuffler(s)</span>
                 </div>
                 {activeTicketReg.guests && activeTicketReg.guests.length > 0 && (
-                  <div className="flex justify-between items-start pt-1 border-t border-[#36332D]">
-                    <span className="text-[#A8A29E]">Additional Participants:</span>
+                  <div className="flex justify-between items-start pt-1 border-t border-[#283677]">
+                    <span className="text-[#94A3B8]">Additional Participants:</span>
                     <span className="text-white font-semibold text-right max-w-[65%]">
                       {activeTicketReg.guests.map(g => g.name || 'Friend').join(', ')}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-1 border-t border-[#36332D]">
-                  <span className="text-[#A8A29E]">Payment:</span>
+                <div className="flex justify-between items-center pt-1 border-t border-[#283677]">
+                  <span className="text-[#94A3B8]">Payment:</span>
                   <div className="text-right">
-                    <span className="text-[#35C8A8] font-bold block">
+                    <span className="text-[#4AB4A4] font-bold block">
                       ₹{activeTicketReg.amountPaid || (activeTicketReg.paxCount * (ticketEvent?.ticketPrice || 0))} (Paid via Razorpay)
                     </span>
                     {activeTicketReg.razorpayPaymentId && (
-                      <span className="text-[10px] font-mono text-[#A8A29E] block">
+                      <span className="text-[10px] font-mono text-[#94A3B8] block">
                         Txn: {activeTicketReg.razorpayPaymentId}
                       </span>
                     )}
@@ -1337,12 +1462,12 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               </div>
 
               {/* Email Sent Confirmation Banner */}
-              <div className="p-3 rounded-xl bg-[#35C8A8]/10 border border-[#35C8A8]/20 flex items-center justify-between text-xs">
+              <div className="p-3 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/20 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-[#35C8A8] shrink-0" />
+                  <Mail className="w-4 h-4 text-[#4AB4A4] shrink-0" />
                   <div>
-                    <span className="text-[#35C8A8] font-bold block">Quirky Email Dispatched!</span>
-                    <span className="text-[10px] text-[#A8A29E]">Sent to {activeTicketReg.participantEmail}</span>
+                    <span className="text-[#4AB4A4] font-bold block">Quirky Email Dispatched!</span>
+                    <span className="text-[10px] text-[#94A3B8]">Sent to {activeTicketReg.participantEmail}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -1352,7 +1477,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                       setResentToast(true);
                       setTimeout(() => setResentToast(false), 3500);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#35C8A8]/20 hover:bg-[#35C8A8]/30 text-[#35C8A8] text-[11px] font-bold flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-[#4AB4A4]/20 hover:bg-[#4AB4A4]/30 text-[#4AB4A4] text-[11px] font-bold flex items-center gap-1 transition-colors"
                     title="Resend email confirmation pass"
                   >
                     <Send className="w-3 h-3" />
@@ -1363,14 +1488,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
 
               {/* Google Calendar Reminder Integration */}
               {ticketEvent && (
-                <div className="p-4 rounded-2xl bg-[#24221E] border border-[#36332D] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-sm">
+                <div className="p-4 rounded-2xl bg-[#1A255C] border border-[#283677] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-sm">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2.5 rounded-xl bg-[#FF6036]/15 text-[#FF6036] shrink-0">
+                    <div className="p-2.5 rounded-xl bg-[#FF751F]/15 text-[#FF751F] shrink-0">
                       <Calendar className="w-5 h-5" />
                     </div>
                     <div>
                       <span className="font-heading font-bold text-white text-xs block">Add to Google Calendar</span>
-                      <span className="text-[11px] text-[#A8A29E]">Set automatic event reminders & add to your schedule</span>
+                      <span className="text-[11px] text-[#94A3B8]">Set automatic event reminders & add to your schedule</span>
                     </div>
                   </div>
 
@@ -1378,7 +1503,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     <button
                       id="btn-add-google-calendar"
                       onClick={() => openGoogleCalendar(ticketEvent, activeTicketReg)}
-                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-[#FF6036]/25 transition-all active:scale-95"
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-[#FF751F]/25 transition-all active:scale-95"
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Google Calendar</span>
@@ -1386,7 +1511,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     <button
                       id="btn-download-ics"
                       onClick={() => downloadIcsFile(ticketEvent, activeTicketReg)}
-                      className="px-2.5 py-2 rounded-xl bg-[#1C1B18] hover:bg-[#2C2924] text-[#A8A29E] hover:text-white border border-[#36332D] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                      className="px-2.5 py-2 rounded-xl bg-[#151E4D] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
                       title="Download .ics file for Apple Calendar or Outlook"
                     >
                       <span>.ICS</span>
@@ -1403,15 +1528,15 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     const w = window.open(printUrl, '_blank');
                     if (w) w.focus();
                   }}
-                  className="flex-1 py-2.5 rounded-xl border border-[#36332D] hover:bg-[#24221E] text-[#D6D3D1] font-heading font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-[#283677] hover:bg-[#1A255C] text-[#CBD5E1] font-heading font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <QrCode className="w-3.5 h-3.5 text-[#FFC226]" />
+                  <QrCode className="w-3.5 h-3.5 text-[#FFD230]" />
                   <span>Save QR Pass</span>
                 </button>
 
                 <button
                   onClick={() => setShowTicketModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#FF6036] hover:bg-[#E85127] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF6036]/25 transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF751F]/25 transition-all"
                 >
                   Ready for Game Day! 🎲
                 </button>
