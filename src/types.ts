@@ -299,6 +299,35 @@ export interface EventEmailBroadcastRequest {
   includeQrPass: boolean;
   includeVenueMap: boolean;
   customHeading?: string;
+  channels?: ('email' | 'whatsapp')[];
+  whatsAppCustomMessage?: string;
+}
+
+export interface RecipientDispatchStatus {
+  registrationId: string;
+  participantId?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  emailSent: boolean;
+  whatsappSent: boolean;
+  whatsappAvailable: boolean;
+  whatsappReason?: string;
+  whatsappUrl?: string;
+  statusSummary: string;
+}
+
+export interface DualPushNotificationResult {
+  success: boolean;
+  eventId: string;
+  eventTitle: string;
+  totalRecipients: number;
+  emailSentCount: number;
+  whatsappSentCount: number;
+  whatsappUnavailableCount: number;
+  fallbackEmailOnlyCount: number;
+  message: string;
+  recipients: RecipientDispatchStatus[];
 }
 
 export type WhatsAppMessageType =

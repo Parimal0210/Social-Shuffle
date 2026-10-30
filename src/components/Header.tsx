@@ -294,15 +294,59 @@ export const Header: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Switch Persona ONLY for admin testing */}
+                  {/* Persona switcher to easily test Admin View vs Participant View */}
+                  <div className="px-2 py-1 mb-1 border-t border-[#202B61] pt-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Switch Persona (Role Testing)
+                    </span>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          loginAsDemoAdmin();
+                          setShowUserMenu(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
+                          isAdminUser
+                            ? 'bg-[#9440DD]/20 text-[#C084FC] font-semibold border border-[#9440DD]/40'
+                            : 'text-[#CBD5E1] hover:bg-[#2A2722]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Shield className="w-3.5 h-3.5 text-[#C084FC] shrink-0" />
+                          <span className="truncate">Parimal Shete (Admin View)</span>
+                        </div>
+                        {isAdminUser && <CheckCircle className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          loginAsDemoParticipant();
+                          setShowUserMenu(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
+                          isAuthenticated && !isAdminUser
+                            ? 'bg-[#FF751F]/20 text-[#FF8566] font-semibold border border-[#FF751F]/40'
+                            : 'text-[#CBD5E1] hover:bg-[#2A2722]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <User className="w-3.5 h-3.5 text-[#FF751F] shrink-0" />
+                          <span className="truncate">Priya Nair (Participant View)</span>
+                        </div>
+                        {isAuthenticated && !isAdminUser && <CheckCircle className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Switch Active Participant for Admin Testing */}
                   {isAdminUser ? (
                     <>
-                      <div className="px-2 py-1 mb-1">
+                      <div className="px-2 py-1 mb-1 border-t border-[#202B61] pt-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Switch Active Participant (Admin Test)
+                          Active Participant Record
                         </span>
                       </div>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                      <div className="space-y-1 max-h-36 overflow-y-auto">
                         {participants.map(p => (
                           <button
                             key={p.id}
@@ -347,7 +391,7 @@ export const Header: React.FC = () => {
                       className="w-full flex items-center gap-2 p-2 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Log Out / Switch Account</span>
+                      <span>Log Out (Guest View)</span>
                     </button>
                   </div>
 

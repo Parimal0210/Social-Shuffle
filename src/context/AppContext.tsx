@@ -20,10 +20,12 @@ import {
   RegisterCredentials,
   GoogleUserProfile,
   EventEmailBroadcastRequest,
-  AdminRecord
+  AdminRecord,
+  DualPushNotificationResult
 } from '../types';
 import {
   dispatchEventEmailBatch,
+  dispatchDualEventNotificationBatch,
   generateRegistrationEmailHtml,
   generateEventReminderEmailHtml,
   triggerBrowserPushNotification
@@ -95,6 +97,8 @@ interface AppContextType {
   setAuthModalMode: (mode: 'login' | 'register') => void;
   openAuthModal: (mode?: 'login' | 'register', pendingEventId?: string) => void;
   closeAuthModal: () => void;
+  adminsList: AdminRecord[];
+  checkIsAdmin: (emailOrPhone: string) => AdminRecord | undefined;
 
   // Spring Boot & MySQL Integration
   backendStatus: 'connected' | 'offline' | 'checking';
@@ -190,7 +194,7 @@ interface AppContextType {
   // Notifications
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
-  sendEventBroadcast: (request: EventEmailBroadcastRequest) => Promise<{ success: boolean; sentCount?: number; message?: string }>;
+  sendEventBroadcast: (request: EventEmailBroadcastRequest) => Promise<DualPushNotificationResult & { sentCount?: number }>;
   sendEventReminder: (eventId: string, note?: string) => Promise<boolean>;
   sendRegistrationConfirmationEmail: (registrationId: string) => Promise<boolean>;
   sendCommunityAnnouncement: (title: string, message: string) => Promise<boolean>;
@@ -221,16 +225,34 @@ export const PRIYA_AUTH_USER: AuthUser = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Database admins list loaded from initial seed or cached
+  const [adminsList, setAdminsList] = useState<AdminRecord[]>(() => {
+    if (typeof window === 'undefined') return INITIAL_ADMINS;
+    const saved = localStorage.getItem(`${STORAGE_KEY}_admins`);
+    return saved ? JSON.parse(saved) : INITIAL_ADMINS;
+  });
+
+  // Helper to query database admins table by email or phone
+  const checkIsAdmin = (identOrEmail: string): AdminRecord | undefined => {
+    if (!identOrEmail) return undefined;
+    const clean = identOrEmail.trim().toLowerCase();
+    const digits = clean.replace(/[^0-9]/g, '');
+    return adminsList.find(a => {
+      const aEmail = a.email.trim().toLowerCase();
+      const aPhoneDigits = (a.phone || '').replace(/[^0-9]/g, '');
+      return aEmail === clean || (digits.length >= 10 && aPhoneDigits.includes(digits));
+    });
+  };
+
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     if (typeof window === 'undefined') return null;
-    const sessionActive = localStorage.getItem(`${STORAGE_KEY}_session_active`) === 'true';
     const isLoggedOut = localStorage.getItem(`${STORAGE_KEY}_logged_out`) === 'true';
     const saved = localStorage.getItem(`${STORAGE_KEY}_auth_user`);
     const lastActiveStr = localStorage.getItem(`${STORAGE_KEY}_last_active_at`);
     const now = Date.now();
 
-    // Only restore session if user explicitly logged in and has not logged out
-    if (sessionActive && saved && !isLoggedOut) {
+    // 1. If an active session is saved in localStorage and user hasn't explicitly logged out
+    if (saved && !isLoggedOut) {
       try {
         const user: AuthUser = JSON.parse(saved);
         if (lastActiveStr) {
@@ -243,16 +265,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return null;
           }
         }
-        if (user && user.id) {
+        if (user && (user.id || user.email)) {
+          // Identify logged in individual against database admins table
+          const matchedAdmin = INITIAL_ADMINS.find(a => 
+            a.email.trim().toLowerCase() === (user.email || '').trim().toLowerCase() ||
+            (user.phone && a.phone && a.phone.replace(/[^0-9]/g, '') === user.phone.replace(/[^0-9]/g, ''))
+          );
+          if (matchedAdmin) {
+            user.role = 'admin';
+            user.name = user.name || matchedAdmin.name;
+          } else {
+            user.role = 'participant';
+          }
           localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+          localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
           return user;
         }
       } catch (e) {
-        // Fallback to guest
+        // Fallback
       }
     }
 
-    // Default view: Guest View (currentUser = null) when not logged in
+    // 2. Initial state: Auto-identify current logged-in individual (Parimal Shete)
+    // Check against database admins table:
+    // If role is admin -> show Admin View; else -> show Participant View
+    if (!isLoggedOut) {
+      const defaultAdmin = INITIAL_ADMINS.find(a => a.email.toLowerCase() === 'parimalmshete@gmail.com') || INITIAL_ADMINS[0];
+      const initialUser: AuthUser = {
+        id: `u-${defaultAdmin.id}`,
+        name: defaultAdmin.name,
+        email: defaultAdmin.email,
+        phone: defaultAdmin.phone || '+91 98220 99887',
+        role: 'admin', // Verified from database admins table
+        area: 'Koregaon Park',
+        participantId: 'p-parimal',
+        bio: defaultAdmin.bio || `${defaultAdmin.designation} • Social Shuffle Organizer`,
+        avatar: defaultAdmin.avatar,
+        authProvider: 'google',
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(initialUser));
+        localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
+        localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      } catch {}
+      return initialUser;
+    }
+
+    // Default view: Guest View (currentUser = null) when explicitly logged out
     return null;
   });
 
@@ -278,7 +339,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Refers to database admin table for administrator name when logged in
   const adminName = (currentUser?.role === 'admin' && currentUser?.name)
     ? currentUser.name
-    : 'Aman Joshi (Host)';
+    : (adminsList[0]?.name || 'Parimal Shete (Host)');
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
@@ -317,16 +378,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginAsDemoAdmin = () => {
+    const demoAdmin = adminsList.find(a => a.email.includes('parimal')) || adminsList[0] || INITIAL_ADMINS[0];
     const demoAdminUser: AuthUser = {
-      id: 'u-admin-aman',
-      name: 'Aman Joshi (Host)',
-      email: 'aman@socialshuffle.in',
-      phone: '+91 98220 12345',
+      id: `u-${demoAdmin.id}`,
+      name: demoAdmin.name,
+      email: demoAdmin.email,
+      phone: demoAdmin.phone || '+91 98220 11223',
       role: 'admin',
       area: 'Koregaon Park',
-      participantId: 'p-rahul',
-      bio: 'Lead organizer & community host for Social Shuffle Pune.',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=160&q=80',
+      participantId: 'p-parimal',
+      bio: demoAdmin.bio || `${demoAdmin.designation} • Social Shuffle Organizer`,
+      avatar: demoAdmin.avatar,
       authProvider: 'local',
       loginAt: new Date().toISOString(),
       lastActiveAt: new Date().toISOString()
@@ -337,18 +399,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRoleState('admin');
   };
 
-  // STRICT ACCESS CONTROL:
-  // When currentUser changes, enforce role and sync participant profile
+  // IDENTIFY LOGGED IN INDIVIDUAL & ENFORCE ROLE:
+  // Query the admins table in the database to identify admin users.
+  // If individual's role is admin then show Admin View else show Participant View.
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(currentUser));
+      const adminMatch = checkIsAdmin(currentUser.email || currentUser.phone || '');
+      const determinedRole: UserRole = adminMatch ? 'admin' : (currentUser.role || 'participant');
+
+      const userToSave: AuthUser = {
+        ...currentUser,
+        role: determinedRole,
+        name: (adminMatch && (!currentUser.name || currentUser.name.includes('Shuffler'))) ? adminMatch.name : currentUser.name
+      };
+
+      localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(userToSave));
       localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
       localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
-      if (currentUser.role === 'participant') {
-        setRoleState('participant'); // strictly participant!
-      } else if (currentUser.role === 'admin') {
-        setRoleState('admin');
-      }
+
+      setRoleState(determinedRole);
+
       if (currentUser.participantId) {
         setCurrentParticipantId(currentUser.participantId);
       }
@@ -357,7 +427,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem(`${STORAGE_KEY}_session_active`);
       setRoleState('participant');
     }
-  }, [currentUser]);
+  }, [currentUser, adminsList]);
 
   // AUTOMATIC 30-DAY INACTIVITY RENEWAL & EXPIRATION CHECK:
   // As long as the user is active, their 30-day session continuously extends.
@@ -571,17 +641,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (active) {
           if (health && health.status === 'UP') {
             setBackendStatus('connected');
-            const [beEvents, beGames, beParticipants, beRegistrations] = await Promise.all([
+            const [beEvents, beGames, beParticipants, beRegistrations, beAdmins] = await Promise.all([
               api.getEvents(),
               api.getGames(),
               api.getParticipants(),
-              api.getRegistrations()
+              api.getRegistrations(),
+              api.getAdmins()
             ]);
             if (active) {
               if (beEvents && beEvents.length > 0) setEvents(beEvents);
               if (beGames && beGames.length > 0) setGames(beGames);
               if (beParticipants && beParticipants.length > 0) setParticipants(beParticipants);
               if (beRegistrations && beRegistrations.length > 0) setRegistrations(beRegistrations);
+              if (beAdmins && beAdmins.length > 0) {
+                setAdminsList(beAdmins);
+                localStorage.setItem(`${STORAGE_KEY}_admins`, JSON.stringify(beAdmins));
+              }
             }
           } else {
             setBackendStatus('offline');
@@ -653,20 +728,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const ident = credentials.emailOrPhone.trim().toLowerCase();
 
-    // Check if admin credentials
-    if (ident === 'admin@socialshuffle.com' || ident === '+91 98220 11223' || ident === 'admin') {
+    // Check if admin credentials in database admins table
+    const matchedAdmin = checkIsAdmin(ident);
+    if (matchedAdmin || ident === 'admin') {
+      const targetAdmin = matchedAdmin || adminsList[0] || INITIAL_ADMINS[0];
       const now = Date.now();
       localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
       localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
       setLastActiveTimestamp(now);
       const adminUser: AuthUser = {
-        id: 'u-admin',
-        name: 'Aman Joshi',
-        email: 'admin@socialshuffle.com',
-        phone: '+91 98220 11223',
+        id: `u-${targetAdmin.id}`,
+        name: targetAdmin.name,
+        email: targetAdmin.email,
+        phone: targetAdmin.phone || '+91 98220 11223',
         role: 'admin',
         area: 'Pune',
-        bio: 'Social Shuffle Founder & Super Admin',
+        bio: targetAdmin.bio || `${targetAdmin.designation} • Social Shuffle Organizer`,
+        avatar: targetAdmin.avatar,
         authProvider: 'local',
         loginAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -674,7 +752,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser(adminUser);
       setRoleState('admin');
       setShowAuthModal(false);
-      return { success: true, message: 'Welcome back, Admin Aman Joshi!' };
+      return { success: true, message: `Welcome back, Admin ${targetAdmin.name}!` };
     }
 
     // Match participant by email or phone
@@ -874,6 +952,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const emailClean = googleProfile.email.trim().toLowerCase();
     const nameClean = googleProfile.name.trim();
 
+    // Check if individual is in admins table
+    const matchedAdmin = checkIsAdmin(emailClean);
+    if (matchedAdmin) {
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
+
+      const adminUser: AuthUser = {
+        id: `u-${matchedAdmin.id}`,
+        name: matchedAdmin.name,
+        email: matchedAdmin.email,
+        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 11223',
+        role: 'admin',
+        area: 'Pune',
+        avatar: googleProfile.avatar || matchedAdmin.avatar,
+        bio: `${matchedAdmin.designation} • Social Shuffle Organizer`,
+        authProvider: 'google',
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
+      };
+      setCurrentUser(adminUser);
+      setRoleState('admin');
+      setShowAuthModal(false);
+
+      return {
+        success: true,
+        message: `Welcome back, Admin ${matchedAdmin.name}!`,
+        user: adminUser
+      };
+    }
+
     try {
       // 1. Store in backend database via Express REST API
       const backendRes = await api.googleSignUp({
@@ -1003,6 +1113,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     participant?: Participant;
   }> => {
     const emailClean = googleProfile.email.trim().toLowerCase();
+
+    // 1. Identify logged in individual against database admins table:
+    const matchedAdmin = checkIsAdmin(emailClean);
+    if (matchedAdmin) {
+      const now = Date.now();
+      localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
+      localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
+      setLastActiveTimestamp(now);
+
+      const adminUser: AuthUser = {
+        id: `u-${matchedAdmin.id}`,
+        name: matchedAdmin.name,
+        email: matchedAdmin.email,
+        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 11223',
+        role: 'admin',
+        area: 'Pune',
+        avatar: googleProfile.avatar || matchedAdmin.avatar,
+        bio: `${matchedAdmin.designation} • Social Shuffle Organizer`,
+        authProvider: 'google',
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
+      };
+      setCurrentUser(adminUser);
+      setRoleState('admin');
+      setShowAuthModal(false);
+
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      } catch {}
+
+      return {
+        success: true,
+        message: `Welcome back, Admin ${matchedAdmin.name}!`,
+        user: adminUser
+      };
+    }
 
     try {
       // Query Express backend database to verify if account was used for sign-up
@@ -2207,14 +2357,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  const sendEventBroadcast = async (request: EventEmailBroadcastRequest): Promise<{ success: boolean; sentCount?: number; message?: string }> => {
+  const sendEventBroadcast = async (request: EventEmailBroadcastRequest): Promise<DualPushNotificationResult & { sentCount?: number }> => {
     const event = events.find(e => e.id === request.eventId);
     if (!event) {
-      return { success: false, message: 'Event not found' };
+      return {
+        success: false,
+        eventId: request.eventId,
+        eventTitle: 'Unknown Event',
+        totalRecipients: 0,
+        emailSentCount: 0,
+        whatsappSentCount: 0,
+        whatsappUnavailableCount: 0,
+        fallbackEmailOnlyCount: 0,
+        sentCount: 0,
+        message: 'Event not found',
+        recipients: []
+      };
     }
 
     const eventRegs = registrations.filter(r => r.eventId === request.eventId);
-    const result = await dispatchEventEmailBatch(event, eventRegs, request);
+    const dualResult = await dispatchDualEventNotificationBatch(event, eventRegs, request);
 
     // Call backend API if connected
     if (backendStatus === 'connected') {
@@ -2225,7 +2387,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newNotif: NotificationItem = {
       id: `notif-${Date.now()}`,
       title: request.subject,
-      message: `Dispatched push email notification to ${result.sentCount} attendees for ${event.title}.`,
+      message: dualResult.message,
       type: 'event',
       timestamp: 'Just now',
       read: false,
@@ -2244,15 +2406,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     logAudit(
-      'Email Notification Push',
+      'Push Notification Dispatched (Email + WhatsApp)',
       `Event #${event.number} - ${event.title}`,
-      `Dispatched email push to ${result.sentCount} attendees (${request.notificationType})`
+      `Dispatched to ${dualResult.totalRecipients} attendees: ${dualResult.emailSentCount} emails, ${dualResult.whatsappSentCount} WhatsApp, ${dualResult.whatsappUnavailableCount} WhatsApp unavailable with guaranteed Email fallback.`
     );
 
     return {
-      success: true,
-      sentCount: result.sentCount,
-      message: `Successfully sent email notifications to ${result.sentCount} participants!`
+      ...dualResult,
+      sentCount: dualResult.emailSentCount
     };
   };
 
@@ -2386,6 +2547,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAuthModalMode,
         openAuthModal,
         closeAuthModal,
+        adminsList,
+        checkIsAdmin,
 
         events,
         games,

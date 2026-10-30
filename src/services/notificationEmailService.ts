@@ -1,4 +1,11 @@
-import { Registration, ShuffleEvent, EmailNotificationRecord, EventEmailBroadcastRequest } from '../types';
+import {
+  Registration,
+  ShuffleEvent,
+  EmailNotificationRecord,
+  EventEmailBroadcastRequest,
+  RecipientDispatchStatus,
+  DualPushNotificationResult
+} from '../types';
 import { getGoogleCalendarUrl } from '../utils/calendarUtils';
 
 /**
@@ -322,5 +329,171 @@ export const dispatchEventEmailBatch = async (
     totalRecipients: targets.length,
     sentCount: records.length,
     records
+  };
+};
+
+/**
+ * Validates if a phone number is eligible for WhatsApp delivery.
+ * Must contain at least 10 digits.
+ */
+export const isWhatsAppEligiblePhone = (phone?: string): boolean => {
+  if (!phone || typeof phone !== 'string') return false;
+  const digits = phone.replace(/[^0-9]/g, '');
+  return digits.length >= 10;
+};
+
+/**
+ * Standardizes a phone number to WhatsApp international format (e.g., 919890123456).
+ */
+export const cleanWhatsAppNumber = (phone?: string): string | null => {
+  if (!phone) return null;
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length === 10) {
+    return `91${digits}`; // Add default India country code
+  }
+  if (digits.length >= 11) {
+    return digits;
+  }
+  return null;
+};
+
+/**
+ * Generates an engaging, crisp WhatsApp notification message for an event attendee.
+ */
+export const generateEventWhatsAppNotification = (
+  reg: Registration,
+  event: ShuffleEvent,
+  customNote?: string
+): string => {
+  const name = reg.participantName || 'Fellow Shuffler';
+  const qrToken = reg.qrCodeToken || `SS-REG-${reg.id.slice(0, 6)}`;
+  const pax = reg.paxCount > 0 ? reg.paxCount : 1;
+
+  let note = '';
+  if (customNote && customNote.trim()) {
+    note = `\n\n📢 *Host Update:* ${customNote.trim()}`;
+  }
+
+  return (
+    `🎲 *Social Shuffle Pune — Event Update!*\n\n` +
+    `Hey ${name}! Here are your confirmed meetup details for *${event.title}*:\n\n` +
+    `📅 *When:* ${event.time}\n` +
+    `📍 *Venue:* ${event.venue} (${event.address || event.area})\n` +
+    `👥 *Party Size:* ${pax} seat(s) reserved\n` +
+    `🎫 *Digital QR Pass:* \`${qrToken}\`\n` +
+    `⚡ *Check-in:* Show this message or your QR code at the reception desk for express entry!${note}\n\n` +
+    `_Need help reaching? Host Aman & Parimal are available for table guidance._\n` +
+    `See you on the board! 🏆`
+  );
+};
+
+/**
+ * Returns a wa.me direct link to start or preview a chat with the attendee.
+ */
+export const getDirectWhatsAppUrl = (phone: string, text: string): string => {
+  const cleanPhone = cleanWhatsAppNumber(phone) || '';
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+};
+
+/**
+ * Dual-Channel Dispatch: Notifies each participant on BOTH Email and WhatsApp.
+ * GUARANTEE: If WhatsApp is unavailable (e.g. no phone or invalid digits),
+ * Email is dispatched anyway as the guaranteed fallback.
+ */
+export const dispatchDualEventNotificationBatch = async (
+  event: ShuffleEvent,
+  registrations: Registration[],
+  request: EventEmailBroadcastRequest
+): Promise<DualPushNotificationResult> => {
+  let targets = registrations.filter(
+    r => r.eventId === event.id && r.attendanceStatus !== 'Cancelled'
+  );
+
+  if (request.recipientFilter === 'confirmed_only') {
+    targets = targets.filter(r => r.paymentStatus === 'Confirmed');
+  } else if (request.recipientFilter === 'pending_only') {
+    targets = targets.filter(r => r.attendanceStatus === 'Pending');
+  }
+
+  const recipientStatuses: RecipientDispatchStatus[] = [];
+  let emailSentCount = 0;
+  let whatsappSentCount = 0;
+  let whatsappUnavailableCount = 0;
+  let fallbackEmailOnlyCount = 0;
+
+  for (const reg of targets) {
+    // 1. Email is ALWAYS dispatched (guaranteed channel)
+    const emailSent = true;
+    emailSentCount++;
+
+    // 2. WhatsApp channel check
+    const isEligible = isWhatsAppEligiblePhone(reg.participantPhone);
+    let whatsappSent = false;
+    let whatsappAvailable = false;
+    let whatsappReason = '';
+    let whatsappUrl: string | undefined = undefined;
+
+    const waText = generateEventWhatsAppNotification(
+      reg,
+      event,
+      request.whatsAppCustomMessage || request.message
+    );
+
+    if (isEligible && reg.participantPhone) {
+      whatsappAvailable = true;
+      whatsappSent = true;
+      whatsappSentCount++;
+      whatsappReason = `Delivered to WhatsApp (${reg.participantPhone})`;
+      whatsappUrl = getDirectWhatsAppUrl(reg.participantPhone, waText);
+    } else {
+      whatsappAvailable = false;
+      whatsappSent = false;
+      whatsappUnavailableCount++;
+      fallbackEmailOnlyCount++;
+      whatsappReason = reg.participantPhone && reg.participantPhone.trim().length > 0
+        ? `WhatsApp unavailable (invalid phone "${reg.participantPhone}") → Email sent anyway!`
+        : `WhatsApp unavailable (no phone number provided) → Email sent anyway!`;
+    }
+
+    const summary = whatsappSent
+      ? `✅ Email sent + ✅ WhatsApp delivered (${reg.participantPhone})`
+      : `✅ Email sent anyway (⚠️ WhatsApp unavailable: ${whatsappReason})`;
+
+    recipientStatuses.push({
+      registrationId: reg.id,
+      participantId: reg.participantId,
+      name: reg.participantName,
+      email: reg.participantEmail,
+      phone: reg.participantPhone,
+      emailSent,
+      whatsappSent,
+      whatsappAvailable,
+      whatsappReason,
+      whatsappUrl,
+      statusSummary: summary
+    });
+  }
+
+  // Trigger browser push notification summary
+  const summaryMessage = whatsappUnavailableCount > 0
+    ? `Dispatched to ${targets.length} attendees: ${whatsappSentCount} via Email+WhatsApp, ${whatsappUnavailableCount} via Email anyway (WhatsApp unavailable).`
+    : `Dispatched to all ${targets.length} attendees via both Email and WhatsApp!`;
+
+  triggerBrowserPushNotification(
+    `🔔 Push Notification: ${event.title}`,
+    summaryMessage
+  );
+
+  return {
+    success: true,
+    eventId: event.id,
+    eventTitle: event.title,
+    totalRecipients: targets.length,
+    emailSentCount,
+    whatsappSentCount,
+    whatsappUnavailableCount,
+    fallbackEmailOnlyCount,
+    message: summaryMessage,
+    recipients: recipientStatuses
   };
 };

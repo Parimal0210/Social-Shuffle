@@ -320,12 +320,15 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
                 <button
                   id={`btn-push-notif-${event.id}`}
                   onClick={() => setBroadcastEvent(event)}
-                  className="px-3.5 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202B61] border border-[#FF751F]/50 text-[#FF751F] hover:text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
-                  title="Trigger push notifications to all participants of this event over email"
+                  className="px-3.5 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202B61] border border-[#FF751F]/60 text-[#FF751F] hover:text-white font-heading font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm group"
+                  title="Push notification to all attendees on Email as well as WhatsApp (if WhatsApp is unavailable, email is sent anyway)"
                 >
-                  <Bell className="w-3.5 h-3.5 text-[#FF751F]" />
-                  <span>Push Email Notification</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FF751F]/20 text-[#FF751F]">
+                  <div className="flex items-center gap-1">
+                    <Bell className="w-3.5 h-3.5 text-[#FF751F] group-hover:scale-110 transition-transform" />
+                    <MessageSquare className="w-3 h-3 text-[#25D366]" />
+                  </div>
+                  <span>Push Notification</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FF751F]/20 text-[#FF751F] font-mono">
                     {confirmedCount}
                   </span>
                 </button>

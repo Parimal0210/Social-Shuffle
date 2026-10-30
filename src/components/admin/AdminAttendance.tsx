@@ -23,7 +23,8 @@ import {
   Sparkles,
   QrCode,
   Camera,
-  Bell
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AttendanceStatus, PaymentStatus, Registration } from '../../types';
@@ -239,14 +240,17 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
             <span>+ Walk-In</span>
           </button>
 
-          {/* Push Email Notification Button */}
+          {/* Push Email & WhatsApp Notification Button */}
           <button
             id="btn-attendance-push-notif"
             onClick={() => setIsNotificationModalOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202B61] border border-[#FF751F]/50 hover:border-[#FF751F] text-[#FF751F] hover:text-white font-heading font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-            title="Push email notification to all attendees of this event"
+            title="Push notification to all attendees on Email as well as WhatsApp (if WhatsApp unavailable, email is sent anyway)"
           >
-            <Bell className="w-3.5 h-3.5 text-[#FF751F] animate-pulse" />
+            <div className="flex items-center gap-0.5">
+              <Bell className="w-3.5 h-3.5 text-[#FF751F] animate-pulse" />
+              <MessageSquare className="w-3 h-3 text-[#25D366]" />
+            </div>
             <span className="hidden sm:inline">Push Notification</span>
             <span className="sm:hidden">Notify</span>
           </button>

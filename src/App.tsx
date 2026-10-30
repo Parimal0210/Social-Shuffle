@@ -46,21 +46,20 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, participantTab]);
 
-  // For every tab change, screen should be loaded from the top only
+  // STRICT ACCESS RULE:
+  // - If individual's role is admin in the database admins table: show Admin View
+  // - Otherwise (participant): show Participant View
+  const showAdminView = isAuthenticated && isAdminUser;
+
+  // For every tab or view change, screen should be loaded from the top only
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [participantTab, adminSection]);
+  }, [participantTab, adminSection, showAdminView]);
 
   const pendingReportsCount = reportsList.filter(r => r.status === 'New').length;
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
-
-  // STRICT ACCESS RULE:
-  // - If user is not logged in: default view is Guest View
-  // - If user is logged in as participant: default view is Participant View
-  // - If user is logged in as admin: default view is Admin View
-  const showAdminView = isAuthenticated && isAdminUser;
 
   const handleOpenAttendanceForEvent = (eventId: string) => {
     setTargetAttendanceEventId(eventId);

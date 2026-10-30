@@ -689,6 +689,22 @@ class ApiService {
     }
   }
 
+  async pushEventNotification(eventId: string, req: EventEmailBroadcastRequest): Promise<{ success: boolean; message?: string } | null> {
+    try {
+      const res = await this.fetchWithTimeout(`/events/${encodeURIComponent(eventId)}/push-notification`, {
+        method: 'POST',
+        body: JSON.stringify(req)
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications', '/registrations');
+        return await res.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async sendEventReminder(eventId: string, note?: string): Promise<boolean> {
     try {
       const res = await this.fetchWithTimeout(`/notifications/send-reminder/${eventId}${note ? `?note=${encodeURIComponent(note)}` : ''}`, {
@@ -905,7 +921,8 @@ class ApiService {
       const res = await fetch('/api/admins');
       if (res.ok) {
         const json = await res.json();
-        if (json.admins) return json.admins;
+        if (Array.isArray(json)) return json;
+        if (json && Array.isArray(json.admins)) return json.admins;
       }
     } catch {}
     return [];
@@ -919,6 +936,18 @@ class ApiService {
       }
     } catch {}
     return { isAdmin: false };
+  }
+
+  // --- Identify Current Logged In Individual ---
+  async identifyCurrentUser(identifier?: string): Promise<{ success: boolean; user?: any; participant?: any; role?: string; isAdmin?: boolean }> {
+    try {
+      const url = identifier ? `/api/auth/me?email=${encodeURIComponent(identifier)}` : '/api/auth/me';
+      const res = await fetch(url);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+    return { success: false };
   }
 }
 
