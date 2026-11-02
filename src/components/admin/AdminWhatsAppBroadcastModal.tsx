@@ -60,7 +60,7 @@ export const AdminWhatsAppBroadcastModal: React.FC<AdminWhatsAppBroadcastModalPr
 
   const [selectedPresetId, setSelectedPresetId] = useState<WhatsAppMessageType>(initialPresetId);
   const [selectedGroup, setSelectedGroup] = useState<string>(OFFICIAL_WHATSAPP_GROUPS[0].name);
-  const [customGroupUrl, setCustomGroupUrl] = useState<string>('https://chat.whatsapp.com/demo-pune-announcements');
+  const [customGroupUrl, setCustomGroupUrl] = useState<string>('https://chat.whatsapp.com/socialshuffle-pune');
   const [editableMessage, setEditableMessage] = useState<string>('');
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
   const [dispatchedToast, setDispatchedToast] = useState<boolean>(false);

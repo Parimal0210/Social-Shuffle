@@ -240,6 +240,18 @@ export const AdminParticipants: React.FC = () => {
         })}
       </div>
 
+      {filteredParticipants.length === 0 && (
+        <div className="p-8 rounded-2xl bg-[#151E4D] border border-[#283677] text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#FF751F]/15 text-[#FF751F] flex items-center justify-center mx-auto">
+            <Users className="w-6 h-6" />
+          </div>
+          <h3 className="font-heading font-bold text-white text-sm">No Active Participant Records</h3>
+          <p className="text-xs text-[#94A3B8] max-w-md mx-auto">
+            The platform is clean and ready to go live. As participants register for upcoming meetups or sign in with their Google/email accounts, their CRM records, check-in history, and badge progress will automatically populate here.
+          </p>
+        </div>
+      )}
+
       {/* PARTICIPANT DETAIL MODAL / DRAWER */}
       {selectedParticipant && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

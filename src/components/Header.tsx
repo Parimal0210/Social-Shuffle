@@ -75,7 +75,7 @@ export const Header: React.FC = () => {
                   ? 'bg-[#FFD230]/15 border-[#FFD230]/40 text-[#FFD230]'
                   : 'bg-[#182255] border-[#283677] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#4AB4A4]/40'
               }`}
-              title="Toggle offline attendance simulation mode"
+              title="Toggle offline attendance mode"
             >
               {isOfflineMode ? (
                 <>
@@ -294,7 +294,15 @@ export const Header: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Persona switcher to easily test Admin View vs Participant View */}
+                  {/* 
+                    ========================================================================================
+                    [COMMENTED OUT FOR GO-LIVE]: Switch Accounts (One account for each view: Admin / Participant)
+                    Role and permissions are now strictly determined by authentication and the database admins table:
+                    - Registered Admin in admins table => Admin View
+                    - Registered Member                => Participant View
+                    ========================================================================================
+                  */}
+                  {/*
                   <div className="px-2 py-1 mb-1 border-t border-[#202B61] pt-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                       Switch Persona (Role Testing)
@@ -338,7 +346,6 @@ export const Header: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Switch Active Participant for Admin Testing */}
                   {isAdminUser ? (
                     <>
                       <div className="px-2 py-1 mb-1 border-t border-[#202B61] pt-2">
@@ -369,6 +376,7 @@ export const Header: React.FC = () => {
                       </div>
                     </>
                   ) : null}
+                  */}
 
                   {/* Participant actions */}
                   <div className="mt-1 pt-1.5 border-t border-[#202B61] space-y-1">
@@ -391,25 +399,9 @@ export const Header: React.FC = () => {
                       className="w-full flex items-center gap-2 p-2 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Log Out (Guest View)</span>
+                      <span>Log Out</span>
                     </button>
                   </div>
-
-                  {isAdminUser && (
-                    <div className="mt-2 pt-2 border-t border-[#202B61] px-1">
-                      <button
-                        onClick={() => {
-                          if (confirm('Reset sample Pune meetup data back to defaults?')) {
-                            resetDatabase();
-                            setShowUserMenu(false);
-                          }
-                        }}
-                        className="w-full text-center py-1 text-[10px] text-rose-400/80 hover:text-rose-300 transition-colors"
-                      >
-                        Reset Sample Database
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>

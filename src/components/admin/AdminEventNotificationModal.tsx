@@ -633,7 +633,7 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
               <div className="flex items-center justify-between text-xs text-[#94A3B8]">
                 <span className="flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5 text-[#4AB4A4]" />
-                  Simulated email preview for: <strong>{sampleAttendee.participantName} ({sampleAttendee.participantEmail})</strong>
+                  Email preview for: <strong>{sampleAttendee.participantName} ({sampleAttendee.participantEmail})</strong>
                 </span>
                 <span className="text-[11px] text-[#64748B]">Subject: {subject}</span>
               </div>

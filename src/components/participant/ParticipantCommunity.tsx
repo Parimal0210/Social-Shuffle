@@ -471,7 +471,7 @@ export const ParticipantCommunity: React.FC = () => {
                 </p>
                 <div className="pt-1">
                   <a
-                    href="https://chat.whatsapp.com/demo"
+                    href="https://chat.whatsapp.com/socialshuffle-pune"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block text-xs font-bold text-[#4AB4A4] hover:underline"

@@ -891,36 +891,6 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
                 </button>
               </div>
             </form>
-
-            {/* Quick 1-Tap Demo Test Attendees for Testing */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] block">
-                Quick Test with Event Attendees (1-Click Sim):
-              </span>
-              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                {currentEventRegistrations.slice(0, 6).map(reg => {
-                  const token = reg.qrCodeToken || `SS-REG-${reg.id}`;
-                  const isChecked = reg.attendanceStatus === 'Checked In';
-                  return (
-                    <button
-                      key={reg.id}
-                      type="button"
-                      onClick={() => handleVerifyQr(token)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-medium transition-all flex items-center gap-1 ${
-                        isChecked
-                          ? 'bg-[#4AB4A4]/20 border-[#4AB4A4]/40 text-[#4AB4A4]'
-                          : 'bg-[#1A255C] border-[#283677] text-[#94A3B8] hover:bg-[#202B61] hover:text-[#F8FAFC]'
-                      }`}
-                    >
-                      <span>{isChecked ? '✓' : '🎲'}</span>
-                      <span>{reg.participantName}</span>
-                      <span className="text-[9px] text-[#64748B] font-mono">({token.slice(-6)})</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Scan Feedback Message */}
             {qrScanMessage && (
               <div

@@ -117,62 +117,19 @@ public class DatabaseInitializationService implements CommandLineRunner {
 
     private void seedUsersIfEmpty() {
         if (userRepository.count() == 0) {
-            log.info("Seeding users table in database...");
+            log.info("Seeding users table in database with admin user...");
             User u1 = new User("u-admin-parimal", "Parimal Shete", "parimalmshete@gmail.com", "+91 98220 99887", "admin123", "admin", "Koregaon Park");
             u1.setAvatar("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200");
             u1.setBio("Co-Founder & Community Architect at Social Shuffle");
             u1.setAuthProvider("google");
 
-            User u2 = new User("u-rohan", "Rohan Kulkarni", "rohan.kulkarni@example.com", "+91 98220 12345", "shuffler123", "participant", "Koregaon Park");
-            u2.setAvatar("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200");
-            u2.setBio("Board game lover, strategy nerd, Catan enthusiast.");
-            u2.setParticipantId("p-rohan");
-            u2.setAuthProvider("local");
-
-            User u3 = new User("u-ananya", "Ananya Deshmukh", "ananya.d@example.com", "+91 98230 56789", "shuffler123", "participant", "Baner");
-            u3.setAvatar("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200");
-            u3.setBio("Codenames spymaster and social deduction aficionado.");
-            u3.setParticipantId("p-ananya");
-            u3.setAuthProvider("local");
-
-            userRepository.saveAll(Arrays.asList(u1, u2, u3));
+            userRepository.save(u1);
         }
     }
 
     private void seedParticipantsIfEmpty() {
-        if (participantRepository.count() == 0) {
-            log.info("Seeding participants table in database...");
-            Participant p1 = new Participant("p-parimal", "Parimal Shete", "parimalmshete@gmail.com", "+91 98220 99887", "Koregaon Park");
-            p1.setAvatar("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200");
-            p1.setBio("Social Shuffle Co-Founder & Tabletop Host");
-            p1.setJoinedDate("2024-01-01");
-
-            Participant p2 = new Participant("p-rohan", "Rohan Kulkarni", "rohan.kulkarni@example.com", "9822012345", "Koregaon Park");
-            p2.setAvatar("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200");
-            p2.setBio("Board game lover, strategy nerd, Catan enthusiast.");
-            p2.setJoinedDate("2024-01-15");
-            p2.setTotalEventsAttended(8);
-            p2.setTotalRegistrations(9);
-            p2.setGamesPlayedIds(Arrays.asList("g-catan", "g-avalon", "g-codenames"));
-            p2.setVenuesVisited(Arrays.asList("The Rustle Nest Cafe", "Pagdandi Bookstore Cafe"));
-            p2.setTotalPaxBrought(4);
-            p2.setLastAttendedEventId("evt-34");
-            p2.setLastAttendedEventTitle("Social Shuffle #34 - Strategy Showdown");
-
-            Participant p3 = new Participant("p-ananya", "Ananya Deshmukh", "ananya.d@example.com", "9823056789", "Baner");
-            p3.setAvatar("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200");
-            p3.setBio("Codenames spymaster and social deduction aficionado.");
-            p3.setJoinedDate("2024-02-01");
-            p3.setTotalEventsAttended(5);
-            p3.setTotalRegistrations(5);
-            p3.setGamesPlayedIds(Arrays.asList("g-codenames", "g-splendor"));
-            p3.setVenuesVisited(List.of("Pagdandi Bookstore Cafe"));
-            p3.setTotalPaxBrought(2);
-            p3.setLastAttendedEventId("evt-34");
-            p3.setLastAttendedEventTitle("Social Shuffle #34 - Strategy Showdown");
-
-            participantRepository.saveAll(Arrays.asList(p1, p2, p3));
-        }
+        // Clean initial state: Active participant records are generated through live user registration
+        log.info("Participants table ready for real member registrations.");
     }
 
     private void seedVenuesIfEmpty() {
@@ -333,31 +290,13 @@ public class DatabaseInitializationService implements CommandLineRunner {
     }
 
     private void seedRegistrationsIfEmpty() {
-        if (registrationRepository.count() == 0) {
-            log.info("Seeding registrations table in database...");
-            Registration reg = new Registration(
-                    "reg-1", "evt-35", "p-rohan", "Rohan Kulkarni", "rohan.kulkarni@example.com",
-                    "9822012345", "Koregaon Park", 2, "Confirmed", "Registered"
-            );
-            reg.setGuests(List.of(new GuestInfo("g-1", "Tanvi Joshi", "tanvi@example.com", "9822099999", "Koregaon Park")));
-            reg.setRegisteredAt(Instant.now().toString());
-            reg.setTicketCode("TC-EVT35-ROHAN");
-            reg.setAmountPaid(350);
-            registrationRepository.save(reg);
-        }
+        // Clean initial state: Registrations are created via live checkout and booking
+        log.info("Registrations table ready for live bookings.");
     }
 
     private void seedFeedbackIfEmpty() {
-        if (feedbackRepository.count() == 0) {
-            log.info("Seeding feedback table in database...");
-            EventFeedback fb1 = new EventFeedback("fb-1", "evt-34", "Rohan Kulkarni", 5, "Incredible vibe! The hosts taught us Catan in 5 minutes and we had a blast.", "Catan", 5);
-            fb1.setCreatedAt("2026-09-20T18:00:00Z");
-
-            EventFeedback fb2 = new EventFeedback("fb-2", "evt-34", "Ananya Deshmukh", 5, "Loved the friendly community and the coffee. Will definitely be a regular every Sunday!", "Codenames", 5);
-            fb2.setCreatedAt("2026-09-20T18:15:00Z");
-
-            feedbackRepository.saveAll(Arrays.asList(fb1, fb2));
-        }
+        // Clean initial state: Feedback is collected after live meetups
+        log.info("Feedback table ready for participant submissions.");
     }
 
     private void seedAuditAndNotificationsIfEmpty() {

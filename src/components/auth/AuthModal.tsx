@@ -1078,32 +1078,6 @@ export const AuthModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* DEMO TEST HELPER: Quick 1-tap fill for generated OTP */}
-              {otpPreview && (
-                <div className="p-3 bg-[#151E4D] border border-[#283677] rounded-xl text-xs space-y-1.5 animate-in fade-in">
-                  <div className="flex items-center justify-between text-[#94A3B8] font-semibold">
-                    <span className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-[#FF751F]" />
-                      Email Dispatched (Demo Preview):
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8] font-mono">10 min expiry</span>
-                  </div>
-                  <div className="flex items-center justify-between bg-[#1A255C] px-3 py-1.5 rounded-lg border border-[#283677]">
-                    <span className="font-mono text-white tracking-widest font-bold text-sm">{otpPreview}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const split = otpPreview.split('');
-                        setOtpDigits(split);
-                        setError(null);
-                      }}
-                      className="px-2.5 py-1 bg-[#FF751F] hover:bg-[#E66310] text-white font-bold text-[10px] rounded transition-all cursor-pointer"
-                    >
-                      Auto-fill Code
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* 6-DIGIT OTP INPUT BOXES */}
               <div className="space-y-2">

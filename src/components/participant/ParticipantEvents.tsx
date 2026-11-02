@@ -1159,7 +1159,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     <input
                       type="text"
                       readOnly
-                      value="•••• •••• •••• 4242  (Razorpay Test Card)"
+                      value="•••• •••• •••• 4242"
                       className="w-full bg-[#10173E] border border-[#283677] rounded-xl px-3 py-2 text-xs text-white"
                     />
                   </div>

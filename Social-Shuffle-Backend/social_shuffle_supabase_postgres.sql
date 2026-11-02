@@ -371,96 +371,9 @@ VALUES
     '2026-09-29T12:00:00Z',
     '2026-09-29T12:00:00Z',
     '2024-01-01T00:00:00Z'
-),
-(
-    'u-rohan',
-    'Rohan Kulkarni',
-    'rohan.kulkarni@example.com',
-    '+91 98220 12345',
-    'shuffler123',
-    'participant',
-    'Koregaon Park',
-    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
-    'Board game lover, strategy nerd, Catan enthusiast.',
-    'p-rohan',
-    'local',
-    '2026-09-29T12:00:00Z',
-    '2026-09-29T12:00:00Z',
-    '2024-01-15T00:00:00Z'
-),
-(
-    'u-ananya',
-    'Ananya Deshmukh',
-    'ananya.d@example.com',
-    '+91 98230 56789',
-    'shuffler123',
-    'participant',
-    'Baner',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200',
-    'Codenames spymaster and social deduction aficionado.',
-    'p-ananya',
-    'local',
-    '2026-09-29T12:00:00Z',
-    '2026-09-29T12:00:00Z',
-    '2024-02-01T00:00:00Z'
-)
-ON CONFLICT (id) DO NOTHING;
+)ON CONFLICT (id) DO NOTHING;
 
--- 3. Seed `participants`
-INSERT INTO participants (id, name, email, phone, area, avatar, bio, joined_date, total_events_attended, total_registrations, games_played_ids, venues_visited, total_pax_brought, last_attended_event_id, last_attended_event_title)
-VALUES
-(
-    'p-parimal',
-    'Parimal Shete',
-    'parimalmshete@gmail.com',
-    '+91 98220 99887',
-    'Koregaon Park',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-    'Social Shuffle Co-Founder & Tabletop Host',
-    '2024-01-01',
-    12,
-    12,
-    '["g-catan","g-avalon","g-codenames","g-splendor"]',
-    '["The Rustle Nest Cafe","Pagdandi Bookstore Cafe"]',
-    10,
-    'evt-34',
-    'Social Shuffle #34 - Strategy Showdown'
-),
-(
-    'p-rohan',
-    'Rohan Kulkarni',
-    'rohan.kulkarni@example.com',
-    '9822012345',
-    'Koregaon Park',
-    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
-    'Board game lover, strategy nerd, Catan enthusiast.',
-    '2024-01-15',
-    8,
-    9,
-    '["g-catan","g-avalon","g-codenames"]',
-    '["The Rustle Nest Cafe","Pagdandi Bookstore Cafe"]',
-    4,
-    'evt-34',
-    'Social Shuffle #34 - Strategy Showdown'
-),
-(
-    'p-ananya',
-    'Ananya Deshmukh',
-    'ananya.d@example.com',
-    '9823056789',
-    'Baner',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200',
-    'Codenames spymaster and social deduction aficionado.',
-    '2024-02-01',
-    5,
-    5,
-    '["g-codenames","g-splendor"]',
-    '["Pagdandi Bookstore Cafe"]',
-    2,
-    'evt-34',
-    'Social Shuffle #34 - Strategy Showdown'
-)
-ON CONFLICT (id) DO NOTHING;
+-- 3. `participants` (Clean initial state: populated as real users register)
 
 -- 4. Seed `venues`
 INSERT INTO venues (id, name, address, area, capacity, contact_phone, maps_url, image, active)
@@ -793,61 +706,11 @@ VALUES
 )
 ON CONFLICT (level) DO NOTHING;
 
--- 8. Seed `participant_badges`
-INSERT INTO participant_badges (id, participant_id, badge_level, badge_name, badge_icon, earned_at, is_current)
-VALUES
-('pb-1', 'p-rohan', 1, 'Novice Roller', '🎲', '2024-01-15T00:00:00Z', FALSE),
-('pb-2', 'p-rohan', 2, 'Apprentice Shuffler', '♟️', '2024-02-10T00:00:00Z', FALSE),
-('pb-3', 'p-rohan', 3, 'Casual Tactician', '⚔️', '2024-03-01T00:00:00Z', TRUE),
-('pb-4', 'p-ananya', 1, 'Novice Roller', '🎲', '2024-02-01T00:00:00Z', FALSE),
-('pb-5', 'p-ananya', 2, 'Apprentice Shuffler', '♟️', '2024-02-25T00:00:00Z', TRUE)
-ON CONFLICT (id) DO NOTHING;
+-- 8. `participant_badges` (Clean initial state: awarded as participants play games)
 
--- 9. Seed `registrations`
-INSERT INTO registrations (id, event_id, participant_id, participant_name, participant_email, participant_phone, participant_area, pax_count, guests, payment_status, attendance_status, check_in_time, registered_at, ticket_code)
-VALUES
-(
-    'reg-1',
-    'evt-35',
-    'p-rohan',
-    'Rohan Kulkarni',
-    'rohan.kulkarni@example.com',
-    '9822012345',
-    'Koregaon Park',
-    2,
-    '[{"id":"g-1","name":"Tanvi Joshi","email":"tanvi@example.com","phone":"9822099999","area":"Koregaon Park"}]',
-    'Confirmed',
-    'Registered',
-    NULL,
-    '2026-09-20T10:30:00Z',
-    'TC-EVT35-ROHAN'
-)
-ON CONFLICT (id) DO NOTHING;
+-- 9. `registrations` (Clean initial state: recorded via event checkouts)
 
--- 10. Seed `feedback`
-INSERT INTO feedback (id, event_id, participant_name, rating, comments, favorite_game, venue_rating, submitted_at)
-VALUES
-(
-    'fb-1',
-    'evt-34',
-    'Rohan Kulkarni',
-    5,
-    'Incredible vibe! The hosts taught us Catan in 5 minutes and we had a blast.',
-    'Catan',
-    5,
-    '2026-09-20T18:00:00Z'
-),
-(
-    'fb-2',
-    'evt-34',
-    'Ananya Deshmukh',
-    5,
-    'Loved the friendly community and the coffee. Will definitely be a regular every Sunday!',
-    'Codenames',
-    5,
-    '2026-09-20T18:15:00Z'
-)
-ON CONFLICT (id) DO NOTHING;
+-- 10. `feedback` (Clean initial state: submitted by event attendees)
 
 -- 11. Seed `audit_logs`
 INSERT INTO audit_logs (id, admin_name, action, target, details, description, "timestamp")

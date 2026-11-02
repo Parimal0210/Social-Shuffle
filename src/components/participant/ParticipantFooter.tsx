@@ -57,7 +57,7 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
                 {/* WhatsApp Community Link */}
                 <a
-                  href="https://chat.whatsapp.com/demo"
+                  href="https://chat.whatsapp.com/socialshuffle-pune"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#25D366]/25 transition-all transform hover:-translate-y-0.5"

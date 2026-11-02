@@ -333,7 +333,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [currentParticipantId, setCurrentParticipantId] = useState<string>(() => {
-    return currentUser?.participantId || 'p-priya';
+    return currentUser?.participantId || '';
   });
 
   // Refers to database admin table for administrator name when logged in
@@ -368,6 +368,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRoleState('participant');
   };
 
+  /*
+  ========================================================================================
+  [COMMENTED OUT FOR GO-LIVE]: Demo Account Switchers
+  Account switching is disabled in live mode. Real users authenticate via sign-in / Google.
+  ========================================================================================
   const loginAsDemoParticipant = () => {
     localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
     localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
@@ -398,6 +403,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(demoAdminUser);
     setRoleState('admin');
   };
+  ========================================================================================
+  */
+  const loginAsDemoParticipant = () => {};
+  const loginAsDemoAdmin = () => {};
 
   // IDENTIFY LOGGED IN INDIVIDUAL & ENFORCE ROLE:
   // Query the admins table in the database to identify admin users.
@@ -505,60 +514,97 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [participants, setParticipants] = useState<Participant[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_participants`);
-    return saved ? JSON.parse(saved) : INITIAL_PARTICIPANTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out any legacy dummy mock participants from earlier test runs
+          const cleaned = parsed.filter(p => !['p-rahul', 'p-tanvi', 'p-rohan', 'p-ananya', 'p-vikram', 'p-priya'].includes(p.id));
+          return cleaned;
+        }
+      } catch {}
+    }
+    return INITIAL_PARTICIPANTS;
   });
 
   const [registrations, setRegistrations] = useState<Registration[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_registrations`);
-    let list: Registration[] = saved ? JSON.parse(saved) : INITIAL_REGISTRATIONS;
-    // Revert Priya Nair registration for Event #35
-    list = list.filter(r => {
-      const isPriya = (
-        r.participantId === 'p-priya' ||
-        r.participantName?.toLowerCase().includes('priya nair') ||
-        r.participantEmail?.toLowerCase().includes('priya.nair')
-      );
-      const isEvent35 = (
-        r.eventId === 'ev-35' ||
-        r.eventId === 'evt-35' ||
-        r.eventId === '35'
-      );
-      return !(isPriya && isEvent35);
-    });
-
-    // Ensure Priya's attended meetups exist in the registrations state
-    const hasPriyaAttended = list.some(r => r.participantId === 'p-priya' && r.attendanceStatus === 'Checked In');
-    if (!hasPriyaAttended) {
-      const priyaInitialRegs = INITIAL_REGISTRATIONS.filter(r => r.participantId === 'p-priya');
-      list = [...list, ...priyaInitialRegs.filter(pr => !list.some(r => r.id === pr.id))];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out any legacy dummy sample registrations
+          const cleaned = parsed.filter(r => !['reg-35-1', 'reg-35-2', 'reg-35-3', 'reg-35-4', 'reg-34-1', 'reg-34-2', 'reg-34-3', 'reg-34-4', 'reg-34-5', 'reg-33-1'].includes(r.id));
+          return cleaned;
+        }
+      } catch {}
     }
-
-    return list;
+    return INITIAL_REGISTRATIONS;
   });
 
   const [feedbackList, setFeedbackList] = useState<EventFeedback[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_feedback`);
-    return saved ? JSON.parse(saved) : INITIAL_FEEDBACK;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(f => !['fb-1', 'fb-2', 'fb-3'].includes(f.id));
+        }
+      } catch {}
+    }
+    return INITIAL_FEEDBACK;
   });
 
   const [reportsList, setReportsList] = useState<SafetyReport[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_reports`);
-    return saved ? JSON.parse(saved) : INITIAL_REPORTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(r => !['rep-1', 'rep-2'].includes(r.id));
+        }
+      } catch {}
+    }
+    return INITIAL_REPORTS;
   });
 
   const [volunteersList, setVolunteersList] = useState<VolunteerApplication[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_volunteers`);
-    return saved ? JSON.parse(saved) : INITIAL_VOLUNTEERS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(v => !['vol-1', 'vol-2'].includes(v.id));
+        }
+      } catch {}
+    }
+    return INITIAL_VOLUNTEERS;
   });
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_audit`);
-    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(a => !['log-1', 'log-2', 'log-3'].includes(a.id));
+        }
+      } catch {}
+    }
+    return INITIAL_AUDIT_LOGS;
   });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_notifications`);
-    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(n => !['notif-1', 'notif-2', 'notif-3'].includes(n.id));
+        }
+      } catch {}
+    }
+    return INITIAL_NOTIFICATIONS;
   });
 
   // Offline Mode state
@@ -602,8 +648,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(notifications));
   }, [notifications]);
 
-  // Current participant object
-  const currentParticipant = participants.find(p => p.id === currentParticipantId) || participants[0];
+  // Current participant object with safe fallback when participants table is empty
+  const fallbackParticipant: Participant = {
+    id: currentUser?.participantId || (currentUser ? `p-${currentUser.id}` : 'p-guest'),
+    name: currentUser?.name || 'Social Shuffler',
+    email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
+    area: currentUser?.area || 'Pune',
+    bio: currentUser?.bio || 'Pune tabletop & board game enthusiast',
+    joinedDate: currentUser?.loginAt ? currentUser.loginAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+    totalEventsAttended: 0,
+    totalRegistrations: 0,
+    gamesPlayedIds: [],
+    venuesVisited: [],
+    totalPaxBrought: 0
+  };
+
+  const currentParticipant = (
+    participants.find(p => p.id === currentParticipantId || (currentUser?.email && p.email?.toLowerCase() === currentUser.email.toLowerCase())) ||
+    participants[0] ||
+    fallbackParticipant
+  );
 
   // Spring Boot + MySQL Connectivity
   const [backendStatus, setBackendStatus] = useState<'connected' | 'offline' | 'checking'>('checking');
@@ -2501,8 +2566,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setVolunteersList(INITIAL_VOLUNTEERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setNotifications(INITIAL_NOTIFICATIONS);
-    setCurrentParticipantId('p-priya');
-    setCurrentUser(PRIYA_AUTH_USER);
+    setCurrentParticipantId('');
+    setCurrentUser(null);
     setIsOfflineMode(false);
     setOfflineSyncQueue([]);
   };
