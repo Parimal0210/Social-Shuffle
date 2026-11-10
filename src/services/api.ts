@@ -22,7 +22,8 @@ import {
   LoginCredentials,
   RegisterCredentials,
   AuthResponse,
-  EventEmailBroadcastRequest
+  EventEmailBroadcastRequest,
+  CommunityStats
 } from '../types';
 import {
   BadgeCalculationResult,
@@ -35,11 +36,15 @@ const API_STORAGE_KEY = 'social_shuffle_api_url';
 export const DEFAULT_API_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_API_URL)
     ? import.meta.env.VITE_BACKEND_API_URL
-    : 'https://social-shuffle-backend.onrender.com/api';
+    : '/api';
 
 export function getStoredApiUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_API_URL;
-  return localStorage.getItem(API_STORAGE_KEY) || DEFAULT_API_URL;
+  const stored = localStorage.getItem(API_STORAGE_KEY);
+  if (stored && !stored.includes('onrender.com')) {
+    return stored;
+  }
+  return DEFAULT_API_URL;
 }
 
 export function setStoredApiUrl(url: string): void {
@@ -546,6 +551,26 @@ class ApiService {
     }
   }
 
+  async getCommunityStats(): Promise<CommunityStats | null> {
+    return this.cachedFetchJson<CommunityStats>('/community/stats', 5000);
+  }
+
+  async updateCommunityStats(updates: Partial<CommunityStats>): Promise<CommunityStats | null> {
+    try {
+      const res = await this.fetchWithTimeout('/community/stats', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        this.invalidateCache('/community/stats');
+        return (await res.json()) as CommunityStats;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async getReports(): Promise<SafetyReport[] | null> {
     return this.cachedFetchJson<SafetyReport[]>('/community/reports', 20000);
   }
@@ -948,6 +973,55 @@ class ApiService {
       }
     } catch {}
     return { success: false };
+  }
+
+  // --- Real Outbound Email & WhatsApp Communications ---
+  async getCommunicationsConfig(): Promise<any> {
+    try {
+      const res = await fetch('/api/communications/config');
+      if (res.ok) return await res.json();
+    } catch {}
+    return null;
+  }
+
+  async updateCommunicationsConfig(config: any): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch('/api/communications/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+    return { success: false, message: 'Network error updating communications config' };
+  }
+
+  async testSendEmail(toEmail: string, subject?: string, message?: string): Promise<any> {
+    try {
+      const res = await fetch('/api/communications/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toEmail, subject, message })
+      });
+      if (res.ok) return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+    return { success: false, error: 'Failed to send test email' };
+  }
+
+  async testSendWhatsApp(toPhone: string, messageText?: string): Promise<any> {
+    try {
+      const res = await fetch('/api/communications/test-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toPhone, messageText })
+      });
+      if (res.ok) return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message };
+    }
+    return { success: false, error: 'Failed to test WhatsApp' };
   }
 }
 

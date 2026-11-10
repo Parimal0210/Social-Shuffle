@@ -111,7 +111,7 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
   onRegisterClick,
   showCta = true
 }) => {
-  const { openAuthModal } = useApp();
+  const { openAuthModal, communityStats } = useApp();
 
   const handleCta = () => {
     if (onRegisterClick) {
@@ -120,6 +120,9 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
       openAuthModal('register');
     }
   };
+
+  const gamesLabel = communityStats?.gamesTaught || '120+';
+  const soloRate = communityStats?.soloPercentage || '60%';
 
   const benefits = [
     {
@@ -145,11 +148,11 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
       badgeColor: 'bg-[#8F43EE]/15 text-[#a870f7] border-[#8F43EE]/30',
       icon: <GameTrackingCustomIcon className="w-14 h-14" />,
       accentBorder: 'hover:border-[#8F43EE]/50 group-hover:shadow-[#8F43EE]/20',
-      tagline: 'Record your tabletop legacy across 120+ games',
+      tagline: `Record your tabletop legacy across ${gamesLabel} games`,
       description:
-        'Track every board game you conquer from our massive 120+ game library. Level up your profile from Rising Shuffler to Board Game Master, earn achievement badges, and build your gaming history.',
+        `Track every board game you conquer from our massive ${gamesLabel} game library. Level up your profile from Rising Shuffler to Board Game Master, earn achievement badges, and build your gaming history.`,
       bulletPoints: [
-        '120+ curated titles tracked by difficulty & genre',
+        `${gamesLabel} curated titles tracked by difficulty & genre`,
         'Level progression from Table Veteran to Master',
         'Personal passport of played games and win history'
       ]
@@ -166,7 +169,7 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
         'Get early-bird booking access to high-demand Sunday editions before tickets sell out. Enjoy secret heavy-strategy nights, themed deduction games, tournaments, and dedicated rule tutors at every table.',
       bulletPoints: [
         'Priority RSVP before public sold-out drops',
-        'Curated matchmaking (60% come solo & make friends)',
+        `Curated matchmaking (${soloRate} come solo & make friends)`,
         'Friendly host mentors explain rules from scratch'
       ]
     }
@@ -247,7 +250,7 @@ export const WhyJoinCommunitySection: React.FC<WhyJoinCommunitySectionProps> = (
                 </span>
               </div>
               <p className="text-xs text-[#A8A29E]">
-                Registering as a participant is 100% free and takes less than 30 seconds. Over 2,400+ Pune shufflers are waiting to welcome you to the table!
+                {communityStats?.whyJoinText || `Registering as a participant is 100% free and takes less than 30 seconds. Over ${communityStats?.membersCount || '2,400+'} Pune shufflers are waiting to welcome you to the table!`}
               </p>
             </div>
 

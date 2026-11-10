@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Search
 } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 interface FaqItem {
   id: string;
@@ -101,6 +102,7 @@ export const ParticipantFaqSection: React.FC<ParticipantFaqSectionProps> = ({
   onExploreEvents,
   isAuthenticated = false
 }) => {
+  const { communityStats } = useApp();
   const [openIds, setOpenIds] = useState<string[]>(['solo', 'experience']);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -111,7 +113,29 @@ export const ParticipantFaqSection: React.FC<ParticipantFaqSectionProps> = ({
     );
   };
 
-  const filteredFaqs = FAQ_ITEMS.filter(faq => {
+  const dynamicFaqs = FAQ_ITEMS.map(faq => {
+    if (faq.id === 'solo' && communityStats?.soloPercentage) {
+      return {
+        ...faq,
+        detailedAnswer: `Over ${communityStats.soloPercentage} of our attendees come completely on their own. You will never have to worry about feeling out of place—our co-founders, Parimal and Diksha, personally greet you at the entrance, introduce you to friendly fellow players, and seat you at a welcoming table within minutes.`
+      };
+    }
+    if (faq.id === 'games-library' && communityStats?.gamesTaught) {
+      return {
+        ...faq,
+        shortAnswer: `Over ${communityStats.gamesTaught} handpicked modern tabletop games.`
+      };
+    }
+    if (faq.id === 'timing' && communityStats?.heroSchedule) {
+      return {
+        ...faq,
+        detailedAnswer: `Our Sunday sessions run from ${communityStats.heroSchedule}. While arriving early gives you the first pick of tables and long-form strategy games, games rotate continuously throughout the evening. If you arrive later, a fresh game table opens up within 10 to 15 minutes.`
+      };
+    }
+    return faq;
+  });
+
+  const filteredFaqs = dynamicFaqs.filter(faq => {
     const matchesCategory =
       activeCategory === 'all' || faq.category === activeCategory;
     const matchesSearch =

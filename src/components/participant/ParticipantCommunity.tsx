@@ -26,7 +26,8 @@ export const ParticipantCommunity: React.FC = () => {
     submitVolunteerApplication,
     volunteersList,
     isAuthenticated,
-    openAuthModal
+    openAuthModal,
+    communityStats
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'feedback' | 'report' | 'contacts' | 'volunteer'>(
@@ -476,7 +477,7 @@ export const ParticipantCommunity: React.FC = () => {
                     rel="noopener noreferrer"
                     className="inline-block text-xs font-bold text-[#4AB4A4] hover:underline"
                   >
-                    Join 1,200+ Pune Shufflers →
+                    Join {communityStats?.membersCount || '2,400+'} Pune Shufflers →
                   </a>
                 </div>
               </div>
@@ -536,7 +537,7 @@ export const ParticipantCommunity: React.FC = () => {
           <div className="p-5 rounded-2xl bg-[#151E4D] border border-[#283677] space-y-2 text-xs text-[#94A3B8]">
             <h4 className="font-heading font-bold text-white text-sm">Coming to Social Shuffle for the first time?</h4>
             <p>• <strong className="text-white">Do I need to know board games?</strong> Not at all! Our hosts explain every single game rule patiently before you play.</p>
-            <p>• <strong className="text-white">Can I come solo?</strong> Over 60% of our shufflers come solo. We seat you with friendly people immediately!</p>
+            <p>• <strong className="text-white">Can I come solo?</strong> Over {communityStats?.soloPercentage || '60%'} of our shufflers come solo. We seat you with friendly people immediately!</p>
           </div>
         </div>
       )}

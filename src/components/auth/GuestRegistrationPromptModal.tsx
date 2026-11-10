@@ -29,7 +29,7 @@ export const GuestRegistrationPromptModal: React.FC<GuestRegistrationPromptModal
   event,
   featureName = 'Event Seat Booking'
 }) => {
-  const { openAuthModal } = useApp();
+  const { openAuthModal, communityStats } = useApp();
 
   if (!isOpen) return null;
 
@@ -116,7 +116,7 @@ export const GuestRegistrationPromptModal: React.FC<GuestRegistrationPromptModal
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
-                <span>Track 120+ games played and level up your Shuffler rank</span>
+                <span>Track {communityStats?.gamesTaught || '120+'} games played and level up your Shuffler rank</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />

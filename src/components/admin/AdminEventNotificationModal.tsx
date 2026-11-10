@@ -28,10 +28,10 @@ import {
 } from 'lucide-react';
 import {
   generateCustomBroadcastEmailHtml,
-  generateEventReminderEmailHtml,
-  generateEventWhatsAppNotification,
-  isWhatsAppEligiblePhone,
-  getDirectWhatsAppUrl
+  generateEventReminderEmailHtml
+  // generateEventWhatsAppNotification,
+  // isWhatsAppEligiblePhone,
+  // getDirectWhatsAppUrl
 } from '../../services/notificationEmailService';
 
 interface AdminEventNotificationModalProps {
@@ -65,12 +65,12 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
   const [includeQrPass, setIncludeQrPass] = useState(true);
   const [includeVenueMap, setIncludeVenueMap] = useState(true);
 
-  // Dual-channel options
+  // Outbound options
   const [enableEmail, setEnableEmail] = useState(true);
-  const [enableWhatsApp, setEnableWhatsApp] = useState(true);
+  // const [enableWhatsApp, setEnableWhatsApp] = useState(false); // Temporarily commented out
 
   // UI tabs & states
-  const [activeTab, setActiveTab] = useState<'compose' | 'email_preview' | 'whatsapp_preview' | 'recipients'>('compose');
+  const [activeTab, setActiveTab] = useState<'compose' | 'email_preview' | 'recipients'>('compose');
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<DualPushNotificationResult | null>(null);
 
@@ -84,10 +84,6 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
     targetRecipients = pendingRegs;
   }
   const totalPaxTargeted = targetRecipients.reduce((acc, curr) => acc + curr.paxCount, 0);
-
-  // Calculate WhatsApp eligibility among target recipients
-  const whatsappReadyRecipients = targetRecipients.filter(r => isWhatsAppEligiblePhone(r.participantPhone));
-  const whatsappUnavailableRecipients = targetRecipients.filter(r => !isWhatsAppEligiblePhone(r.participantPhone));
 
   // Template selector helper
   const handleSelectPreset = (type: 'reminder' | 'qr_pass' | 'starting_soon' | 'venue_directions' | 'custom') => {
@@ -146,7 +142,7 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
         recipientFilter,
         includeQrPass,
         includeVenueMap,
-        channels: enableWhatsApp ? ['email', 'whatsapp'] : ['email']
+        channels: ['email']
       });
       setSendResult(result);
     } catch {
@@ -157,9 +153,9 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
         totalRecipients: targetRecipients.length,
         emailSentCount: 0,
         whatsappSentCount: 0,
-        whatsappUnavailableCount: targetRecipients.length,
-        fallbackEmailOnlyCount: 0,
-        message: 'Failed to dispatch push notifications.',
+        whatsappUnavailableCount: 0,
+        fallbackEmailOnlyCount: targetRecipients.length,
+        message: 'Failed to dispatch email notifications.',
         recipients: []
       });
     } finally {
@@ -190,75 +186,48 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
     ? generateEventReminderEmailHtml(sampleAttendee, event, message)
     : generateCustomBroadcastEmailHtml(sampleAttendee, event, subject, message, includeQrPass);
 
-  const previewWhatsAppText = generateEventWhatsAppNotification(sampleAttendee, event, message);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-150">
       <div className="w-full max-w-4xl bg-[#151E4D] border border-[#283677] rounded-3xl shadow-2xl overflow-hidden flex flex-col my-8 max-h-[92vh]">
         {/* Modal Top Header */}
         <div className="p-6 bg-[#1A255C] border-b border-[#202B61] flex items-start justify-between gap-4 shrink-0">
           <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-2xl bg-[#FF751F]/15 border border-[#FF751F]/30 text-[#FF751F] shrink-0 mt-0.5 relative">
+            <div className="p-3 rounded-2xl bg-[#FF751F]/15 border border-[#FF751F]/30 text-[#FF751F] shrink-0 mt-0.5">
               <Bell className="w-6 h-6 animate-pulse" />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#25D366] flex items-center justify-center border-2 border-[#1A255C]">
-                <MessageSquare className="w-2.5 h-2.5 text-white" />
-              </div>
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF751F]/20 text-[#FF751F] border border-[#FF751F]/30">
-                  Dual-Channel Push Dispatcher
+                  Email Push Dispatcher
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-ping" />
-                  Email + WhatsApp
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4AB4A4]/20 text-[#4AB4A4] border border-[#4AB4A4]/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4AB4A4] animate-pulse" />
+                  Real Outbound SMTP
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4AB4A4]/20 text-[#4AB4A4]">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFD230]/20 text-[#FFD230]">
                   {targetRecipients.length} Attendees ({totalPaxTargeted} Pax)
                 </span>
               </div>
               <h2 className="text-xl font-heading font-bold text-[#F8FAFC] mt-1.5 flex items-center gap-2">
-                Push Notification for {event.title}
+                Broadcast to Event Attendees
               </h2>
-              <div className="flex items-center gap-3 text-xs text-[#94A3B8] mt-1 flex-wrap">
-                <span className="flex items-center gap-1 text-[#F8FAFC]">
-                  <Calendar className="w-3.5 h-3.5 text-[#4AB4A4]" />
-                  {event.time}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-[#F8FAFC]">
-                  <MapPin className="w-3.5 h-3.5 text-[#FF751F]" />
-                  {event.venue} ({event.area})
-                </span>
-              </div>
+              <p className="text-xs text-[#94A3B8] mt-0.5">
+                Send official reminders, check-in QR passes, and venue directions directly to attendee inboxes
+              </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 text-[#94A3B8] hover:text-[#F8FAFC] rounded-xl hover:bg-[#202B61] transition-colors"
+            className="w-8 h-8 rounded-xl bg-[#10173E] hover:bg-[#202B61] border border-[#283677] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Dual Delivery Channel Guarantee Banner */}
-        <div className="px-6 py-2.5 bg-[#0C1230] border-b border-[#202B61] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 text-[#CBD5E1]">
-            <ShieldCheck className="w-4 h-4 text-[#4AB4A4] shrink-0" />
-            <span>
-              <strong>Dual Channel Dispatch:</strong> Notifies attendees on both <strong>Email</strong> and <strong>WhatsApp</strong>.
-            </span>
-          </div>
-          <div className="text-[11px] px-2.5 py-1 rounded-lg bg-[#FFD230]/15 text-[#FFD230] border border-[#FFD230]/30 font-medium self-start sm:self-auto flex items-center gap-1.5">
-            <AlertTriangle className="w-3 h-3 text-[#FFD230]" />
-            <span>If WhatsApp unavailable, <strong>Email is sent anyway</strong></span>
-          </div>
-        </div>
-
-        {/* Modal Tabs */}
-        <div className="px-6 py-2.5 bg-[#10173E] border-b border-[#202B61] flex items-center justify-between shrink-0 overflow-x-auto">
-          <div className="flex items-center gap-1.5">
+        {/* Tab Switcher */}
+        <div className="px-6 py-3 bg-[#10173E] border-b border-[#202B61] flex items-center justify-between gap-2 overflow-x-auto shrink-0">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab('compose')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
@@ -281,6 +250,8 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
               <Mail className="w-3.5 h-3.5" />
               <span>Email Preview</span>
             </button>
+            {/* WhatsApp Preview temporarily commented out */}
+            {/*
             <button
               onClick={() => setActiveTab('whatsapp_preview')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
@@ -292,6 +263,7 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
               <MessageSquare className="w-3.5 h-3.5" />
               <span>WhatsApp Preview</span>
             </button>
+            */}
             <button
               onClick={() => setActiveTab('recipients')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
@@ -306,13 +278,9 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
           </div>
 
           <div className="text-[11px] text-[#94A3B8] hidden md:flex items-center gap-3">
-            <span className="flex items-center gap-1 text-[#25D366]">
-              <span className="w-2 h-2 rounded-full bg-[#25D366]" />
-              {whatsappReadyRecipients.length} WA Ready
-            </span>
-            <span className="flex items-center gap-1 text-[#FFD230]">
-              <span className="w-2 h-2 rounded-full bg-[#FFD230]" />
-              {whatsappUnavailableRecipients.length} Email-only Fallback
+            <span className="flex items-center gap-1 text-[#4AB4A4]">
+              <span className="w-2 h-2 rounded-full bg-[#4AB4A4]" />
+              {targetRecipients.length} Inboxes Ready
             </span>
           </div>
         </div>
@@ -349,37 +317,71 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
               </div>
 
               {/* Delivery Stats Chips */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-[#4AB4A4]/30 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#4AB4A4]/30 text-xs">
                 <div className="p-2.5 rounded-xl bg-[#10173E] border border-[#202B61] flex items-center justify-between">
                   <span className="text-[#94A3B8] flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-[#4AB4A4]" />
                     Email Dispatched
                   </span>
                   <span className="font-bold text-white">
-                    {sendResult.emailSentCount} / {sendResult.totalRecipients} (100%)
+                    {sendResult.emailSentCount} / {sendResult.totalRecipients} Delivered
                   </span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-[#10173E] border border-[#202B61] flex items-center justify-between">
                   <span className="text-[#94A3B8] flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
-                    WhatsApp Dispatched
+                    <QrCode className="w-3.5 h-3.5 text-[#FF751F]" />
+                    Digital QR Passes
                   </span>
-                  <span className="font-bold text-[#25D366]">
-                    {sendResult.whatsappSentCount} attendees
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#10173E] border border-[#202B61] flex items-center justify-between">
-                  <span className="text-[#94A3B8] flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#FFD230]" />
-                    WA Unavailable (Email Sent)
-                  </span>
-                  <span className="font-bold text-[#FFD230]">
-                    {sendResult.whatsappUnavailableCount} attendees
+                  <span className="font-bold text-[#4AB4A4]">
+                    Embedded in Email
                   </span>
                 </div>
               </div>
+
+              {/* Attendee Delivery List */}
+              {sendResult.recipients && sendResult.recipients.length > 0 && (
+                <div className="pt-2 border-t border-[#4AB4A4]/30 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-[#CBD5E1] font-bold">
+                    <span>Attendee Outbound Transmission Records:</span>
+                    <span className="text-[#4AB4A4]">
+                      {sendResult.emailSentCount} Delivered
+                    </span>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    {sendResult.recipients.map((rec) => (
+                      <div
+                        key={rec.registrationId || rec.email}
+                        className="p-2 rounded-xl bg-[#10173E] border border-[#202B61] flex items-center justify-between text-xs gap-2"
+                      >
+                        <div className="min-w-0">
+                          <span className="font-bold text-white block truncate">{rec.name}</span>
+                          <span className="text-[10px] text-[#94A3B8] font-mono block truncate">
+                            {rec.email}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#4AB4A4]/20 text-[#4AB4A4] font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3 text-[#4AB4A4]" /> Email Dispatched
+                          </span>
+                          {rec.emailPreviewUrl && (
+                            <a
+                              href={rec.emailPreviewUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1A255C] text-[#4AB4A4] text-[10px] font-bold"
+                            >
+                              <span>Preview</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -572,7 +574,8 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
                     </div>
                   </label>
 
-                  {/* WhatsApp Channel */}
+                  {/* WhatsApp Channel temporarily commented out */}
+                  {/*
                   <label className="p-3 rounded-xl bg-[#151E4D] border border-[#283677] flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -584,15 +587,13 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
                       <div className="flex items-center gap-1.5">
                         <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
                         <span className="text-xs font-bold text-[#F8FAFC]">WhatsApp Notification</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#25D366]/20 text-[#25D366] font-bold">
-                          {whatsappReadyRecipients.length} Available
-                        </span>
                       </div>
                       <p className="text-[11px] text-[#94A3B8] mt-0.5">
-                        Sends direct WhatsApp alerts with check-in details. If WhatsApp is not available, mail is sent anyway!
+                        Sends direct WhatsApp alerts with check-in details.
                       </p>
                     </div>
                   </label>
+                  */}
                 </div>
               </div>
 
@@ -607,7 +608,7 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
                   />
                   <div>
                     <span className="text-xs font-bold text-[#F8FAFC] block">Include Digital QR Pass</span>
-                    <span className="text-[11px] text-[#94A3B8]">Embeds attendee scannable entry QR image in the email & token in WhatsApp</span>
+                    <span className="text-[11px] text-[#94A3B8]">Embeds attendee scannable entry QR image in the email</span>
                   </div>
                 </label>
 
@@ -648,65 +649,25 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
             </div>
           )}
 
-          {/* TAB 3: LIVE WHATSAPP PREVIEW */}
+          {/* TAB 3: LIVE WHATSAPP PREVIEW (Temporarily commented out per request) */}
+          {/*
           {activeTab === 'whatsapp_preview' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs text-[#94A3B8]">
-                <span className="flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
-                  WhatsApp notification preview for: <strong>{sampleAttendee.participantName} ({sampleAttendee.participantPhone || 'No Phone'})</strong>
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#25D366]/20 text-[#25D366] font-bold">
-                  Direct DM Format
-                </span>
-              </div>
-
-              {/* Realistic WhatsApp Chat Bubble Container */}
-              <div className="rounded-2xl border border-[#283677] bg-[#0B141B] p-4 sm:p-8 flex justify-center">
-                <div className="w-full max-w-lg space-y-3">
-                  <div className="flex justify-center">
-                    <span className="text-[10px] uppercase font-bold text-[#8696A0] bg-[#182229] px-3 py-1 rounded-lg">
-                      Today • Social Shuffle Notification
-                    </span>
-                  </div>
-
-                  <div className="bg-[#005C4B] text-[#E9EDEF] rounded-2xl rounded-tl-none p-4 shadow-md text-xs sm:text-sm whitespace-pre-wrap font-sans leading-relaxed border border-[#02735E]">
-                    {previewWhatsAppText}
-                    <div className="text-right text-[10px] text-[#8696A0] mt-2">
-                      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ✓✓
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[#111B21] border border-[#222E35] text-xs text-[#8696A0] flex items-center justify-between">
-                    <span>Target Phone: <strong className="text-white">{sampleAttendee.participantPhone || 'Unavailable'}</strong></span>
-                    {isWhatsAppEligiblePhone(sampleAttendee.participantPhone) ? (
-                      <span className="text-[#25D366] font-bold flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> WhatsApp Verified
-                      </span>
-                    ) : (
-                      <span className="text-[#FFD230] font-bold flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" /> Fallback to Email Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+              ...
             </div>
           )}
+          */}
 
           {/* TAB 4: RECIPIENTS & CHANNEL BREAKDOWN */}
           {activeTab === 'recipients' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <span className="text-[#94A3B8]">
-                  Targeting <strong>{targetRecipients.length}</strong> participants across dual channels
+                  Targeting <strong>{targetRecipients.length}</strong> participants via authenticated SMTP email relay
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] px-2.5 py-1 rounded-lg bg-[#25D366]/20 text-[#25D366] font-bold">
-                    {whatsappReadyRecipients.length} WhatsApp Ready
-                  </span>
-                  <span className="text-[11px] px-2.5 py-1 rounded-lg bg-[#FFD230]/20 text-[#FFD230] font-bold">
-                    {whatsappUnavailableRecipients.length} Email Fallback
+                  <span className="text-[11px] px-2.5 py-1 rounded-lg bg-[#4AB4A4]/20 text-[#4AB4A4] font-bold">
+                    {targetRecipients.length} Email Inboxes Ready
                   </span>
                 </div>
               </div>
@@ -719,9 +680,9 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
                         <th className="p-3">Attendee Name</th>
                         <th className="p-3">Email Address</th>
                         <th className="p-3">Phone</th>
-                        <th className="p-3">WhatsApp Channel Status</th>
+                        <th className="p-3">Delivery Status</th>
                         <th className="p-3 text-center">Pax</th>
-                        <th className="p-3 text-right">Actions</th>
+                        <th className="p-3 text-right">Pass Format</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#202B61]">
@@ -732,62 +693,33 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
                           </td>
                         </tr>
                       ) : (
-                        targetRecipients.map(r => {
-                          const waEligible = isWhatsAppEligiblePhone(r.participantPhone);
-                          const waMsg = generateEventWhatsAppNotification(r, event, message);
-                          const waUrl = waEligible && r.participantPhone ? getDirectWhatsAppUrl(r.participantPhone, waMsg) : '#';
-
-                          return (
-                            <tr key={r.id} className="hover:bg-white/[0.02]">
-                              <td className="p-3 font-bold text-[#F8FAFC]">
-                                {r.participantName}
-                              </td>
-                              <td className="p-3 text-[#94A3B8] font-mono text-[11px]">
-                                {r.participantEmail}
-                              </td>
-                              <td className="p-3 text-[#CBD5E1] text-[11px]">
-                                {r.participantPhone || <span className="text-[#64748B] italic">Not provided</span>}
-                              </td>
-                              <td className="p-3">
-                                {waEligible ? (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#25D366]/20 text-[#25D366] text-[10px] font-bold">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-                                    WhatsApp Ready
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFD230]/20 text-[#FFD230] text-[10px] font-bold"
-                                    title="WhatsApp phone unavailable or invalid. System will send email anyway!"
-                                  >
-                                    <AlertTriangle className="w-3 h-3 text-[#FFD230]" />
-                                    Unavailable → Email Fallback
-                                  </span>
-                                )}
-                              </td>
-                              <td className="p-3 text-center font-bold text-[#FF751F]">
-                                {r.paxCount}
-                              </td>
-                              <td className="p-3 text-right">
-                                {waEligible ? (
-                                  <a
-                                    href={waUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#25D366]/15 hover:bg-[#25D366]/30 text-[#25D366] text-[10px] font-bold transition-colors"
-                                    title="Open WhatsApp chat directly in new tab"
-                                  >
-                                    <span>Chat</span>
-                                    <ExternalLink className="w-2.5 h-2.5" />
-                                  </a>
-                                ) : (
-                                  <span className="text-[10px] text-[#64748B]">
-                                    Email only
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
+                        targetRecipients.map(r => (
+                          <tr key={r.id} className="hover:bg-white/[0.02]">
+                            <td className="p-3 font-bold text-[#F8FAFC]">
+                              {r.participantName}
+                            </td>
+                            <td className="p-3 text-[#94A3B8] font-mono text-[11px]">
+                              {r.participantEmail}
+                            </td>
+                            <td className="p-3 text-[#CBD5E1] text-[11px]">
+                              {r.participantPhone || <span className="text-[#64748B] italic">Not provided</span>}
+                            </td>
+                            <td className="p-3">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#4AB4A4]/20 text-[#4AB4A4] text-[10px] font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#4AB4A4]" />
+                                SMTP Inbox Ready
+                              </span>
+                            </td>
+                            <td className="p-3 text-center font-bold text-[#FF751F]">
+                              {r.paxCount}
+                            </td>
+                            <td className="p-3 text-right">
+                              <span className="text-[10px] text-[#CBD5E1] font-mono">
+                                {includeQrPass ? 'Scannable QR' : 'Standard'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
                       )}
                     </tbody>
                   </table>
@@ -802,7 +734,7 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
           <div className="text-xs text-[#94A3B8] flex items-center gap-2">
             <QrCode className="w-4 h-4 text-[#4AB4A4]" />
             <span>
-              Targeting <strong>{targetRecipients.length}</strong> participants ({whatsappReadyRecipients.length} Email + WhatsApp, {whatsappUnavailableRecipients.length} Email anyway)
+              Targeting <strong>{targetRecipients.length}</strong> participants via authenticated SMTP email relay with digital QR passes
             </span>
           </div>
 
@@ -827,12 +759,12 @@ export const AdminEventNotificationModal: React.FC<AdminEventNotificationModalPr
               {isSending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  <span>Dispatching to Email & WhatsApp...</span>
+                  <span>Transmitting Real Emails...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Push Notification to {targetRecipients.length} Attendees</span>
+                  <span>Push Email to {targetRecipients.length} Attendees</span>
                 </>
               )}
             </button>

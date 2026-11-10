@@ -15,7 +15,10 @@ import {
   Search,
   ArrowRight,
   Clock,
-  Sparkles
+  Sparkles,
+  ShieldCheck,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AdminViewSection } from './AdminSidebar';
@@ -38,7 +41,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     games,
     feedbackList,
     reportsList,
-    volunteersList
+    volunteersList,
+    currentUser
   } = useApp();
 
   // Metrics calculations
@@ -79,6 +83,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* FULL ADMINISTRATOR DETAILS BANNER */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#1E1B4B] via-[#151E4D] to-[#10173E] border border-[#9440DD]/40 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#9440DD] to-[#7928CA] p-0.5 shadow-md shadow-purple-500/20 shrink-0">
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                className="w-full h-full rounded-[14px] object-cover"
+              />
+            ) : (
+              <div className="w-full h-full rounded-[14px] bg-[#1E1B4B] flex items-center justify-center text-base font-bold text-white">
+                {currentUser?.name?.[0] || 'A'}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#9440DD]/20 text-[#C084FC] border border-[#9440DD]/30 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-[#C084FC]" />
+                {currentUser?.adminRole || 'Super Admin'}
+              </span>
+            </div>
+
+            <h2 className="text-lg font-heading font-bold text-white flex items-center gap-2">
+              <span>{currentUser?.name || 'Parimal Shete'}</span>
+              <span className="text-xs font-normal text-[#94A3B8]">({currentUser?.designation || 'Co-Founder & Community Architect'})</span>
+            </h2>
+
+            {/* All Administrator Details Line */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#94A3B8]">
+              <span className="flex items-center gap-1 text-[#F8FAFC]">
+                <Mail className="w-3.5 h-3.5 text-[#FF751F]" />
+                <span>{currentUser?.email || 'parimalmshete@gmail.com'}</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1 text-[#F8FAFC]">
+                <Phone className="w-3.5 h-3.5 text-[#4AB4A4]" />
+                <span className="font-mono">{currentUser?.phone || '+91 98220 99887'}</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1 text-[#CBD5E1]">
+                <MapPin className="w-3.5 h-3.5 text-[#FFD230]" />
+                <span>{currentUser?.area || 'Koregaon Park, Pune'}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Top Banner / Event Day Callout */}
       {nextEvent && (
         <div className="p-5 sm:p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">

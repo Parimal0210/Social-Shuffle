@@ -8,7 +8,8 @@ import {
   VolunteerApplication,
   AuditLog,
   NotificationItem,
-  AdminRecord
+  AdminRecord,
+  CommunityStats
 } from '../types';
 
 export const INITIAL_GAMES: Game[] = [
@@ -534,19 +535,306 @@ export const INITIAL_EVENTS: ShuffleEvent[] = [
   }
 ];
 
-export const INITIAL_PARTICIPANTS: Participant[] = [];
+export const INITIAL_PARTICIPANTS: Participant[] = [
+  {
+    id: 'p-priya',
+    name: 'Priya Nair',
+    email: 'priya.nair@example.com',
+    phone: '+91 97632 99011',
+    area: 'Wakad',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
+    bio: 'Weekly regular shuffler. Always looking for teammates for Just One & Wingspan!',
+    joinedDate: '2024-01-15',
+    totalEventsAttended: 6,
+    totalRegistrations: 7,
+    gamesPlayedIds: ['g-codenames', 'g-justone', 'g-azul', 'g-wingspan', 'g-dixit', 'g-cascadia'],
+    venuesVisited: ['Toit Brewery', 'FC Road Social', 'Waari Book Cafe'],
+    totalPaxBrought: 3,
+    lastAttendedEventId: 'ev-ss3',
+    lastAttendedEventTitle: 'Secret Social & Mystery Games'
+  },
+  {
+    id: 'p-rohan',
+    name: 'Rohan Deshmukh',
+    email: 'rohan.deshmukh@example.com',
+    phone: '+91 98223 44551',
+    area: 'Koregaon Park',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80',
+    bio: 'Heavy strategy enthusiast. Terraforming Mars, Dune Imperium & Scythe fan.',
+    joinedDate: '2024-01-05',
+    totalEventsAttended: 11,
+    totalRegistrations: 12,
+    gamesPlayedIds: ['g-dune', 'g-terraformingmars', 'g-scythe', 'g-brass', 'g-root'],
+    venuesVisited: ['Toit Brewery', 'FC Road Social', 'Effingut KP', 'Waari Book Cafe'],
+    totalPaxBrought: 8,
+    lastAttendedEventId: 'ev-ss3',
+    lastAttendedEventTitle: 'Secret Social & Mystery Games'
+  },
+  {
+    id: 'p-ananya',
+    name: 'Ananya Kulkarni',
+    email: 'ananya.k@example.com',
+    phone: '+91 98901 22334',
+    area: 'Baner',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=160&q=80',
+    bio: 'Designer by day, social deduction master by night. Secret Hitler champ.',
+    joinedDate: '2024-01-20',
+    totalEventsAttended: 8,
+    totalRegistrations: 8,
+    gamesPlayedIds: ['g-secrethitler', 'g-avalon', 'g-bloodontheclocktower', 'g-decrypto', 'g-wavelength'],
+    venuesVisited: ['Toit Brewery', 'Waari Book Cafe'],
+    totalPaxBrought: 5,
+    lastAttendedEventId: 'ev-ss3',
+    lastAttendedEventTitle: 'Secret Social & Mystery Games'
+  },
+  {
+    id: 'p-tanmay',
+    name: 'Tanmay Joshi',
+    email: 'tanmay.j@example.com',
+    phone: '+91 98221 88990',
+    area: 'Viman Nagar',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=160&q=80',
+    bio: 'Love learning new modern European games and meeting new people over coffee.',
+    joinedDate: '2024-02-01',
+    totalEventsAttended: 5,
+    totalRegistrations: 6,
+    gamesPlayedIds: ['g-catan', 'g-ticketoride', 'g-carcassonne', 'g-splendor', 'g-cascadia'],
+    venuesVisited: ['FC Road Social', 'Toit Brewery'],
+    totalPaxBrought: 2,
+    lastAttendedEventId: 'ev-ss2',
+    lastAttendedEventTitle: 'Strategy & Heavyweight Battles'
+  },
+  {
+    id: 'p-sneha',
+    name: 'Sneha Patil',
+    email: 'sneha.patil@example.com',
+    phone: '+91 97665 11223',
+    area: 'Aundh',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80',
+    bio: 'Board game collector and casual teacher. Let us play Cascadia and Sushi Go!',
+    joinedDate: '2024-02-14',
+    totalEventsAttended: 4,
+    totalRegistrations: 4,
+    gamesPlayedIds: ['g-cascadia', 'g-sushigo', 'g-azul', 'g-flip7', 'g-dixit'],
+    venuesVisited: ['Waari Book Cafe', 'FC Road Social'],
+    totalPaxBrought: 1,
+    lastAttendedEventId: 'ev-ss3',
+    lastAttendedEventTitle: 'Secret Social & Mystery Games'
+  },
+  {
+    id: 'p-aditya',
+    name: 'Aditya Shinde',
+    email: 'aditya.shinde@example.com',
+    phone: '+91 98220 33445',
+    area: 'Kothrud',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
+    bio: 'Tournament competitor. Competitive Spirit Island and Blood on the Clocktower storyteller.',
+    joinedDate: '2024-01-10',
+    totalEventsAttended: 9,
+    totalRegistrations: 10,
+    gamesPlayedIds: ['g-spiritisland', 'g-bloodontheclocktower', 'g-dune', 'g-root', 'g-clank'],
+    venuesVisited: ['Toit Brewery', 'FC Road Social', 'Effingut KP'],
+    totalPaxBrought: 6,
+    lastAttendedEventId: 'ev-ss3',
+    lastAttendedEventTitle: 'Secret Social & Mystery Games'
+  }
+];
 
-export const INITIAL_REGISTRATIONS: Registration[] = [];
+export const INITIAL_REGISTRATIONS: Registration[] = [
+  {
+    id: 'reg-ss4-priya',
+    eventId: 'ev-ss4',
+    participantId: 'p-priya',
+    participantName: 'Priya Nair',
+    participantEmail: 'priya.nair@example.com',
+    participantPhone: '+91 97632 99011',
+    participantArea: 'Wakad',
+    paxCount: 2,
+    guests: [{ id: 'g-1', name: 'Aarav Nair', phone: '+91 97632 99012' }],
+    registeredAt: '2024-11-01T10:30:00Z',
+    attendanceStatus: 'Pending',
+    paymentStatus: 'Confirmed',
+    gamesPlayed: [],
+    notes: 'Please assign to beginner/party game table'
+  },
+  {
+    id: 'reg-ss4-rohan',
+    eventId: 'ev-ss4',
+    participantId: 'p-rohan',
+    participantName: 'Rohan Deshmukh',
+    participantEmail: 'rohan.deshmukh@example.com',
+    participantPhone: '+91 98223 44551',
+    participantArea: 'Koregaon Park',
+    paxCount: 1,
+    guests: [],
+    registeredAt: '2024-11-01T11:15:00Z',
+    attendanceStatus: 'Pending',
+    paymentStatus: 'Confirmed',
+    gamesPlayed: [],
+    notes: 'Excited for Terraforming Mars session'
+  },
+  {
+    id: 'reg-ss4-ananya',
+    eventId: 'ev-ss4',
+    participantId: 'p-ananya',
+    participantName: 'Ananya Kulkarni',
+    participantEmail: 'ananya.k@example.com',
+    participantPhone: '+91 98901 22334',
+    participantArea: 'Baner',
+    paxCount: 1,
+    guests: [],
+    registeredAt: '2024-11-01T12:00:00Z',
+    attendanceStatus: 'Pending',
+    paymentStatus: 'Confirmed',
+    gamesPlayed: []
+  },
+  {
+    id: 'reg-ss4-aditya',
+    eventId: 'ev-ss4',
+    participantId: 'p-aditya',
+    participantName: 'Aditya Shinde',
+    participantEmail: 'aditya.shinde@example.com',
+    participantPhone: '+91 98220 33445',
+    participantArea: 'Kothrud',
+    paxCount: 2,
+    guests: [{ id: 'g-2', name: 'Kavita Shinde' }],
+    registeredAt: '2024-11-01T14:20:00Z',
+    attendanceStatus: 'Pending',
+    paymentStatus: 'Confirmed',
+    gamesPlayed: []
+  },
+  {
+    id: 'reg-ss3-priya',
+    eventId: 'ev-ss3',
+    participantId: 'p-priya',
+    participantName: 'Priya Nair',
+    participantEmail: 'priya.nair@example.com',
+    participantPhone: '+91 97632 99011',
+    participantArea: 'Wakad',
+    paxCount: 1,
+    guests: [],
+    registeredAt: '2024-10-15T09:00:00Z',
+    attendanceStatus: 'Checked In',
+    paymentStatus: 'Confirmed',
+    checkInTime: '2024-10-20T16:15:00Z',
+    gamesPlayed: ['g-codenames', 'g-justone']
+  },
+  {
+    id: 'reg-ss3-rohan',
+    eventId: 'ev-ss3',
+    participantId: 'p-rohan',
+    participantName: 'Rohan Deshmukh',
+    participantEmail: 'rohan.deshmukh@example.com',
+    participantPhone: '+91 98223 44551',
+    participantArea: 'Koregaon Park',
+    paxCount: 2,
+    guests: [{ id: 'g-3', name: 'Manish Verma' }],
+    registeredAt: '2024-10-15T10:00:00Z',
+    attendanceStatus: 'Checked In',
+    paymentStatus: 'Confirmed',
+    checkInTime: '2024-10-20T16:10:00Z',
+    gamesPlayed: ['g-bloodontheclocktower', 'g-secrethitler']
+  }
+];
 
-export const INITIAL_FEEDBACK: EventFeedback[] = [];
+export const INITIAL_FEEDBACK: EventFeedback[] = [
+  {
+    id: 'fb-1',
+    eventId: 'ev-ss3',
+    eventTitle: 'Secret Social & Mystery Games',
+    participantName: 'Priya Nair',
+    isAnonymous: false,
+    overallRating: 5,
+    venueRating: 5,
+    gameRating: 5,
+    hostRating: 5,
+    suggestions: 'Super well organized by Aman and Parimal. The explanations were crisp and people were so friendly!',
+    createdAt: '2024-10-21T10:00:00Z'
+  },
+  {
+    id: 'fb-2',
+    eventId: 'ev-ss3',
+    eventTitle: 'Secret Social & Mystery Games',
+    participantName: 'Rohan Deshmukh',
+    isAnonymous: false,
+    overallRating: 5,
+    venueRating: 4,
+    gameRating: 5,
+    hostRating: 5,
+    suggestions: 'Best board gaming community in Pune hands down. Great craft beers at Toit too.',
+    createdAt: '2024-10-21T12:30:00Z'
+  }
+];
 
-export const INITIAL_REPORTS: SafetyReport[] = [];
+export const INITIAL_REPORTS: SafetyReport[] = [
+  {
+    id: 'rep-1',
+    eventId: 'ev-ss2',
+    eventTitle: 'Strategy & Heavyweight Battles',
+    reporterName: 'Ananya Kulkarni',
+    type: 'Venue issue',
+    description: 'Minor tea spill near Table 4. Cloth clean-up was immediate and sleeves saved the cards.',
+    isAnonymous: false,
+    status: 'Resolved',
+    resolutionNotes: 'Cleaned and double-sleeved Terraforming Mars deck.',
+    createdAt: '2024-09-18T18:00:00Z'
+  }
+];
 
-export const INITIAL_VOLUNTEERS: VolunteerApplication[] = [];
+export const INITIAL_VOLUNTEERS: VolunteerApplication[] = [
+  {
+    id: 'vol-1',
+    name: 'Sneha Patil',
+    email: 'sneha.patil@example.com',
+    phone: '+91 97665 11223',
+    area: 'Aundh',
+    reason: 'Love fostering board game communities in Pune.',
+    experience: 'Played over 80+ tabletop games. Happy to teach Azul, Cascadia, and Wingspan.',
+    skills: 'Quick game teacher, welcoming host',
+    availability: 'Weekend evenings',
+    preferredResponsibilities: ['Game Explainer / Rules Teacher', 'Welcome Desk'],
+    status: 'Accepted',
+    submittedAt: '2024-10-01T14:00:00Z'
+  }
+];
 
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [
+  {
+    id: 'log-1',
+    timestamp: '2024-11-01T09:00:00Z',
+    adminName: 'Parimal Shete',
+    action: 'Created Event',
+    target: 'Social Shuffle #4 - The Grand Tabletop Gala',
+    details: 'Published event with 65 capacity and Rs. 400 ticket price.'
+  },
+  {
+    id: 'log-2',
+    timestamp: '2024-11-01T09:30:00Z',
+    adminName: 'Parimal Shete',
+    action: 'Added Game to Catalog',
+    target: 'Harmonies',
+    details: 'Added Libellud 2024 release Harmonies with Medium difficulty.'
+  }
+];
 
-export const INITIAL_NOTIFICATIONS: NotificationItem[] = [];
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-1',
+    title: 'Social Shuffle #4 Meetup This Weekend 🎲',
+    message: 'Registrations are filling fast at FC Road Social. 35+ spots confirmed!',
+    type: 'event',
+    timestamp: '2 hours ago',
+    read: false
+  },
+  {
+    id: 'notif-2',
+    title: 'New Game Added: Harmonies',
+    message: 'Libellud gorgeous pattern builder Harmonies is now available in the Pune game library.',
+    type: 'system',
+    timestamp: 'Yesterday',
+    read: true
+  }
+];
 
 export const INITIAL_ADMINS: AdminRecord[] = [
   {
@@ -558,6 +846,7 @@ export const INITIAL_ADMINS: AdminRecord[] = [
     designation: 'Co-Founder & Community Architect',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
     bio: 'Social Shuffle Co-Founder & Community Architect',
+    area: 'Koregaon Park, Pune',
     active: true,
     createdAt: '2024-01-01T00:00:00Z'
   },
@@ -570,6 +859,7 @@ export const INITIAL_ADMINS: AdminRecord[] = [
     designation: 'Co-Founder',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
     bio: 'Social Shuffle Co-Founder',
+    area: 'Baner, Pune',
     active: true,
     createdAt: '2024-01-01T00:00:00Z'
   },
@@ -582,6 +872,7 @@ export const INITIAL_ADMINS: AdminRecord[] = [
     designation: 'Co-Founder & Experience Director',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200',
     bio: 'Social Shuffle Co-Founder & Experience Director',
+    area: 'Kalyani Nagar, Pune',
     active: true,
     createdAt: '2024-01-01T00:00:00Z'
   },
@@ -594,8 +885,62 @@ export const INITIAL_ADMINS: AdminRecord[] = [
     designation: 'Community Host & Super Admin',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
     bio: 'Social Shuffle Lead Host & Admin',
+    area: 'Viman Nagar, Pune',
     active: true,
     createdAt: '2024-01-01T00:00:00Z'
   }
 ];
+
+export const INITIAL_COMMUNITY_STATS: CommunityStats = {
+  id: 'community-stats-main',
+  membersCount: '2,400+',
+  membersCountNumeric: 2400,
+  gamesTaught: '120+',
+  gamesTaughtNumeric: 120,
+  soloPercentage: '60%',
+  soloPercentageNumeric: 60,
+  eventsHosted: '34',
+  eventsHostedLabel: 'Sold-out Editions',
+  eventsHostedNumeric: 34,
+  neighborhoods: ['Koregaon Park', 'Baner', 'Kalyani Nagar'],
+  heroHeadline: 'Unplug, Roll Dice & Make Real Friends in Pune',
+  heroSchedule: 'Every Sunday 3 PM – 8 PM',
+  heroDescription: 'Social Shuffle brings together over 2,400+ board gamers across Koregaon Park, Baner, and Kalyani Nagar. Never played modern tabletop games before? Friendly community hosts explain every rule step-by-step!',
+  communityTagline: 'Connect with 2,400+ friendly Pune shufflers. Get instant table RSVP drops, spot alerts, rule walk-throughs, and weekend cafe photos.',
+  whyJoinText: 'Registering as a participant is 100% free and takes less than 30 seconds. Over 2,400+ Pune shufflers are waiting to welcome you to the table!',
+  curatedMatchmakingText: 'Curated matchmaking (60% come solo & make friends)',
+  metricCards: [
+    {
+      id: 'members',
+      value: '2,400+',
+      label: 'Pune Shufflers',
+      color: '#FFFFFF',
+      subtext: 'Active community'
+    },
+    {
+      id: 'games',
+      value: '120+',
+      label: 'Games Taught',
+      color: '#4AB4A4',
+      subtext: 'In our library'
+    },
+    {
+      id: 'solo',
+      value: '60%',
+      label: 'Come Solo',
+      color: '#FFD230',
+      subtext: 'Instant table seating'
+    },
+    {
+      id: 'events',
+      value: '34',
+      label: 'Sold-out Editions',
+      color: '#FF751F',
+      subtext: 'Hosted meetups'
+    }
+  ],
+  updatedAt: '2026-11-04T12:00:00.000Z',
+  updatedBy: 'Parimal Shete (Co-Founder)'
+};
+
 

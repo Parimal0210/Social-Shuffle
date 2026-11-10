@@ -31,9 +31,15 @@ import {
 import { useApp } from '../../context/AppContext';
 import { ShuffleEvent, GuestInfo, Registration } from '../../types';
 import { openGoogleCalendar, downloadIcsFile } from '../../utils/calendarUtils';
+import { openGoogleMaps } from '../../utils/googleMapsUtils';
 import { GuestRegistrationPromptModal } from '../auth/GuestRegistrationPromptModal';
 import { LogAttendedGamesModal } from './LogAttendedGamesModal';
 import confetti from 'canvas-confetti';
+import {
+  createRazorpayOrder,
+  openNativeRazorpayCheckout,
+  verifyRazorpayPayment
+} from '../../services/razorpayService';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
@@ -187,7 +193,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   };
 
   // Step 1: User clicks "Confirm & Pay via Razorpay" -> Validates and Redirects to Razorpay Gateway
-  const handleConfirmRegistration = (e: React.FormEvent) => {
+  const handleConfirmRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registeringEvent) return;
 
@@ -253,46 +259,56 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       return;
     }
 
-    // Redirect to Razorpay Payment Gateway
+    // 1. Create Order via Razorpay Backend
+    const orderData = await createRazorpayOrder({
+      amount: totalAmount,
+      eventId: registeringEvent.id,
+      eventTitle: registeringEvent.title,
+      paxCount: totalParticipants,
+      participantName: currentParticipant.name,
+      participantEmail: currentParticipant.email,
+      participantPhone: currentParticipant.phone,
+      notes
+    });
+
+    const activeOrderId = orderData.orderId || orderId;
+
+    // Set modal state in case native popup is dismissed or ad-blocked
     setRazorpayGatewayModal({
       event: registeringEvent,
       totalParticipants,
       additionalParticipants: sanitizedAdditional,
       notes,
       totalAmount,
-      orderId
+      orderId: activeOrderId
     });
     setPaymentStep('checkout');
     setPaymentProcessing(false);
 
-    // If native Razorpay checkout.js script loaded, also initiate native popup
-    if (typeof (window as any).Razorpay !== 'undefined') {
-      try {
-        const rzp = new (window as any).Razorpay({
-          key: 'rzp_test_SocialShufflePune',
-          amount: totalAmount * 100,
-          currency: 'INR',
-          name: 'Social Shuffle Pune',
-          description: `${registeringEvent.title} (${totalParticipants} Pax)`,
-          image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=120&auto=format&fit=crop&q=80',
-          order_id: orderId,
-          handler: function (response: any) {
-            handleCompleteRazorpayPayment(response.razorpay_payment_id || `pay_${Date.now().toString(36)}`);
-          },
-          prefill: {
-            name: currentParticipant.name,
-            email: currentParticipant.email,
-            contact: currentParticipant.phone
-          },
-          theme: {
-            color: '#7c3aed'
-          }
+    // Launch official native Razorpay popup
+    openNativeRazorpayCheckout({
+      orderId: activeOrderId,
+      amount: totalAmount,
+      eventTitle: registeringEvent.title,
+      paxCount: totalParticipants,
+      participantName: currentParticipant.name,
+      participantEmail: currentParticipant.email,
+      participantPhone: currentParticipant.phone,
+      onSuccess: async (res) => {
+        await verifyRazorpayPayment({
+          razorpayPaymentId: res.razorpay_payment_id,
+          razorpayOrderId: res.razorpay_order_id || activeOrderId,
+          razorpaySignature: res.razorpay_signature,
+          eventId: registeringEvent.id,
+          amount: totalAmount,
+          participantId: currentParticipant.id
         });
-        rzp.open();
-      } catch (e) {
-        // Fallback to embedded Razorpay gateway view
+        handleCompleteRazorpayPayment(res.razorpay_payment_id);
+      },
+      onDismiss: () => {
+        // Keeps the fallback sheet available if user dismissed intentionally
       }
-    }
+    });
   };
 
   // Step 2: Razorpay confirms payment was successfully done -> Only then register attendee and trigger smooth RSVP animation
@@ -754,14 +770,24 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     </button>
 
                     {event && (
-                      <button
-                        onClick={() => openGoogleCalendar(event, reg)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#1A255C] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center gap-1 transition-colors"
-                        title="Add this event to Google Calendar for automatic reminders"
-                      >
-                        <Calendar className="w-3.5 h-3.5 text-[#FF751F]" />
-                        <span>Google Calendar</span>
-                      </button>
+                      <>
+                        <button
+                          onClick={() => openGoogleCalendar(event, reg)}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#1A255C] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center gap-1 transition-colors"
+                          title="Add this event to Google Calendar for automatic reminders"
+                        >
+                          <Calendar className="w-3.5 h-3.5 text-[#FF751F]" />
+                          <span>Google Calendar</span>
+                        </button>
+                        <button
+                          onClick={() => openGoogleMaps(event.venue, event.address)}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#1A255C] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center gap-1 transition-colors"
+                          title="View venue on Google Maps"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-[#4AB4A4]" />
+                          <span>Maps</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -1499,19 +1525,28 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       id="btn-add-google-calendar"
                       onClick={() => openGoogleCalendar(ticketEvent, activeTicketReg)}
-                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-[#FF751F]/25 transition-all active:scale-95"
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-[#FF751F]/25 transition-all active:scale-95 cursor-pointer"
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Google Calendar</span>
                     </button>
                     <button
+                      id="btn-open-google-maps"
+                      onClick={() => openGoogleMaps(ticketEvent.venue, ticketEvent.address)}
+                      className="px-3 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      title="Open venue in Google Maps"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-[#4AB4A4]" />
+                      <span>Maps</span>
+                    </button>
+                    <button
                       id="btn-download-ics"
                       onClick={() => downloadIcsFile(ticketEvent, activeTicketReg)}
-                      className="px-2.5 py-2 rounded-xl bg-[#151E4D] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                      className="px-2.5 py-2 rounded-xl bg-[#151E4D] hover:bg-[#202B61] text-[#94A3B8] hover:text-white border border-[#283677] text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                       title="Download .ics file for Apple Calendar or Outlook"
                     >
                       <span>.ICS</span>

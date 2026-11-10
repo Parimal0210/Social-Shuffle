@@ -7,6 +7,7 @@ import {
   DualPushNotificationResult
 } from '../types';
 import { getGoogleCalendarUrl } from '../utils/calendarUtils';
+import { getGoogleMapsSearchUrl } from '../utils/googleMapsUtils';
 
 /**
  * Social Shuffle Pune — Email Push Notification Service
@@ -23,6 +24,7 @@ export const generateRegistrationEmailHtml = (registration: Registration, event?
   const qrToken = registration.qrCodeToken || `SS-REG-${registration.id}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(qrToken)}`;
   const calendarUrl = event ? getGoogleCalendarUrl(event, registration) : '#';
+  const mapsUrl = event ? getGoogleMapsSearchUrl(eventVenue, eventAddress) : 'https://maps.google.com';
 
   const guestListHtml = registration.guests && registration.guests.length > 0
     ? `<div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px;">
@@ -82,8 +84,11 @@ export const generateRegistrationEmailHtml = (registration: Registration, event?
         <div class="pass-token">${qrToken}</div>
       </div>
       <div style="text-align:center;margin: 22px 0 10px 0;">
-        <a href="${calendarUrl}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #4285F4 0%, #1A73E8 100%);color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:13px;box-shadow:0 4px 15px rgba(66,133,244,0.35);">
-          📅 Add to Google Calendar (Set Reminder)
+        <a href="${calendarUrl}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #4285F4 0%, #1A73E8 100%);color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:bold;font-size:12px;margin:4px;box-shadow:0 4px 15px rgba(66,133,244,0.35);">
+          📅 Add to Google Calendar
+        </a>
+        <a href="${mapsUrl}" target="_blank" style="display:inline-block;background:#131E3A;border:1px solid #34A853;color:#34A853;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:bold;font-size:12px;margin:4px;">
+          📍 View on Google Maps
         </a>
       </div>
     </div>
@@ -109,6 +114,7 @@ export const generateEventReminderEmailHtml = (
   const qrToken = registration.qrCodeToken || `SS-REG-${registration.id}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(qrToken)}`;
   const calendarUrl = getGoogleCalendarUrl(event, registration);
+  const mapsUrl = getGoogleMapsSearchUrl(eventVenue, eventAddress);
 
   const noteBlock = customNote && customNote.trim()
     ? `<div style="background:rgba(255,96,54,0.12);border-left:4px solid #FF6036;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#fed7aa;">
@@ -159,15 +165,18 @@ export const generateEventReminderEmailHtml = (
         <div style="font-family:monospace;font-size:13px;color:#FF6036;margin-top:8px;font-weight:bold;">${qrToken}</div>
       </div>
       <div style="text-align:center;margin: 20px 0;">
-        <a href="${calendarUrl}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #4285F4 0%, #1A73E8 100%);color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:13px;box-shadow:0 4px 15px rgba(66,133,244,0.35);">
-          📅 Add to Google Calendar (Set Reminders)
+        <a href="${calendarUrl}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #4285F4 0%, #1A73E8 100%);color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:bold;font-size:12px;margin:4px;box-shadow:0 4px 15px rgba(66,133,244,0.35);">
+          📅 Add to Google Calendar
+        </a>
+        <a href="${mapsUrl}" target="_blank" style="display:inline-block;background:#131E3A;border:1px solid #34A853;color:#34A853;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:bold;font-size:12px;margin:4px;">
+          📍 Venue on Google Maps
         </a>
       </div>
       <div style="background:#111B35;border-radius:10px;padding:14px;font-size:12px;color:#94a3b8;line-height:1.5;">
         💡 <strong>Pro Tips:</strong> Arrive 10 minutes early to choose your opening table. First-timer? Our hosts explain game rules patient and friendly!
       </div>
     </div>
-    <div class="footer">Social Shuffle Pune • Have questions? Reply to this email or ping us on WhatsApp!</div>
+    <div class="footer">Social Shuffle Pune • Have questions? Reply directly to this email!</div>
   </div>
 </body>
 </html>`;

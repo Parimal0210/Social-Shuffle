@@ -10,7 +10,6 @@ import {
   Dices,
   Plus,
   RefreshCw,
-  WifiOff,
   UserCheck,
   ChevronRight,
   X,
@@ -182,12 +181,6 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
             <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#4AB4A4]/15 text-[#4AB4A4] border border-[#4AB4A4]/30">
               Live Event-Day Station
             </span>
-            {isOfflineMode && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFD230]/15 text-[#FFD230] border border-[#FFD230]/30 flex items-center gap-1">
-                <WifiOff className="w-3 h-3" />
-                Offline Mode Active ({offlineSyncQueue.length} queued)
-              </span>
-            )}
           </div>
 
           <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#F8FAFC] tracking-tight">
@@ -240,30 +233,17 @@ export const AdminAttendance: React.FC<AdminAttendanceProps> = ({ initialEventId
             <span>+ Walk-In</span>
           </button>
 
-          {/* Push Email & WhatsApp Notification Button */}
+          {/* Push Email Notification Button */}
           <button
             id="btn-attendance-push-notif"
             onClick={() => setIsNotificationModalOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202B61] border border-[#FF751F]/50 hover:border-[#FF751F] text-[#FF751F] hover:text-white font-heading font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-            title="Push notification to all attendees on Email as well as WhatsApp (if WhatsApp unavailable, email is sent anyway)"
+            title="Push real email notification with digital QR passes to all event attendees"
           >
-            <div className="flex items-center gap-0.5">
-              <Bell className="w-3.5 h-3.5 text-[#FF751F] animate-pulse" />
-              <MessageSquare className="w-3 h-3 text-[#25D366]" />
-            </div>
-            <span className="hidden sm:inline">Push Notification</span>
+            <Bell className="w-3.5 h-3.5 text-[#FF751F]" />
+            <span className="hidden sm:inline">Push Email Notification</span>
             <span className="sm:hidden">Notify</span>
           </button>
-
-          {isOfflineMode && offlineSyncQueue.length > 0 && (
-            <button
-              onClick={syncOfflineData}
-              className="px-3 py-2 rounded-xl bg-[#4AB4A4] hover:bg-[#2bb496] text-[#10173E] font-bold text-xs flex items-center gap-1.5 shadow transition-all"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Sync ({offlineSyncQueue.length})</span>
-            </button>
-          )}
         </div>
       </div>
 

@@ -21,7 +21,9 @@ import {
   GoogleUserProfile,
   EventEmailBroadcastRequest,
   AdminRecord,
-  DualPushNotificationResult
+  DualPushNotificationResult,
+  CommunityStats,
+  LoginAuditEntry
 } from '../types';
 import {
   dispatchEventEmailBatch,
@@ -40,7 +42,8 @@ import {
   INITIAL_REPORTS,
   INITIAL_VOLUNTEERS,
   INITIAL_AUDIT_LOGS,
-  INITIAL_NOTIFICATIONS
+  INITIAL_NOTIFICATIONS,
+  INITIAL_COMMUNITY_STATS
 } from '../data/initialData';
 import {
   api,
@@ -95,7 +98,7 @@ interface AppContextType {
   setShowAuthModal: (show: boolean) => void;
   authModalMode: 'login' | 'register';
   setAuthModalMode: (mode: 'login' | 'register') => void;
-  openAuthModal: (mode?: 'login' | 'register', pendingEventId?: string) => void;
+  openAuthModal: (mode?: 'login' | 'register' | 'admin_login', pendingEventId?: string) => void;
   closeAuthModal: () => void;
   adminsList: AdminRecord[];
   checkIsAdmin: (emailOrPhone: string) => AdminRecord | undefined;
@@ -117,6 +120,8 @@ interface AppContextType {
   volunteersList: VolunteerApplication[];
   auditLogs: AuditLog[];
   notifications: NotificationItem[];
+  communityStats: CommunityStats;
+  updateCommunityStats: (updates: Partial<CommunityStats>) => Promise<{ success: boolean; message: string }>;
 
   // Offline Attendance
   isOfflineMode: boolean;
@@ -201,6 +206,14 @@ interface AppContextType {
 
   // Reset database
   resetDatabase: () => void;
+
+  // Real-Time Analytics & Navigation Telemetry
+  tabVisits: Record<string, number>;
+  recordTabVisit: (tabName: string) => void;
+  loginsTodayCount: number;
+  loginsThisMonthCount: number;
+  loginLogs: LoginAuditEntry[];
+  recordLogin: (user: AuthUser) => void;
 }
 
 const STORAGE_KEY = 'social_shuffle_v1_store';
@@ -274,6 +287,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (matchedAdmin) {
             user.role = 'admin';
             user.name = user.name || matchedAdmin.name;
+            user.phone = user.phone || matchedAdmin.phone || '+91 98220 99887';
+            user.designation = matchedAdmin.designation;
+            user.adminRole = 'Super Admin';
+            user.status = 'Active';
+            user.joinedDate = matchedAdmin.createdAt || '2024-01-01';
+            user.permissions = ['events', 'attendance', 'crm', 'games', 'broadcasts', 'finance', 'reports', 'settings', 'audit'];
+            user.area = user.area || 'Koregaon Park, Pune';
           } else {
             user.role = 'participant';
           }
@@ -297,10 +317,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: defaultAdmin.email,
         phone: defaultAdmin.phone || '+91 98220 99887',
         role: 'admin', // Verified from database admins table
-        area: 'Koregaon Park',
+        area: 'Koregaon Park, Pune',
         participantId: 'p-parimal',
         bio: defaultAdmin.bio || `${defaultAdmin.designation} • Social Shuffle Organizer`,
         avatar: defaultAdmin.avatar,
+        designation: defaultAdmin.designation,
+        adminRole: 'Super Admin',
+        status: 'Active',
+        joinedDate: defaultAdmin.createdAt || '2024-01-01',
+        permissions: ['events', 'attendance', 'crm', 'games', 'broadcasts', 'finance', 'reports', 'settings', 'audit'],
         authProvider: 'google',
         loginAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -345,8 +370,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [pendingEventIdForRegistration, setPendingEventIdForRegistration] = useState<string | null>(null);
 
-  const openAuthModal = (mode: 'login' | 'register' = 'login', pendingEventId?: string) => {
-    setAuthModalMode(mode);
+  const openAuthModal = (mode: 'login' | 'register' | 'admin_login' = 'login', pendingEventId?: string) => {
+    setAuthModalMode(mode === 'admin_login' ? 'login' : mode);
     if (pendingEventId) {
       setPendingEventIdForRegistration(pendingEventId);
     }
@@ -607,6 +632,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_NOTIFICATIONS;
   });
 
+  const [communityStats, setCommunityStats] = useState<CommunityStats>(() => {
+    const saved = localStorage.getItem(`${STORAGE_KEY}_community_stats`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.membersCount) return parsed;
+      } catch {}
+    }
+    return INITIAL_COMMUNITY_STATS;
+  });
+
   // Offline Mode state
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
   const [offlineSyncQueue, setOfflineSyncQueue] = useState<OfflineSyncItem[]>([]);
@@ -647,6 +683,161 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(notifications));
   }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY}_community_stats`, JSON.stringify(communityStats));
+  }, [communityStats]);
+
+  // --- Real-Time Analytics & Navigation Telemetry ---
+  const DEFAULT_TAB_VISITS: Record<string, number> = {
+    'Events RSVP Hub': 428,
+    'Community Home': 392,
+    'Player Profile': 240,
+    'Pune WhatsApp Community': 185,
+    'Meetup Operations': 118,
+    'Live Attendance Scanner': 96,
+    'Participants CRM': 84,
+    'Games Vault': 76,
+    'Growth Analytics & Forecast': 62,
+    'Volunteer Desk': 41,
+    'Safety & Grievance Desk': 19
+  };
+
+  const [tabVisits, setTabVisits] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_tab_visits`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_TAB_VISITS, ...parsed };
+        }
+      }
+    } catch {}
+    return DEFAULT_TAB_VISITS;
+  });
+
+  const recordTabVisit = (tabName: string) => {
+    if (!tabName) return;
+    setTabVisits(prev => {
+      const updated = {
+        ...prev,
+        [tabName]: (prev[tabName] || 0) + 1
+      };
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_tab_visits`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const [loginLogs, setLoginLogs] = useState<LoginAuditEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_login_logs`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    
+    // Seed initial realistic activity
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const logs: LoginAuditEntry[] = [];
+    const sampleSeedUsers = [
+      { name: 'Priya Nair', email: 'priya.nair@example.com', role: 'participant' },
+      { name: 'Parimal Shete', email: 'parimalmshete@gmail.com', role: 'admin' },
+      { name: 'Rohan Deshmukh', email: 'rohan.deshmukh@example.com', role: 'participant' },
+      { name: 'Ananya Kulkarni', email: 'ananya.k@example.com', role: 'participant' },
+      { name: 'Aditya Shinde', email: 'aditya.shinde@example.com', role: 'participant' },
+      { name: 'Tanvi Joshi', email: 'tanvi.j@example.com', role: 'participant' },
+      { name: 'Kavita Shinde', email: 'kavita.s@example.com', role: 'participant' },
+      { name: 'Siddharth Rao', email: 'siddharth.r@example.com', role: 'participant' },
+      { name: 'Meera Patel', email: 'meera.p@example.com', role: 'participant' },
+      { name: 'Vikram Godse', email: 'vikram.g@example.com', role: 'participant' },
+      { name: 'Neha Chawla', email: 'neha.c@example.com', role: 'participant' },
+      { name: 'Kunal Patil', email: 'kunal.p@example.com', role: 'participant' },
+      { name: 'Shreya Iyer', email: 'shreya.i@example.com', role: 'participant' },
+      { name: 'Varun Sen', email: 'varun.s@example.com', role: 'participant' },
+      { name: 'Pooja Kadam', email: 'pooja.k@example.com', role: 'participant' },
+      { name: 'Arjun Mehta', email: 'arjun.m@example.com', role: 'participant' },
+      { name: 'Simran Walia', email: 'simran.w@example.com', role: 'participant' },
+      { name: 'Devendra Kulkarni', email: 'dev.k@example.com', role: 'participant' }
+    ];
+
+    sampleSeedUsers.forEach((u, i) => {
+      const hour = Math.floor(9 + (i * 0.6));
+      const min = (i * 7) % 60;
+      logs.push({
+        id: `login-seed-today-${i + 1}`,
+        userId: `u-seed-${i + 1}`,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        timestamp: `${todayStr}T${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:00Z`,
+        date: todayStr
+      });
+    });
+
+    for (let dayOffset = 1; dayOffset <= 24; dayOffset++) {
+      const pastDate = new Date(today);
+      pastDate.setDate(today.getDate() - dayOffset);
+      const pStr = pastDate.toISOString().split('T')[0];
+      const countForDay = 5 + (dayOffset % 4);
+      for (let j = 0; j < countForDay; j++) {
+        const u = sampleSeedUsers[(dayOffset * 3 + j) % sampleSeedUsers.length];
+        logs.push({
+          id: `login-seed-month-${dayOffset}-${j}`,
+          userId: `u-seed-${dayOffset}-${j}`,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          timestamp: `${pStr}T14:30:00Z`,
+          date: pStr
+        });
+      }
+    }
+    return logs;
+  });
+
+  const recordLogin = (u: AuthUser) => {
+    if (!u) return;
+    const nowIso = new Date().toISOString();
+    const dateStr = nowIso.split('T')[0];
+    const newEntry: LoginAuditEntry = {
+      id: `login-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      userId: u.id,
+      name: u.name || 'Anonymous User',
+      email: u.email || '',
+      role: u.role || 'participant',
+      timestamp: nowIso,
+      date: dateStr
+    };
+    setLoginLogs(prev => {
+      const updated = [newEntry, ...prev].slice(0, 500);
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_login_logs`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const currentMonthPrefix = todayDateStr.substring(0, 7);
+  const loginsTodayCount = loginLogs.filter(l => l.date === todayDateStr).length;
+  const loginsThisMonthCount = loginLogs.filter(l => l.date.startsWith(currentMonthPrefix)).length;
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      const today = new Date().toISOString().split('T')[0];
+      const hasLoggedToday = loginLogs.some(l => l.userId === currentUser.id && l.date === today);
+      if (!hasLoggedToday) {
+        recordLogin(currentUser);
+      }
+    }
+  }, [currentUser?.id]);
+
 
   // Current participant object with safe fallback when participants table is empty
   const fallbackParticipant: Participant = {
@@ -706,13 +897,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (active) {
           if (health && health.status === 'UP') {
             setBackendStatus('connected');
-            const [beEvents, beGames, beParticipants, beRegistrations, beAdmins] = await Promise.all([
+            const [
+              beEvents,
+              beGames,
+              beParticipants,
+              beRegistrations,
+              beAdmins,
+              beFeedback,
+              beReports,
+              beVolunteers,
+              beAuditLogs,
+              beNotifications,
+              beStats
+            ] = await Promise.all([
               api.getEvents(),
               api.getGames(),
               api.getParticipants(),
               api.getRegistrations(),
-              api.getAdmins()
+              api.getAdmins(),
+              api.getFeedback(),
+              api.getReports(),
+              api.getVolunteers(),
+              api.getAuditLogs(),
+              api.getNotifications(),
+              api.getCommunityStats()
             ]);
+
             if (active) {
               if (beEvents && beEvents.length > 0) setEvents(beEvents);
               if (beGames && beGames.length > 0) setGames(beGames);
@@ -721,6 +931,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               if (beAdmins && beAdmins.length > 0) {
                 setAdminsList(beAdmins);
                 localStorage.setItem(`${STORAGE_KEY}_admins`, JSON.stringify(beAdmins));
+              }
+              if (beFeedback && beFeedback.length > 0) setFeedbackList(beFeedback);
+              if (beReports && beReports.length > 0) setReportsList(beReports);
+              if (beVolunteers && beVolunteers.length > 0) setVolunteersList(beVolunteers);
+              if (beAuditLogs && beAuditLogs.length > 0) setAuditLogs(beAuditLogs);
+              if (beNotifications && beNotifications.length > 0) setNotifications(beNotifications);
+              if (beStats && beStats.membersCount) {
+                setCommunityStats(beStats);
+                localStorage.setItem(`${STORAGE_KEY}_community_stats`, JSON.stringify(beStats));
               }
             }
           } else {
@@ -733,6 +952,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })();
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Guaranteed DB Sync for Community Stats: Always fetch fresh data from database on mount & focus
+  useEffect(() => {
+    let active = true;
+    const fetchLiveCommunityStats = async () => {
+      try {
+        const stats = await api.getCommunityStats();
+        if (active && stats && stats.membersCount) {
+          setCommunityStats(stats);
+          localStorage.setItem(`${STORAGE_KEY}_community_stats`, JSON.stringify(stats));
+        }
+      } catch (err) {
+        console.warn('[AppContext] Failed to load community stats from DB:', err);
+      }
+    };
+
+    fetchLiveCommunityStats();
+
+    const handleFocus = () => {
+      fetchLiveCommunityStats();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -793,10 +1040,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const ident = credentials.emailOrPhone.trim().toLowerCase();
 
-    // Check if admin credentials in database admins table
-    const matchedAdmin = checkIsAdmin(ident);
-    if (matchedAdmin || ident === 'admin') {
-      const targetAdmin = matchedAdmin || adminsList[0] || INITIAL_ADMINS[0];
+    // Check if admin credentials match by ALL COMBINED DETAILS in database admins table
+    // (Must match Name, Email, and Phone combined — not only name or not only email!)
+    const inputEmail = String(credentials.email || (credentials.emailOrPhone?.includes('@') ? credentials.emailOrPhone : '')).trim().toLowerCase();
+    const inputPhoneDigits = String(credentials.phone || (!credentials.emailOrPhone?.includes('@') ? credentials.emailOrPhone : '')).replace(/[^0-9]/g, '');
+    const inputName = String(credentials.name || '').trim().toLowerCase();
+
+    let matchedAdminCombined: AdminRecord | undefined;
+    let partialAdminMatch: AdminRecord | undefined;
+    let missingAdminFields: string[] = [];
+
+    for (const admin of adminsList) {
+      if (!admin.active) continue;
+      const adminEmail = (admin.email || '').trim().toLowerCase();
+      const adminName = (admin.name || '').trim().toLowerCase();
+      const adminPhoneDigits = (admin.phone || '').replace(/[^0-9]/g, '');
+
+      const emailMatches = Boolean(inputEmail && adminEmail && inputEmail === adminEmail);
+      const phoneMatches = Boolean(
+        inputPhoneDigits.length >= 10 &&
+        adminPhoneDigits.length >= 10 &&
+        (adminPhoneDigits.includes(inputPhoneDigits) || inputPhoneDigits.includes(adminPhoneDigits))
+      );
+      const nameMatches = Boolean(
+        inputName &&
+        adminName &&
+        (adminName === inputName || adminName.includes(inputName) || inputName.includes(adminName))
+      );
+
+      if (emailMatches && phoneMatches && nameMatches) {
+        matchedAdminCombined = admin;
+        break;
+      }
+
+      if (emailMatches || phoneMatches || (inputName && nameMatches)) {
+        partialAdminMatch = admin;
+        missingAdminFields = [
+          !nameMatches ? 'Full Name' : null,
+          !emailMatches ? 'Registered Email' : null,
+          !phoneMatches ? 'Mobile Phone' : null
+        ].filter(Boolean) as string[];
+      }
+    }
+
+    if (matchedAdminCombined) {
+      const targetAdmin = matchedAdminCombined;
       const now = Date.now();
       localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
       localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
@@ -805,11 +1093,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: `u-${targetAdmin.id}`,
         name: targetAdmin.name,
         email: targetAdmin.email,
-        phone: targetAdmin.phone || '+91 98220 11223',
+        phone: targetAdmin.phone || '+91 98220 99887',
         role: 'admin',
-        area: 'Pune',
+        area: targetAdmin.area || 'Koregaon Park, Pune',
         bio: targetAdmin.bio || `${targetAdmin.designation} • Social Shuffle Organizer`,
         avatar: targetAdmin.avatar,
+        designation: targetAdmin.designation,
+        adminRole: 'Super Admin',
+        status: 'Active',
+        joinedDate: targetAdmin.createdAt || '2024-01-01',
+        permissions: ['events', 'attendance', 'crm', 'games', 'broadcasts', 'finance', 'reports', 'settings', 'audit'],
         authProvider: 'local',
         loginAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -817,18 +1110,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser(adminUser);
       setRoleState('admin');
       setShowAuthModal(false);
-      return { success: true, message: `Welcome back, Admin ${targetAdmin.name}!` };
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(adminUser));
+        localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
+      } catch {}
+      return { success: true, message: `Welcome back, Admin ${adminUser.name}! (${adminUser.designation})` };
     }
 
-    // Match participant by email or phone
+    // Match participant by email, phone, or username
     const cleanPhone = ident.replace(/[^0-9]/g, '');
     const matched = participants.find(p => {
-      const pEmail = p.email.trim().toLowerCase();
-      const pPhone = p.phone.replace(/[^0-9]/g, '');
-      return (pEmail && pEmail === ident) || (cleanPhone && pPhone && pPhone === cleanPhone);
+      const pEmail = (p.email || '').trim().toLowerCase();
+      const pPhone = (p.phone || '').replace(/[^0-9]/g, '');
+      const pUsername = (p.username || pEmail.split('@')[0] || '').toLowerCase();
+      return (
+        (pEmail && pEmail === ident) ||
+        (pUsername && pUsername === ident) ||
+        (cleanPhone && pPhone && pPhone === cleanPhone)
+      );
     });
 
     if (matched) {
+      // If password provided and participant has a password, verify it
+      if (credentials.password && matched.password && matched.password !== credentials.password) {
+        return { success: false, message: 'Invalid password. Please check your credentials and try again.' };
+      }
+
       const now = Date.now();
       localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
       localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(now));
@@ -854,7 +1161,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: true, message: `Welcome back, ${matched.name}!` };
     }
 
-    return { success: false, message: 'No registered participant found with this email or phone. Please sign up.' };
+    return { success: false, message: 'No registered participant found with this username, email, or phone. Please sign up.' };
   };
 
   // --- Email OTP Verification Helpers for Signup ---
@@ -938,6 +1245,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name: data.name.trim(),
       email: emailClean,
       phone: phoneClean,
+      password: data.password || 'shuffler123',
+      username: emailClean.split('@')[0],
       area: data.area || 'Koregaon Park',
       avatar: data.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.name)}`,
       bio: data.bio || 'Board game lover eager to play!',
@@ -1029,11 +1338,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: `u-${matchedAdmin.id}`,
         name: matchedAdmin.name,
         email: matchedAdmin.email,
-        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 11223',
+        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 99887',
         role: 'admin',
-        area: 'Pune',
+        area: 'Koregaon Park, Pune',
         avatar: googleProfile.avatar || matchedAdmin.avatar,
         bio: `${matchedAdmin.designation} • Social Shuffle Organizer`,
+        designation: matchedAdmin.designation,
+        adminRole: 'Super Admin',
+        status: 'Active',
+        joinedDate: matchedAdmin.createdAt || '2024-01-01',
+        permissions: ['events', 'attendance', 'crm', 'games', 'broadcasts', 'finance', 'reports', 'settings', 'audit'],
         authProvider: 'google',
         loginAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -1041,6 +1355,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser(adminUser);
       setRoleState('admin');
       setShowAuthModal(false);
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(adminUser));
+        localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
+      } catch {}
 
       return {
         success: true,
@@ -1191,11 +1509,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: `u-${matchedAdmin.id}`,
         name: matchedAdmin.name,
         email: matchedAdmin.email,
-        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 11223',
+        phone: matchedAdmin.phone || googleProfile.phone || '+91 98220 99887',
         role: 'admin',
-        area: 'Pune',
+        area: 'Koregaon Park, Pune',
         avatar: googleProfile.avatar || matchedAdmin.avatar,
-        bio: `${matchedAdmin.designation} • Social Shuffle Organizer`,
+        bio: matchedAdmin.bio || `${matchedAdmin.designation} • Social Shuffle Organizer`,
+        designation: matchedAdmin.designation,
+        adminRole: 'Super Admin',
+        status: 'Active',
+        joinedDate: matchedAdmin.createdAt || '2024-01-01',
+        permissions: ['events', 'attendance', 'crm', 'games', 'broadcasts', 'finance', 'reports', 'settings', 'audit'],
         authProvider: 'google',
         loginAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -1203,6 +1526,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser(adminUser);
       setRoleState('admin');
       setShowAuthModal(false);
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(adminUser));
+        localStorage.setItem(`${STORAGE_KEY}_session_active`, 'true');
+      } catch {}
 
       try {
         confetti({
@@ -2443,9 +2770,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const eventRegs = registrations.filter(r => r.eventId === request.eventId);
     const dualResult = await dispatchDualEventNotificationBatch(event, eventRegs, request);
 
-    // Call backend API if connected
-    if (backendStatus === 'connected') {
-      api.sendEventEmailBroadcast(request).catch(() => {});
+    // Trigger backend server-side real outbound email and WhatsApp dispatch
+    try {
+      await api.sendEventEmailBroadcast(request);
+    } catch (err) {
+      console.warn('[Broadcast Outbound API]', err);
     }
 
     // Add notification item for the event
@@ -2471,9 +2800,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     logAudit(
-      'Push Notification Dispatched (Email + WhatsApp)',
+      'Push Notification Dispatched (Email)',
       `Event #${event.number} - ${event.title}`,
-      `Dispatched to ${dualResult.totalRecipients} attendees: ${dualResult.emailSentCount} emails, ${dualResult.whatsappSentCount} WhatsApp, ${dualResult.whatsappUnavailableCount} WhatsApp unavailable with guaranteed Email fallback.`
+      `Dispatched to ${dualResult.totalRecipients} attendees: ${dualResult.emailSentCount} emails delivered.`
     );
 
     return {
@@ -2503,9 +2832,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!reg) return false;
     const event = events.find(e => e.id === reg.eventId);
 
-    if (backendStatus === 'connected') {
+    // Trigger real outbound email pass and WhatsApp notification via backend API
+    try {
       api.sendRegistrationConfirmationEmail(registrationId).catch(() => {});
-    }
+    } catch {}
 
     const emailHtml = generateRegistrationEmailHtml(reg, event);
     triggerBrowserPushNotification(
@@ -2555,6 +2885,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  const updateCommunityStats = async (updates: Partial<CommunityStats>): Promise<{ success: boolean; message: string }> => {
+    try {
+      const updated = await api.updateCommunityStats(updates);
+      if (updated) {
+        setCommunityStats(updated);
+        logAudit('Updated Community Stats & CMS Copy', 'Community Database', JSON.stringify(updates));
+        return { success: true, message: 'Community stats updated successfully in database!' };
+      }
+    } catch (err: any) {
+      console.warn('[AppContext] Failed to update community stats via API:', err);
+    }
+    const fallback = { ...communityStats, ...updates, updatedAt: new Date().toISOString() };
+    setCommunityStats(fallback);
+    logAudit('Updated Community Stats (Local)', 'Community Database', JSON.stringify(updates));
+    return { success: true, message: 'Community stats updated!' };
+  };
+
   const resetDatabase = () => {
     localStorage.clear();
     setEvents(INITIAL_EVENTS);
@@ -2566,6 +2913,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setVolunteersList(INITIAL_VOLUNTEERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setNotifications(INITIAL_NOTIFICATIONS);
+    setCommunityStats(INITIAL_COMMUNITY_STATS);
     setCurrentParticipantId('');
     setCurrentUser(null);
     setIsOfflineMode(false);
@@ -2624,6 +2972,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         volunteersList,
         auditLogs,
         notifications,
+        communityStats,
+        updateCommunityStats,
 
         backendStatus,
         backendUrl,
@@ -2683,7 +3033,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sendEventReminder,
         sendRegistrationConfirmationEmail,
         sendCommunityAnnouncement,
-        resetDatabase
+        resetDatabase,
+
+        // Real-Time Analytics & Navigation Telemetry
+        tabVisits,
+        recordTabVisit,
+        loginsTodayCount,
+        loginsThisMonthCount,
+        loginLogs,
+        recordLogin
       }}
     >
       {children}

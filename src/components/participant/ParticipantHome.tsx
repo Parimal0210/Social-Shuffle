@@ -45,7 +45,8 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
     registrations,
     isAuthenticated,
     isGuest,
-    openAuthModal
+    openAuthModal,
+    communityStats
   } = useApp();
 
   const [promptEvent, setPromptEvent] = useState<ShuffleEvent | null>(null);
@@ -94,36 +95,62 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
               </span>
               <span className="text-[#64748B]" aria-hidden="true">·</span>
               <span className="text-[#4AB4A4]">
-                Every Sunday 3 PM – 8 PM
+                {communityStats?.heroSchedule || 'Every Sunday 3 PM – 8 PM'}
               </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight font-heading">
-              Unplug, Roll Dice & Make Real Friends in Pune
+              {communityStats?.heroHeadline || 'Unplug, Roll Dice & Make Real Friends in Pune'}
             </h1>
 
             <p className="text-sm sm:text-base text-[#CBD5E1] leading-relaxed max-w-2xl">
-              Social Shuffle brings together over <strong className="text-white font-semibold">2,400+ board gamers</strong> across Koregaon Park, Baner, and Kalyani Nagar. Never played modern tabletop games before? Friendly community hosts explain every rule step-by-step!
+              {communityStats?.heroDescription || 'Social Shuffle brings together over 2,400+ board gamers across Koregaon Park, Baner, and Kalyani Nagar. Never played modern tabletop games before? Friendly community hosts explain every rule step-by-step!'}
             </p>
 
-            {/* Social Proof Real Community Metrics */}
+            {/* Social Proof Real Community Metrics from Database */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2">
-              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
-                <div className="text-2xl font-black text-white font-heading tabular-nums">2,400+</div>
-                <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Pune Shufflers</div>
-              </div>
-              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
-                <div className="text-2xl font-black text-[#4AB4A4] font-heading tabular-nums">120+</div>
-                <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Games Taught</div>
-              </div>
-              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
-                <div className="text-2xl font-black text-[#FFD230] font-heading tabular-nums">60%</div>
-                <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Come Solo</div>
-              </div>
-              <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
-                <div className="text-2xl font-black text-[#FF751F] font-heading tabular-nums">34</div>
-                <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Sold-out Editions</div>
-              </div>
+              {communityStats?.metricCards && communityStats.metricCards.length > 0 ? (
+                communityStats.metricCards.map((card) => (
+                  <div key={card.id} className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677] transition-all hover:border-[#FF751F]/40">
+                    <div
+                      className="text-2xl font-black font-heading tabular-nums"
+                      style={{ color: card.color || '#FFFFFF' }}
+                    >
+                      {card.value}
+                    </div>
+                    <div className="text-xs text-[#94A3B8] font-medium mt-0.5">{card.label}</div>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                    <div className="text-2xl font-black text-white font-heading tabular-nums">
+                      {communityStats?.membersCount || '2,400+'}
+                    </div>
+                    <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Pune Shufflers</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                    <div className="text-2xl font-black text-[#4AB4A4] font-heading tabular-nums">
+                      {communityStats?.gamesTaught || '120+'}
+                    </div>
+                    <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Games Taught</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                    <div className="text-2xl font-black text-[#FFD230] font-heading tabular-nums">
+                      {communityStats?.soloPercentage || '60%'}
+                    </div>
+                    <div className="text-xs text-[#94A3B8] font-medium mt-0.5">Come Solo</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-[#1A255C] border border-[#283677]">
+                    <div className="text-2xl font-black text-[#FF751F] font-heading tabular-nums">
+                      {communityStats?.eventsHosted || '34'}
+                    </div>
+                    <div className="text-xs text-[#94A3B8] font-medium mt-0.5">
+                      {communityStats?.eventsHostedLabel || 'Sold-out Editions'}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* CTAs */}

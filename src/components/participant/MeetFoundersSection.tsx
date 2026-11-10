@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import parimalImg from '../../assets/images/founder_parimal_1793171702548.jpg';
 import dikshaImg from '../../assets/images/founder_diksha_1793171722564.jpg';
+import { useApp } from '../../context/AppContext';
 
 interface MeetFoundersSectionProps {
   onRegisterClick?: () => void;
@@ -84,6 +85,14 @@ export const MeetFoundersSection: React.FC<MeetFoundersSectionProps> = ({
   onExploreEvents,
   isAuthenticated = false
 }) => {
+  const { communityStats } = useApp();
+  const foundersWithDynamicStats = FOUNDERS.map(f => {
+    if (f.id === 'parimal' && communityStats?.gamesTaught) {
+      return { ...f, stats: `${communityStats.gamesTaught} game titles taught` };
+    }
+    return f;
+  });
+
   return (
     <section aria-label="Meet the Founders" className="space-y-6">
       {/* Section Header */}
@@ -109,7 +118,7 @@ export const MeetFoundersSection: React.FC<MeetFoundersSectionProps> = ({
 
       {/* Founders List: Split Card Layout (Left Part: Photo | Right Part: Content) */}
       <div className="space-y-6">
-        {FOUNDERS.map(founder => {
+        {foundersWithDynamicStats.map(founder => {
           const isParimal = founder.id === 'parimal';
           const accentColor = isParimal ? '#FF751F' : '#4AB4A4';
           const borderHover = isParimal
@@ -284,7 +293,7 @@ export const MeetFoundersSection: React.FC<MeetFoundersSectionProps> = ({
               Our Solo Attendee Promise
             </h4>
             <p className="text-xs sm:text-sm text-[#94A3B8] mt-0.5 max-w-xl">
-              Over 60% of our attendees come solo. Parimal and Diksha personally introduce you, seat you with friendly players, and ensure you feel right at home within minutes.
+              Over {communityStats?.soloPercentage || '60%'} of our attendees come solo. Parimal and Diksha personally introduce you, seat you with friendly players, and ensure you feel right at home within minutes.
             </p>
           </div>
         </div>

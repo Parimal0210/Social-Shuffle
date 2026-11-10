@@ -18,6 +18,21 @@ export interface AuthUser {
   authProvider?: 'local' | 'google';
   lastActiveAt?: string;
   loginAt?: string;
+  designation?: string;
+  adminRole?: AdminRole | string;
+  status?: string;
+  joinedDate?: string;
+  permissions?: string[];
+}
+
+export interface LoginAuditEntry {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  timestamp: string;
+  date: string;
 }
 
 export interface GoogleUserProfile {
@@ -31,7 +46,12 @@ export interface GoogleUserProfile {
 
 export interface LoginCredentials {
   emailOrPhone: string;
+  email?: string;
   password?: string;
+  name?: string;
+  phone?: string;
+  designation?: string;
+  role?: 'admin' | 'participant';
 }
 
 export interface RegisterCredentials {
@@ -62,6 +82,7 @@ export interface AdminRecord {
   designation: string;
   avatar?: string;
   bio?: string;
+  area?: string;
   active: boolean;
   createdAt: string;
 }
@@ -80,6 +101,8 @@ export interface Participant {
   email: string;
   phone: string;
   area: string; // Pune locality e.g., 'Koregaon Park', 'Baner', 'Viman Nagar'
+  password?: string; // Stored credential so participant can login henceforth with password
+  username?: string;
   avatar?: string;
   bio?: string;
   joinedDate: string;
@@ -310,6 +333,8 @@ export interface RecipientDispatchStatus {
   email: string;
   phone?: string;
   emailSent: boolean;
+  emailMessageId?: string;
+  emailPreviewUrl?: string;
   whatsappSent: boolean;
   whatsappAvailable: boolean;
   whatsappReason?: string;
@@ -349,3 +374,41 @@ export interface WhatsAppCommunityBroadcastRecord {
   triggeredAt: string;
   method: 'whatsapp_web' | 'copied_clipboard' | 'group_link';
 }
+
+export interface MetricCard {
+  id: string;
+  value: string;
+  label: string;
+  color?: string;
+  subtext?: string;
+}
+
+export interface CommunityStats {
+  id: string;
+  membersCount: string;
+  membersCountNumeric: number;
+  gamesTaught: string;
+  gamesTaughtNumeric: number;
+  soloPercentage: string;
+  soloPercentageNumeric: number;
+  eventsHosted: string;
+  eventsHostedLabel: string;
+  eventsHostedNumeric: number;
+  neighborhoods: string[];
+  heroHeadline: string;
+  heroSchedule: string;
+  heroDescription: string;
+  communityTagline: string;
+  whyJoinText: string;
+  curatedMatchmakingText?: string;
+  metricCards?: MetricCard[];
+  updatedAt?: string;
+  updatedBy?: string;
+  liveCounts?: {
+    participants: number;
+    games: number;
+    events: number;
+    registrations: number;
+  };
+}
+

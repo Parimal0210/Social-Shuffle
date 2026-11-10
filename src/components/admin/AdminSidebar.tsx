@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { SocialShuffleIcon } from '../SocialShuffleLogo';
+import { useApp } from '../../context/AppContext';
 
 export type AdminViewSection =
   | 'dashboard'
@@ -22,6 +23,7 @@ export type AdminViewSection =
   | 'participants'
   | 'games'
   | 'analytics'
+  | 'communications'
   | 'feedback'
   | 'reports'
   | 'volunteers'
@@ -41,6 +43,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   pendingReportsCount = 0,
   newVolunteersCount = 0
 }) => {
+  const { currentUser } = useApp();
+
   const menuItems = [
     { id: 'dashboard' as AdminViewSection, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'events' as AdminViewSection, label: 'Events & Meetups', icon: Calendar },
@@ -119,6 +123,49 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           );
         })}
       </nav>
+
+      {/* Logged-in Administrator Identity Card: Shows ALL Admin Details */}
+      <div className="hidden lg:block mt-6 pt-4 border-t border-[#202B61]">
+        <div className="p-3 bg-[#151E4D] border border-[#283677] rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#4AB4A4] flex items-center gap-1 font-heading">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4AB4A4] animate-pulse"></span>
+              Super Admin Session
+            </span>
+            <span className="text-[9px] font-mono text-[#94A3B8]">
+              {currentUser?.id || 'u-admin-parimal'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                className="w-10 h-10 rounded-full border-2 border-[#4AB4A4] object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-[#4AB4A4]/20 border border-[#4AB4A4]/40 flex items-center justify-center font-bold text-sm text-[#4AB4A4] shrink-0">
+                {currentUser?.name?.[0] || 'P'}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold text-white block truncate font-heading">
+                {currentUser?.name || 'Parimal Shete'}
+              </span>
+              <span className="text-[10px] font-medium text-[#FFD230] block truncate">
+                {currentUser?.designation || 'Co-Founder & Community Architect'}
+              </span>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-[#94A3B8] space-y-0.5 pt-1 border-t border-[#202B61]/60">
+            <div className="truncate">{currentUser?.email || 'parimalmshete@gmail.com'}</div>
+            <div className="truncate font-mono text-slate-300">{currentUser?.phone || '+91 98220 99887'}</div>
+            <div className="truncate text-slate-400">{currentUser?.area || 'Koregaon Park, Pune'}</div>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 };

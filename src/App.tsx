@@ -26,7 +26,7 @@ import { ParticipantFooter } from './components/participant/ParticipantFooter';
 import { AuthModal } from './components/auth/AuthModal';
 
 const AppContent: React.FC = () => {
-  const { userRole, role, isAdminUser, isAuthenticated, reportsList, volunteersList } = useApp();
+  const { userRole, role, isAdminUser, isAuthenticated, reportsList, volunteersList, recordTabVisit } = useApp();
 
   // Admin Navigation State
   const [adminSection, setAdminSection] = useState<AdminViewSection>('dashboard');
@@ -50,6 +50,36 @@ const AppContent: React.FC = () => {
   // - If individual's role is admin in the database admins table: show Admin View
   // - Otherwise (participant): show Participant View
   const showAdminView = isAuthenticated && isAdminUser;
+
+  // Real-Time Tab Navigation Telemetry
+  useEffect(() => {
+    if (showAdminView) {
+      const adminTabNames: Record<AdminViewSection, string> = {
+        dashboard: 'Meetup Operations',
+        events: 'Meetup Operations',
+        attendance: 'Live Attendance Scanner',
+        participants: 'Participants CRM',
+        games: 'Games Vault',
+        analytics: 'Growth Analytics & Forecast',
+        communications: 'Mail Communications Hub',
+        feedback: 'Feedback Wall',
+        reports: 'Safety & Grievance Desk',
+        volunteers: 'Volunteer Desk',
+        import_export: 'Database Import/Export',
+        audit: 'Tamper-Proof Audit Trail'
+      };
+      recordTabVisit(adminTabNames[adminSection] || 'Meetup Operations');
+    } else {
+      const participantTabNames: Record<ParticipantTab, string> = {
+        home: 'Community Home',
+        events: 'Events RSVP Hub',
+        progress: 'Player Profile',
+        community: 'Pune WhatsApp Community',
+        profile: 'Player Profile'
+      };
+      recordTabVisit(participantTabNames[participantTab] || 'Community Home');
+    }
+  }, [participantTab, adminSection, showAdminView]);
 
   // For every tab or view change, screen should be loaded from the top only
   useEffect(() => {
@@ -83,7 +113,8 @@ const AppContent: React.FC = () => {
 
       {/* Main App Body */}
       {showAdminView ? (
-        <div className="flex-1 flex flex-col lg:flex-row w-full max-w-7xl mx-auto">
+        <div className="flex-1 flex flex-col w-full">
+          <div className="flex-1 flex flex-col lg:flex-row w-full max-w-7xl mx-auto">
           {/* Admin Sidebar Navigation (Responsive & Desktop optimized) */}
           <AdminSidebar
             currentSection={adminSection}
@@ -145,7 +176,8 @@ const AppContent: React.FC = () => {
             {adminSection === 'audit' && <AdminAuditLog />}
           </main>
         </div>
-      ) : (
+      </div>
+    ) : (
         <div className="flex-1 flex flex-col w-full">
           <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto">
             {/* Participant Tab Navigation (Desktop top pills + mobile bottom bar) */}

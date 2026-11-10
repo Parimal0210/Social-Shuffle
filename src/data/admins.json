@@ -8,6 +8,7 @@
     "designation": "Co-Founder & Community Architect",
     "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
     "bio": "Social Shuffle Co-Founder & Community Architect",
+    "area": "Koregaon Park, Pune",
     "active": true,
     "createdAt": "2024-01-01T00:00:00Z"
   },
@@ -20,6 +21,7 @@
     "designation": "Co-Founder",
     "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
     "bio": "Social Shuffle Co-Founder",
+    "area": "Baner, Pune",
     "active": true,
     "createdAt": "2024-01-01T00:00:00Z"
   },
@@ -32,6 +34,7 @@
     "designation": "Co-Founder & Experience Director",
     "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200",
     "bio": "Social Shuffle Co-Founder & Experience Director",
+    "area": "Kalyani Nagar, Pune",
     "active": true,
     "createdAt": "2024-01-01T00:00:00Z"
   },
@@ -44,6 +47,7 @@
     "designation": "Community Host & Super Admin",
     "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200",
     "bio": "Social Shuffle Lead Host & Admin",
+    "area": "Viman Nagar, Pune",
     "active": true,
     "createdAt": "2024-01-01T00:00:00Z"
   }

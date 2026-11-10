@@ -14,6 +14,7 @@ import {
 import cafeVibesImg from '../../assets/images/game_cafe_vibes_1793171611428.jpg';
 import strategyDiceImg from '../../assets/images/game_strategy_dice_1793171652536.jpg';
 import partyFunImg from '../../assets/images/game_party_fun_1793171683492.jpg';
+import { useApp } from '../../context/AppContext';
 
 interface WeekendPhotoCarouselProps {
   onExploreEvents?: () => void;
@@ -77,16 +78,34 @@ export const WeekendPhotoCarousel: React.FC<WeekendPhotoCarouselProps> = ({
   onJoinClick,
   isAuthenticated = false
 }) => {
+  const { communityStats } = useApp();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const dynamicSlides: Slide[] = SLIDES.map(slide => {
+    if ((slide.id === 'cafe-meetup' || slide.id === 'cafe-vibes') && communityStats?.soloPercentage) {
+      return {
+        ...slide,
+        tags: slide.tags.map(t => t.includes('Come Solo') ? `${communityStats.soloPercentage} Come Solo` : t)
+      };
+    }
+    if (slide.id === 'strategy-dice' && communityStats?.gamesTaught) {
+      return {
+        ...slide,
+        subtitle: `Over ${communityStats.gamesTaught} Curated Board Games for Every Taste`,
+        tags: slide.tags.map(t => t.includes('Board Games') ? `${communityStats.gamesTaught} Board Games` : t)
+      };
+    }
+    return slide;
+  });
+
   const nextSlide = () => {
-    setCurrentIndex(prev => (prev + 1) % SLIDES.length);
+    setCurrentIndex(prev => (prev + 1) % dynamicSlides.length);
   };
 
   const prevSlide = () => {
-    setCurrentIndex(prev => (prev - 1 + SLIDES.length) % SLIDES.length);
+    setCurrentIndex(prev => (prev - 1 + dynamicSlides.length) % dynamicSlides.length);
   };
 
   useEffect(() => {
@@ -96,15 +115,15 @@ export const WeekendPhotoCarousel: React.FC<WeekendPhotoCarouselProps> = ({
     }
 
     timerRef.current = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % SLIDES.length);
+      setCurrentIndex(prev => (prev + 1) % dynamicSlides.length);
     }, 6000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPaused]);
+  }, [isPaused, dynamicSlides.length]);
 
-  const currentSlide = SLIDES[currentIndex];
+  const currentSlide = dynamicSlides[currentIndex];
 
   return (
     <section

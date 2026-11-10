@@ -17,12 +17,14 @@ import {
 } from 'lucide-react';
 import { SocialShuffleIcon, SocialShuffleLogo } from '../SocialShuffleLogo';
 import { ParticipantTab } from './ParticipantNav';
+import { useApp } from '../../context/AppContext';
 
 interface ParticipantFooterProps {
   onNavigateTab?: (tab: ParticipantTab) => void;
 }
 
 export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigateTab }) => {
+  const { communityStats } = useApp();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -49,7 +51,7 @@ export const ParticipantFooter: React.FC<ParticipantFooterProps> = ({ onNavigate
                   Never miss an offline board game meetup in Pune!
                 </h3>
                 <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-                  Connect with 2,400+ friendly Pune shufflers on WhatsApp & Instagram. Get instant table RSVP drops, spot alerts, rule walk-throughs, and weekend cafe photos.
+                  {communityStats?.communityTagline || `Connect with ${communityStats?.membersCount || '2,400+'} friendly Pune shufflers on WhatsApp & Instagram. Get instant table RSVP drops, spot alerts, rule walk-throughs, and weekend cafe photos.`}
                 </p>
               </div>
 
