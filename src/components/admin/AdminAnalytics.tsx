@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
-  TrendingDown,
   MapPin,
   Users,
   Dices,
@@ -15,20 +14,12 @@ import {
   Lightbulb,
   Target,
   BarChart2,
-  CreditCard,
-  ShieldCheck,
-  Settings,
-  Key,
-  RefreshCw,
-  Check,
   X,
   UserPlus,
   CalendarDays,
   ArrowUpRight,
   ArrowDownRight,
-  Wallet,
-  Activity,
-  Layers
+  Wallet
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -41,11 +32,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend
+  Tooltip
 } from 'recharts';
 import { useApp } from '../../context/AppContext';
-import { fetchRazorpayConfig, RazorpayConfig } from '../../services/razorpayService';
 
 interface MonthlyRevenueRecord {
   monthKey: string;
@@ -83,31 +72,7 @@ export const AdminAnalytics: React.FC = () => {
   const [revenueChartMode, setRevenueChartMode] = useState<'revenue' | 'composed' | 'growth'>('revenue');
   const [revenueTimeRange, setRevenueTimeRange] = useState<'6m' | '12m'>('6m');
 
-  // Razorpay Gateway State
-  const [razorpayConfig, setRazorpayConfig] = useState<RazorpayConfig>({
-    keyId: 'rzp_test_SocialShufflePune',
-    currency: 'INR',
-    enabled: true,
-    isLive: false,
-    companyName: 'Social Shuffle Pune',
-    themeColor: '#FF751F'
-  });
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [editKeyId, setEditKeyId] = useState('');
-  const [editKeySecret, setEditKeySecret] = useState('');
-  const [testOrderResult, setTestOrderResult] = useState<{ success: boolean; orderId?: string; message?: string } | null>(null);
-  const [isTestingOrder, setIsTestingOrder] = useState(false);
-  const [isSavingConfig, setIsSavingConfig] = useState(false);
-  const [configSuccessMsg, setConfigSuccessMsg] = useState('');
-
-  useEffect(() => {
-    fetchRazorpayConfig().then(cfg => {
-      setRazorpayConfig(cfg);
-      setEditKeyId(cfg.keyId);
-    });
-  }, []);
-
-  // 1. Current Month & Daywise Participant Registration Analysis
+  // Current Month & Daywise Participant Registration Analysis
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonthNum = now.getMonth();
@@ -121,17 +86,6 @@ export const AdminAnalytics: React.FC = () => {
   });
   const newParticipantsThisMonthCount = newParticipantsThisMonth.length;
   const newParticipantsShare = Math.round((newParticipantsThisMonthCount / (participants.length || 1)) * 100);
-
-  // Real-time calculation of total confirmed revenue
-  const totalRealTimeRevenue = useMemo(() => {
-    return registrations
-      .filter(r => r.attendanceStatus !== 'Cancelled' && r.paymentStatus === 'Confirmed')
-      .reduce((acc, curr) => {
-        const ev = events.find(e => e.id === curr.eventId);
-        const price = ev?.ticketPrice || 350;
-        return acc + curr.paxCount * price;
-      }, 0);
-  }, [registrations, events]);
 
   // Real-time revenue grouped by YYYY-MM
   const realTimeMonthGroup = useMemo(() => {
@@ -158,7 +112,6 @@ export const AdminAnalytics: React.FC = () => {
   // MONTHLY REVENUE DATASET FOR RECHARTS (Including MoM Trends)
   // =========================================================================
   const allMonthlyRevenueData: MonthlyRevenueRecord[] = useMemo(() => {
-    // 2026 Historical baseline accounts + dynamic current month injection
     const rawMonths = [
       { key: '2026-01', label: 'Jan 26', full: 'January 2026', baseRev: 11200, basePax: 32, prevYear: 6800 },
       { key: '2026-02', label: 'Feb 26', full: 'February 2026', baseRev: 13650, basePax: 39, prevYear: 7700 },
@@ -195,7 +148,7 @@ export const AdminAnalytics: React.FC = () => {
       const prevRev = i > 0 ? records[i - 1].grossRevenue : 9800;
       const momGrowthAmount = grossRevenue - prevRev;
       const momGrowthPercent = Number(((momGrowthAmount / prevRev) * 100).toFixed(1));
-      const netRevenue = Math.round(grossRevenue * 0.98); // 2% Razorpay transaction surcharge
+      const netRevenue = Math.round(grossRevenue * 0.98); // 2% Razorpay transaction charge
       const avgOrderValue = Math.round(grossRevenue / Math.max(1, transactionsCount));
 
       records.push({
@@ -235,7 +188,6 @@ export const AdminAnalytics: React.FC = () => {
   const isGrowthPositive = momGrowthRate >= 0;
 
   const totalYearRevenue = allMonthlyRevenueData.reduce((acc, r) => acc + r.grossRevenue, 0);
-  const avgMonthlyIncome = Math.round(totalYearRevenue / allMonthlyRevenueData.length);
   const projectedNextMonthIncome = Math.round(currentMonthRecord.grossRevenue * (1 + Math.max(0.06, momGrowthRate / 100)));
 
   // Timeline days for Daywise view
@@ -294,7 +246,7 @@ export const AdminAnalytics: React.FC = () => {
   const maxDailyCount = Math.max(...daywiseData.map(d => d.count), 1);
   const peakDayEntry = daywiseData.reduce((prev, curr) => (curr.count > prev.count ? curr : prev), daywiseData[0] || { count: 0, label: 'N/A' });
 
-  // Day of week distribution
+  // Day of week distribution & Recharts dataset for concise chart
   const dayOfWeekNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const dayOfWeekCounts = [0, 0, 0, 0, 0, 0, 0];
   participants.forEach(p => {
@@ -305,6 +257,17 @@ export const AdminAnalytics: React.FC = () => {
     }
   });
   const maxDayOfWeek = Math.max(...dayOfWeekCounts, 1);
+
+  // Concise Day-of-Week Chart Data
+  const dayOfWeekChartData = useMemo(() => {
+    const fullNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return dayOfWeekNames.map((shortName, idx) => ({
+      day: shortName,
+      fullName: fullNames[idx],
+      signups: dayOfWeekCounts[idx],
+      isPeak: dayOfWeekCounts[idx] === maxDayOfWeek && maxDayOfWeek > 0
+    }));
+  }, [dayOfWeekCounts, maxDayOfWeek]);
 
   // Solo vs Group Pax Breakdown
   const totalBookings = registrations.length || 1;
@@ -393,80 +356,7 @@ export const AdminAnalytics: React.FC = () => {
     ? Math.round(eventFillStats.reduce((acc, s) => acc + s.fillRate, 0) / eventFillStats.length)
     : 92;
 
-  // Handler: Test Razorpay Order Generation
-  const handleTestRazorpayOrder = async () => {
-    setIsTestingOrder(true);
-    setTestOrderResult(null);
-    try {
-      const res = await fetch('/api/payments/razorpay/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: 350,
-          eventId: events[0]?.id || 'ev-ss3',
-          eventTitle: events[0]?.title || 'Secret Social & Mystery Games',
-          paxCount: 1,
-          participantName: 'Admin Test Runner',
-          participantEmail: 'admin@socialshuffle.in',
-          participantPhone: '9822000000',
-          notes: 'Gateway health check from Community Analytics'
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setTestOrderResult({
-          success: true,
-          orderId: data.orderId,
-          message: `Order verified! ID: ${data.orderId} (₹${data.amountInRupees})`
-        });
-      } else {
-        setTestOrderResult({
-          success: false,
-          message: data.message || 'Failed to create test order'
-        });
-      }
-    } catch (err: any) {
-      setTestOrderResult({
-        success: false,
-        message: err.message || 'Connection error testing gateway'
-      });
-    } finally {
-      setIsTestingOrder(false);
-    }
-  };
-
-  // Handler: Save Razorpay Config
-  const handleSaveRazorpayConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingConfig(true);
-    setConfigSuccessMsg('');
-    try {
-      const res = await fetch('/api/payments/razorpay/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keyId: editKeyId.trim(),
-          keySecret: editKeySecret.trim() || undefined,
-          enabled: true
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setRazorpayConfig(data.config);
-        setConfigSuccessMsg('Razorpay configuration updated and saved successfully!');
-        setTimeout(() => {
-          setIsConfigModalOpen(false);
-          setConfigSuccessMsg('');
-        }, 1200);
-      }
-    } catch (err) {
-      console.error('Error saving Razorpay config:', err);
-    } finally {
-      setIsSavingConfig(false);
-    }
-  };
-
-  // Custom Recharts Tooltip
+  // Custom Recharts Tooltip for Revenue Card
   const CustomRevenueTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
     const data: MonthlyRevenueRecord = payload[0].payload;
@@ -653,7 +543,6 @@ export const AdminAnalytics: React.FC = () => {
           SECTION: REVENUE METRICS CARD (RECHARTS VISUALIZATION OF RAZORPAY INCOME)
           ========================================================================= */}
       <div className="p-6 rounded-2xl bg-[#151E4D] border-2 border-[#10B981]/30 shadow-2xl space-y-6 relative overflow-hidden">
-        {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#10B981]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#FF751F]/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -1064,215 +953,6 @@ export const AdminAnalytics: React.FC = () => {
         </div>
       </div>
 
-      {/* SECTION: RAZORPAY PAYMENT GATEWAY CONFIGURATION & ENGINE */}
-      <div className="p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#283677]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0c2340] to-[#0284c7] flex items-center justify-center shadow-lg shadow-sky-500/20 text-white">
-              <CreditCard className="w-5 h-5 font-bold text-sky-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-heading font-bold text-[#F8FAFC]">
-                  Razorpay Payment Gateway & Checkout Engine
-                </h3>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                  {razorpayConfig.isLive ? 'Live Mode Active' : 'Test Mode Configured'}
-                </span>
-              </div>
-              <p className="text-xs text-[#94A3B8]">
-                Native UPI (GPay, PhonePe, Paytm, CRED), Cards & NetBanking checkout for Pune RSVP tickets
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleTestRazorpayOrder}
-              disabled={isTestingOrder}
-              className="px-3 py-1.5 rounded-xl bg-[#1A255C] hover:bg-[#202E70] text-[#38BDF8] border border-[#283677] text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isTestingOrder ? 'animate-spin' : ''}`} />
-              {isTestingOrder ? 'Generating Order...' : 'Test Order Generation'}
-            </button>
-            <button
-              onClick={() => setIsConfigModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#FF751F] to-[#FFD230] text-[#10173E] font-heading font-bold text-xs flex items-center gap-1.5 shadow-md hover:opacity-95 transition-all"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Configure Gateway
-            </button>
-          </div>
-        </div>
-
-        {/* Test Order Result Notification */}
-        {testOrderResult && (
-          <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
-            testOrderResult.success
-              ? 'bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981]'
-              : 'bg-red-500/10 border-red-500/30 text-red-400'
-          }`}>
-            <div className="flex items-center gap-2">
-              {testOrderResult.success ? <CheckCircle2 className="w-4 h-4 text-[#10B981]" /> : <AlertTriangle className="w-4 h-4 text-red-400" />}
-              <span>{testOrderResult.message}</span>
-            </div>
-            <button onClick={() => setTestOrderResult(null)} className="text-[#94A3B8] hover:text-white">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* Gateway Specification Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-xl bg-[#10173E] border border-[#283677] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] block">Active Key ID</span>
-            <div className="font-mono text-xs text-[#38BDF8] font-bold truncate" title={razorpayConfig.keyId}>
-              {razorpayConfig.keyId}
-            </div>
-            <span className="text-[10px] text-[#64748B] block">Checkout.js identifier</span>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-[#10173E] border border-[#283677] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] block">Settlement Currency</span>
-            <div className="text-sm font-heading font-bold text-[#F8FAFC]">
-              INR (₹) Indian Rupee
-            </div>
-            <span className="text-[10px] text-[#4AB4A4] block">Domestic instant payouts</span>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-[#10173E] border border-[#283677] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] block">Accepted Channels</span>
-            <div className="text-xs font-semibold text-[#FFD230] truncate">
-              UPI, Cards, NetBanking
-            </div>
-            <span className="text-[10px] text-[#94A3B8] block">GPay, PhonePe, Paytm, RuPay</span>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-[#10173E] border border-[#283677] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] block">Revenue Processed</span>
-            <div className="text-sm font-heading font-bold text-[#10B981]">
-              ₹{totalYearRevenue.toLocaleString()}
-            </div>
-            <span className="text-[10px] text-[#10B981] block">100% verified ledger balance</span>
-          </div>
-        </div>
-
-        {/* Payment Rails Verification Strip */}
-        <div className="p-3.5 rounded-xl bg-[#1A255C]/50 border border-[#283677] flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#10B981]" />
-            <span className="text-[#F8FAFC] font-semibold">Payment Gateway Integration Health:</span>
-            <span className="text-[#94A3B8]">
-              Automated order generation, SHA-256 webhook signatures, and instant confirmation
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] font-mono text-[#38BDF8]">
-            <span className="px-2 py-0.5 rounded bg-[#10173E] border border-[#283677]">UPI Intent</span>
-            <span className="px-2 py-0.5 rounded bg-[#10173E] border border-[#283677]">Card 3D Secure</span>
-            <span className="px-2 py-0.5 rounded bg-[#10173E] border border-[#283677]">Wallets</span>
-          </div>
-        </div>
-      </div>
-
-      {/* RAZORPAY CONFIGURATION MODAL */}
-      {isConfigModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl bg-[#151E4D] border-2 border-[#283677] shadow-2xl p-6 space-y-5 text-left">
-            <div className="flex items-center justify-between pb-3 border-b border-[#283677]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF751F] to-[#FFD230] flex items-center justify-center text-[#10173E]">
-                  <Key className="w-4 h-4 font-bold" />
-                </div>
-                <div>
-                  <h3 className="text-base font-heading font-bold text-[#F8FAFC]">
-                    Configure Razorpay Gateway
-                  </h3>
-                  <p className="text-xs text-[#94A3B8]">
-                    Set your Razorpay API Key ID and Key Secret to process live ticket payments
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsConfigModalOpen(false)}
-                className="text-[#94A3B8] hover:text-[#F8FAFC] p-1.5 rounded-lg hover:bg-[#1A255C]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {configSuccessMsg && (
-              <div className="p-3 rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 text-xs text-[#10B981] flex items-center gap-2">
-                <Check className="w-4 h-4" />
-                <span>{configSuccessMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSaveRazorpayConfig} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#F8FAFC] block">
-                  Razorpay Key ID
-                </label>
-                <input
-                  type="text"
-                  value={editKeyId}
-                  onChange={(e) => setEditKeyId(e.target.value)}
-                  placeholder="rzp_test_... or rzp_live_..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#10173E] border border-[#283677] text-sm text-[#F8FAFC] focus:outline-none focus:border-[#FF751F] font-mono"
-                  required
-                />
-                <p className="text-[11px] text-[#94A3B8]">
-                  From Razorpay Dashboard → Settings → API Keys
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#F8FAFC] block">
-                  Razorpay Key Secret (Optional / Private)
-                </label>
-                <input
-                  type="password"
-                  value={editKeySecret}
-                  onChange={(e) => setEditKeySecret(e.target.value)}
-                  placeholder="Leave blank to keep existing secret"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#10173E] border border-[#283677] text-sm text-[#F8FAFC] focus:outline-none focus:border-[#FF751F] font-mono"
-                />
-                <p className="text-[11px] text-[#94A3B8]">
-                  Used securely by backend for webhook authentication and signature validation
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#1A255C]/60 border border-[#283677] text-xs text-[#94A3B8] space-y-1">
-                <div className="font-semibold text-[#F8FAFC] flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#4AB4A4]" />
-                  <span>Test Mode vs Live Mode</span>
-                </div>
-                <p>
-                  Keys starting with <code className="text-[#FFD230] font-mono">rzp_test_</code> will run in sandbox mode with mock UPI/Cards. Keys starting with <code className="text-[#10B981] font-mono">rzp_live_</code> will collect real funds.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#283677]">
-                <button
-                  type="button"
-                  onClick={() => setIsConfigModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1A255C] hover:bg-[#202E70] text-[#94A3B8] text-xs font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingConfig}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#FF751F] to-[#FFD230] text-[#10173E] font-heading font-bold text-xs shadow-lg hover:opacity-95 transition-all disabled:opacity-50"
-                >
-                  {isSavingConfig ? 'Saving...' : 'Save Configuration'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* SECTION: DAYWISE PARTICIPANT REGISTRATION ANALYTICS */}
       <div className="p-6 rounded-2xl bg-[#151E4D] border border-[#283677] shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#283677]">
@@ -1428,47 +1108,69 @@ export const AdminAnalytics: React.FC = () => {
           </div>
         </div>
 
-        {/* Day-of-Week Distribution Pattern (Mon-Sun) */}
-        <div className="p-4 rounded-xl bg-[#1A255C]/50 border border-[#283677] space-y-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-heading font-bold text-[#F8FAFC]">
-              Day-of-Week Registration Pattern
-            </span>
-            <span className="text-[11px] text-[#94A3B8]">
-              Where new member signups concentrate before Sunday meetups
-            </span>
+        {/* DAY-OF-WEEK REGISTRATION PATTERN (CONCISE RECHARTS CHART) */}
+        <div className="p-4 rounded-xl bg-[#1A255C]/50 border border-[#283677] space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-bold text-[#F8FAFC]">
+                Day-of-Week Registration Pattern
+              </span>
+              <span className="text-[11px] text-[#94A3B8]">
+                (Weekly velocity breakdown across days)
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-[#FFD230] font-semibold">
+                Peak: Sunday ({maxDayOfWeek} signups)
+              </span>
+              <span className="text-[#64748B]">•</span>
+              <span className="text-[#4AB4A4]">
+                Weekend surge ahead of Sunday meetups
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
-            {dayOfWeekNames.map((dayName, idx) => {
-              const count = dayOfWeekCounts[idx];
-              const pct = Math.round((count / maxDayOfWeek) * 100);
-              const isSunday = idx === 0;
-              const isFridaySaturday = idx === 5 || idx === 6;
-
-              return (
-                <div key={dayName} className="p-2.5 rounded-lg bg-[#151E4D] border border-[#202B61] text-center space-y-1.5">
-                  <span className={`text-[11px] font-bold block ${
-                    isSunday ? 'text-[#FFD230]' : isFridaySaturday ? 'text-[#FF751F]' : 'text-[#94A3B8]'
-                  }`}>
-                    {dayName}
-                  </span>
-                  <div className="text-base font-heading font-bold text-[#F8FAFC]">
-                    {count}
-                  </div>
-                  <div className="w-full h-1 bg-[#10173E] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        isSunday || isFridaySaturday
-                          ? 'bg-gradient-to-r from-[#FF751F] to-[#FFD230]'
-                          : 'bg-[#4AB4A4]'
-                      }`}
-                      style={{ width: `${Math.max(8, pct)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="h-28 w-full pt-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dayOfWeekChartData} margin={{ top: 8, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#283677" opacity={0.4} vertical={false} />
+                <XAxis
+                  dataKey="day"
+                  stroke="#94A3B8"
+                  tick={{ fill: '#94A3B8', fontSize: 11 }}
+                  axisLine={{ stroke: '#283677' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  stroke="#94A3B8"
+                  tick={{ fill: '#94A3B8', fontSize: 10 }}
+                  axisLine={{ stroke: '#283677' }}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255, 117, 31, 0.08)' }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const d = payload[0].payload;
+                    return (
+                      <div className="px-3 py-1.5 rounded-lg bg-[#10173E] border border-[#283677] text-xs shadow-xl space-y-0.5">
+                        <div className="font-heading font-bold text-[#F8FAFC]">{d.fullName}</div>
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          <span className="text-[#94A3B8]">New registrations:</span>
+                          <span className="font-bold text-[#FFD230] font-mono">{d.signups}</span>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="signups"
+                  radius={[4, 4, 0, 0]}
+                  fill="#4AB4A4"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
