@@ -19,6 +19,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
 import { SocialShuffleLogo } from './SocialShuffleLogo';
+import { GoogleGmailConnectModal } from './common/GoogleGmailConnectModal';
 
 export const Header: React.FC = () => {
   const {
@@ -42,6 +43,7 @@ export const Header: React.FC = () => {
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showGmailModal, setShowGmailModal] = useState(false);
   const [viewingEmailNotif, setViewingEmailNotif] = useState<NotificationItem | null>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -56,6 +58,16 @@ export const Header: React.FC = () => {
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Gmail Live Delivery Button */}
+          <button
+            onClick={() => setShowGmailModal(true)}
+            title="Connect Gmail / Test Live Outbound Email Delivery"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#182255] border border-[#283677] hover:border-red-500/40 text-xs font-semibold text-[#CBD5E1] hover:text-white transition-all shadow-sm"
+          >
+            <Mail className="w-3.5 h-3.5 text-red-400" />
+            <span className="hidden sm:inline">Gmail Delivery</span>
+          </button>
+
           {/* Social Shuffle Pulse Notifications: Shown ONLY to logged-in participants and admins */}
           {isAuthenticated && (
             <div className="relative">
@@ -335,6 +347,13 @@ export const Header: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Google Gmail Connect & Test Modal */}
+      <GoogleGmailConnectModal
+        isOpen={showGmailModal}
+        onClose={() => setShowGmailModal(false)}
+        defaultEmail={currentUser?.email || 'parimalmshete@gmail.com'}
+      />
 
     </header>
   );

@@ -21,7 +21,9 @@ import {
   // dispatchOutboundWhatsApp, // Temporarily commented out
   loadCommunicationsConfig,
   saveCommunicationsConfig,
-  getMailTransporter
+  getMailTransporter,
+  setGmailOAuthToken,
+  getGmailOAuthStatus
 } from './src/services/backendMailer';
 import {
   generateRegistrationEmailHtml,
@@ -1695,10 +1697,23 @@ async function startServer() {
     }
   });
 
+  // Sync active Google OAuth token for Gmail API dispatch
+  app.post('/api/communications/set-gmail-token', (req, res) => {
+    const { token, email } = req.body;
+    setGmailOAuthToken(token || null, email || null);
+    res.json({ success: true, ...getGmailOAuthStatus() });
+  });
+
+  app.get('/api/communications/gmail-status', (_req, res) => {
+    res.json(getGmailOAuthStatus());
+  });
+
   // Live Outbound Email Test Dispatch
   app.post('/api/communications/test-email', async (req, res) => {
-    const { toEmail, subject = '🎲 Social Shuffle Test Email Dispatch', message = 'This is a live test email sent from the Social Shuffle Pune platform.' } = req.body;
-    if (!toEmail || typeof toEmail !== 'string') {
+    const targetRecipient = req.body.toEmail || req.body.to || req.body.email || 'parimalmshete@gmail.com';
+    const { subject = '🎲 Social Shuffle Test Email Dispatch', message = 'This is a live test email sent from the Social Shuffle Pune platform.' } = req.body;
+    const toEmail = String(targetRecipient).trim();
+    if (!toEmail) {
       return res.status(400).json({ success: false, message: 'Recipient email address is required' });
     }
 
