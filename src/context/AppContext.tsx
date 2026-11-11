@@ -79,7 +79,7 @@ interface AppContextType {
   isGuest: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
   registerParticipant: (data: RegisterCredentials, options?: { verifiedByOtp?: boolean }) => Promise<{ success: boolean; message: string }>;
-  sendRegistrationOtp: (email: string, name?: string) => Promise<{ success: boolean; message: string; otpPreview?: string; expiresInSeconds?: number }>;
+  sendRegistrationOtp: (email: string, name?: string) => Promise<{ success: boolean; message: string; expiresInSeconds?: number }>;
   verifyRegistrationOtp: (email: string, otp: string) => Promise<{ success: boolean; message: string; verified?: boolean }>;
   checkEmailVerified: (email: string) => Promise<boolean>;
   loginWithGoogle: (profile?: GoogleUserProfile) => Promise<{ success: boolean; message: string; code?: string }>;
@@ -87,13 +87,10 @@ interface AppContextType {
   continueWithGoogle: (profile: GoogleUserProfile) => Promise<{ success: boolean; message: string; code?: string; user?: AuthUser; participant?: Participant }>;
   logout: () => void;
   switchToGuestView: () => void;
-  loginAsDemoParticipant: () => void;
-  loginAsDemoAdmin: () => void;
   pendingEventIdForRegistration: string | null;
   setPendingEventIdForRegistration: (id: string | null) => void;
   lastActiveTimestamp: number;
   sessionRemainingDays: number;
-  simulateInactivityTimeout: () => void;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
   authModalMode: 'login' | 'register';
@@ -393,45 +390,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRoleState('participant');
   };
 
-  /*
-  ========================================================================================
-  [COMMENTED OUT FOR GO-LIVE]: Demo Account Switchers
-  Account switching is disabled in live mode. Real users authenticate via sign-in / Google.
-  ========================================================================================
-  const loginAsDemoParticipant = () => {
-    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
-    localStorage.setItem(`${STORAGE_KEY}_auth_user`, JSON.stringify(PRIYA_AUTH_USER));
-    setCurrentUser(PRIYA_AUTH_USER);
-    setCurrentParticipantId('p-priya');
-    setRoleState('participant');
-  };
 
-  const loginAsDemoAdmin = () => {
-    const demoAdmin = adminsList.find(a => a.email.includes('parimal')) || adminsList[0] || INITIAL_ADMINS[0];
-    const demoAdminUser: AuthUser = {
-      id: `u-${demoAdmin.id}`,
-      name: demoAdmin.name,
-      email: demoAdmin.email,
-      phone: demoAdmin.phone || '+91 98220 11223',
-      role: 'admin',
-      area: 'Koregaon Park',
-      participantId: 'p-parimal',
-      bio: demoAdmin.bio || `${demoAdmin.designation} • Social Shuffle Organizer`,
-      avatar: demoAdmin.avatar,
-      authProvider: 'local',
-      loginAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString()
-    };
-    localStorage.removeItem(`${STORAGE_KEY}_logged_out`);
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(Date.now()));
-    setCurrentUser(demoAdminUser);
-    setRoleState('admin');
-  };
-  ========================================================================================
-  */
-  const loginAsDemoParticipant = () => {};
-  const loginAsDemoAdmin = () => {};
 
   // IDENTIFY LOGGED IN INDIVIDUAL & ENFORCE ROLE:
   // Query the admins table in the database to identify admin users.
@@ -1168,7 +1127,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const sendRegistrationOtp = async (email: string, name?: string): Promise<{
     success: boolean;
     message: string;
-    otpPreview?: string;
     expiresInSeconds?: number;
   }> => {
     return await api.sendOtp(email, name);
@@ -1660,24 +1618,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRoleState('participant');
   };
 
-  // Helper for testing/demoing the 30-day inactivity timeout
-  const simulateInactivityTimeout = () => {
-    const expiredTime = Date.now() - (INACTIVITY_TIMEOUT_MS + 1000);
-    localStorage.setItem(`${STORAGE_KEY}_last_active_at`, String(expiredTime));
-    setLastActiveTimestamp(expiredTime);
-    logout();
-    setNotifications(prev => [
-      {
-        id: `notif-sim-expired-${Date.now()}`,
-        title: '30-Day Inactivity Timeout Triggered ⏱️',
-        message: 'Simulation: Over 30 days of inactivity passed. You were automatically logged out as per session policy.',
-        type: 'system',
-        timestamp: 'Just now',
-        read: false
-      },
-      ...prev
-    ]);
-  };
+
 
   // Helper to add audit log
   const logAudit = (action: string, target: string, details: string) => {
@@ -2947,13 +2888,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         continueWithGoogle,
         logout,
         switchToGuestView,
-        loginAsDemoParticipant,
-        loginAsDemoAdmin,
         pendingEventIdForRegistration,
         setPendingEventIdForRegistration,
         lastActiveTimestamp,
         sessionRemainingDays,
-        simulateInactivityTimeout,
         showAuthModal,
         setShowAuthModal,
         authModalMode,

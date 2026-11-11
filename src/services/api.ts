@@ -893,7 +893,6 @@ class ApiService {
     success: boolean;
     message: string;
     email?: string;
-    otpPreview?: string;
     expiresInSeconds?: number;
   }> {
     try {

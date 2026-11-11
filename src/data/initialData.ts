@@ -537,6 +537,23 @@ export const INITIAL_EVENTS: ShuffleEvent[] = [
 
 export const INITIAL_PARTICIPANTS: Participant[] = [
   {
+    id: 'p-varad',
+    name: 'Varad',
+    email: 'varad@socialshuffle.in',
+    phone: '+91 98221 12345',
+    password: 'shuffler123',
+    username: 'varad',
+    area: 'Koregaon Park',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Varad',
+    bio: 'Pune board game enthusiast • Catan & Social Deduction lover!',
+    joinedDate: '2026-11-11',
+    totalEventsAttended: 0,
+    totalRegistrations: 0,
+    gamesPlayedIds: [],
+    venuesVisited: [],
+    totalPaxBrought: 0
+  },
+  {
     id: 'p-priya',
     name: 'Priya Nair',
     email: 'priya.nair@example.com',

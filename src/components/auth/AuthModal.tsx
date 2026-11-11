@@ -66,7 +66,6 @@ export const AuthModal: React.FC = () => {
   // Registration multi-step state: 'form' -> 'otp_verify'
   const [regStep, setRegStep] = useState<'form' | 'otp_verify'>('form');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
-  const [otpPreview, setOtpPreview] = useState<string | null>(null);
   const [otpTimer, setOtpTimer] = useState<number>(60);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
   const [otpSending, setOtpSending] = useState<boolean>(false);
@@ -256,7 +255,6 @@ export const AuthModal: React.FC = () => {
       setOtpSending(false);
 
       if (res.success) {
-        setOtpPreview(res.otpPreview || null);
         setOtpTimer(60);
         setOtpDigits(['', '', '', '', '', '']);
         setRegStep('otp_verify');
@@ -283,7 +281,6 @@ export const AuthModal: React.FC = () => {
       const res = await sendRegistrationOtp(regEmail.trim().toLowerCase(), regName.trim());
       setOtpSending(false);
       if (res.success) {
-        setOtpPreview(res.otpPreview || null);
         setOtpTimer(60);
         setOtpDigits(['', '', '', '', '', '']);
         otpInputRefs.current[0]?.focus();
@@ -404,17 +401,6 @@ export const AuthModal: React.FC = () => {
     if (!res.success) {
       setError(res.message);
     }
-  };
-
-  const handleQuickLogin = async (ident: string, pass: string) => {
-    setLoading(true);
-    setLoadingMessage('Signing in...');
-    setError(null);
-    await login({
-      emailOrPhone: ident,
-      password: pass
-    });
-    setLoading(false);
   };
 
   return (

@@ -1578,27 +1578,36 @@ async function startServer() {
       </div>
     `;
 
-    let mailResult: any = null;
+    // Send REAL OTP verification email asynchronously (non-blocking)
+    sendOutboundEmail({
+      to: cleanEmail,
+      subject: `🎲 ${otp} is your Social Shuffle verification code`,
+      html: otpEmailHtml,
+      text: `Your Social Shuffle verification code is ${otp}. Valid for 10 minutes.`
+    }).then(mailResult => {
+      console.log(`[OTP Email] Dispatched to ${cleanEmail}:`, mailResult.success ? 'Success' : mailResult.error);
+    }).catch(err => {
+      console.warn('[OTP Email Error]', err?.message);
+    });
+
+    // Also persist in in-app notifications so user can view it in the app
     try {
-      mailResult = await sendOutboundEmail({
-        to: cleanEmail,
-        subject: `🎲 ${otp} is your Social Shuffle verification code`,
-        html: otpEmailHtml,
-        text: `Your Social Shuffle verification code is ${otp}. Valid for 10 minutes.`
+      dbNotifications.insert({
+        id: `notif-otp-${Date.now()}`,
+        userId: cleanEmail,
+        title: 'Email Verification Code',
+        message: `Your verification code is ${otp}. Enter this 6-digit code to complete signup.`,
+        type: 'account',
+        read: false,
+        createdAt: new Date().toISOString()
       });
-      console.log(`[OTP Real Mail] Outbound email sent to ${cleanEmail}:`, mailResult.success ? 'Success' : mailResult.error);
-    } catch (err: any) {
-      console.warn('[OTP Real Mail Error]', err?.message);
-    }
+    } catch {}
 
     res.json({
       success: true,
       message: `Verification code sent to ${cleanEmail}`,
       email: cleanEmail,
-      expiresInSeconds,
-      otpPreview: otp,
-      mailDelivered: mailResult?.success || false,
-      previewUrl: mailResult?.previewUrl || null
+      expiresInSeconds
     });
   });
 
