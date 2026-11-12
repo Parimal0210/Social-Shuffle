@@ -40,6 +40,7 @@ import {
   openNativeRazorpayCheckout,
   verifyRazorpayPayment
 } from '../../services/razorpayService';
+import { downloadRegistrationPdf } from '../../utils/pdfPassGenerator';
 
 interface ParticipantEventsProps {
   preselectedEventId?: string;
@@ -113,11 +114,14 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
     paymentId: string;
     amount: number;
   } | null>(null);
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(null);
 
-  // My registered events
-  const myRegistrations = registrations.filter(
-    r => r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
-  );
+  // My registered upcoming events (strictly upcoming events, completed events removed)
+  const myRegistrations = registrations.filter(r => {
+    if (r.participantId !== currentParticipant.id || r.attendanceStatus === 'Cancelled') return false;
+    const event = events.find(e => e.id === r.eventId);
+    return event?.status === 'upcoming';
+  });
 
   // Auto-open registration if user just registered/logged in from a pending event
   React.useEffect(() => {
@@ -312,10 +316,12 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
   };
 
   // Step 2: Razorpay confirms payment was successfully done -> Only then register attendee and trigger smooth RSVP animation
-  const handleCompleteRazorpayPayment = (customPaymentId?: string) => {
-    if (!razorpayGatewayModal) return;
-
-    const paymentId = customPaymentId || `pay_rzp_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  const handleCompleteRazorpayPayment = (paymentId: string) => {
+    if (!razorpayGatewayModal || !paymentId) {
+      console.warn('[Razorpay] Cannot finalize registration without confirmed payment ID');
+      setPaymentProcessing(false);
+      return;
+    }
 
     setPaymentProcessing(true);
     setPaymentStep('authorizing');
@@ -462,7 +468,7 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
       {activeSubTab === 'upcoming' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {events
-            .filter(e => e.status !== 'archived')
+            .filter(e => e.status === 'upcoming')
             .map(event => {
               const isRegistered = registrations.some(
                 r => r.eventId === event.id && r.participantId === currentParticipant.id && r.attendanceStatus !== 'Cancelled'
@@ -1223,6 +1229,13 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
                 </div>
               )}
 
+              {/* Error alert if payment failed or could not launch */}
+              {paymentErrorMessage && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-200">
+                  {paymentErrorMessage}
+                </div>
+              )}
+
               {/* Status processing message when authorizing */}
               {paymentProcessing && (
                 <div className="p-3.5 rounded-xl bg-[#4AB4A4]/10 border border-[#4AB4A4]/30 flex items-center gap-3 animate-pulse text-xs text-[#4AB4A4]">
@@ -1249,19 +1262,55 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               </button>
               <button
                 type="button"
-                onClick={() => handleCompleteRazorpayPayment()}
+                onClick={() => {
+                  setPaymentProcessing(true);
+                  setPaymentErrorMessage(null);
+                  openNativeRazorpayCheckout({
+                    orderId: razorpayGatewayModal.orderId,
+                    amount: razorpayGatewayModal.totalAmount,
+                    eventTitle: razorpayGatewayModal.event.title,
+                    paxCount: razorpayGatewayModal.totalParticipants,
+                    participantName: currentParticipant.name,
+                    participantEmail: currentParticipant.email,
+                    participantPhone: currentParticipant.phone,
+                    onSuccess: async (res) => {
+                      if (!res.razorpay_payment_id) {
+                        setPaymentProcessing(false);
+                        setPaymentErrorMessage('Payment response was incomplete. Registration cancelled.');
+                        return;
+                      }
+                      await verifyRazorpayPayment({
+                        razorpayPaymentId: res.razorpay_payment_id,
+                        razorpayOrderId: res.razorpay_order_id || razorpayGatewayModal.orderId,
+                        razorpaySignature: res.razorpay_signature,
+                        eventId: razorpayGatewayModal.event.id,
+                        amount: razorpayGatewayModal.totalAmount,
+                        participantId: currentParticipant.id
+                      });
+                      handleCompleteRazorpayPayment(res.razorpay_payment_id);
+                    },
+                    onDismiss: () => {
+                      setPaymentProcessing(false);
+                    }
+                  }).then(launched => {
+                    if (!launched) {
+                      setPaymentProcessing(false);
+                      setPaymentErrorMessage('Unable to launch Razorpay popup. Please ensure popups are allowed or try again.');
+                    }
+                  });
+                }}
                 disabled={paymentProcessing}
-                className="flex-[2] py-2.5 px-4 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF751F]/25 flex items-center justify-center gap-1.5 transition-all disabled:opacity-60"
+                className="flex-[2] py-2.5 px-4 rounded-xl bg-[#FF751F] hover:bg-[#E66310] text-white font-heading font-bold text-xs shadow-sm shadow-[#FF751F]/25 flex items-center justify-center gap-1.5 transition-all disabled:opacity-60 cursor-pointer"
               >
                 {paymentProcessing ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Authorizing Payment...</span>
+                    <span>Verifying with Razorpay...</span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Pay ₹{razorpayGatewayModal.totalAmount} & Register</span>
+                    <span>Pay ₹{razorpayGatewayModal.totalAmount} via Razorpay</span>
                   </>
                 )}
               </button>
@@ -1558,15 +1607,15 @@ export const ParticipantEvents: React.FC<ParticipantEventsProps> = ({ preselecte
               {/* Modal Actions */}
               <div className="flex gap-2.5 pt-1">
                 <button
-                  onClick={() => {
-                    const printUrl = qrUrl;
-                    const w = window.open(printUrl, '_blank');
-                    if (w) w.focus();
+                  id="btn-save-qr-pass-pdf"
+                  onClick={async () => {
+                    await downloadRegistrationPdf(activeTicketReg, ticketEvent);
                   }}
-                  className="flex-1 py-2.5 rounded-xl border border-[#283677] hover:bg-[#1A255C] text-[#CBD5E1] font-heading font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-[#283677] hover:bg-[#1A255C] text-[#CBD5E1] hover:text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  title="Download official PDF ticket pass with QR code and registration details"
                 >
                   <QrCode className="w-3.5 h-3.5 text-[#FFD230]" />
-                  <span>Save QR Pass</span>
+                  <span>Save QR Pass (PDF)</span>
                 </button>
 
                 <button

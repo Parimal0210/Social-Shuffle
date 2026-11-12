@@ -325,7 +325,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <PlusCircle className="w-6 h-6 text-[#FF751F] mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-heading font-bold text-white">Create Event</div>
-            <div className="text-xs text-[#94A3B8] mt-0.5">New meetup session</div>
+            <div className="text-xs text-[#94A3B8] mt-0.5">New meetup event</div>
           </button>
 
           <button

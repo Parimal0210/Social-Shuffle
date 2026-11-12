@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 
@@ -26,7 +26,7 @@ import { ParticipantFooter } from './components/participant/ParticipantFooter';
 import { AuthModal } from './components/auth/AuthModal';
 
 const AppContent: React.FC = () => {
-  const { userRole, role, isAdminUser, isAuthenticated, reportsList, volunteersList, recordTabVisit } = useApp();
+  const { userRole, role, isAdminUser, isAuthenticated, currentUser, reportsList, volunteersList, recordTabVisit } = useApp();
 
   // Admin Navigation State
   const [adminSection, setAdminSection] = useState<AdminViewSection>('dashboard');
@@ -38,6 +38,14 @@ const AppContent: React.FC = () => {
   // Participant Navigation State
   const [participantTab, setParticipantTab] = useState<ParticipantTab>('home');
   const [preselectedEventId, setPreselectedEventId] = useState<string | undefined>();
+
+  // After login: Home tab is the default landing page
+  useEffect(() => {
+    if (isAuthenticated) {
+      setParticipantTab('home');
+      setAdminSection('dashboard');
+    }
+  }, [isAuthenticated, currentUser?.id]);
 
   // Ensure guest view cannot access community tab (profile tab displays guest showcase)
   useEffect(() => {
@@ -81,12 +89,17 @@ const AppContent: React.FC = () => {
     }
   }, [participantTab, adminSection, showAdminView]);
 
-  // For every tab or view change, screen should be loaded from the top only
+  // Scroll to top on actual tab/view changes without locking document scroll
+  const prevTabRef = useRef(participantTab);
+  const prevSectionRef = useRef(adminSection);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, [participantTab, adminSection, showAdminView]);
+    if (prevTabRef.current !== participantTab || prevSectionRef.current !== adminSection) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      prevTabRef.current = participantTab;
+      prevSectionRef.current = adminSection;
+    }
+  }, [participantTab, adminSection]);
 
   const pendingReportsCount = reportsList.filter(r => r.status === 'New').length;
   const newVolunteersCount = volunteersList.filter(v => v.status === 'New' || v.status === 'Under Review').length;
@@ -124,7 +137,7 @@ const AppContent: React.FC = () => {
           />
 
           {/* Admin Screen Container */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
             {adminSection === 'dashboard' && (
               <AdminDashboard
                 onNavigate={sec => setAdminSection(sec)}

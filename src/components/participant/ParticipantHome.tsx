@@ -22,7 +22,6 @@ import {
 import { useApp } from '../../context/AppContext';
 import { ParticipantTab } from './ParticipantNav';
 import { SocialShuffleIcon } from '../SocialShuffleLogo';
-import { WhyJoinCommunitySection } from './WhyJoinCommunitySection';
 import { WeekendPhotoCarousel } from './WeekendPhotoCarousel';
 import { MeetFoundersSection } from './MeetFoundersSection';
 import { ParticipantFaqSection } from './ParticipantFaqSection';
@@ -52,8 +51,8 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
   const [promptEvent, setPromptEvent] = useState<ShuffleEvent | null>(null);
   const [showPromptModal, setShowPromptModal] = useState<boolean>(false);
 
-  // Find next upcoming event
-  const nextEvent = events.find(e => e.status === 'upcoming') || events[0];
+  // Find next upcoming event (strictly upcoming, completed events removed)
+  const nextEvent = events.find(e => e.status === 'upcoming');
 
   const nextEventRegsCount = registrations
     .filter(r => r.eventId === nextEvent?.id && r.attendanceStatus !== 'Cancelled')
@@ -240,13 +239,7 @@ export const ParticipantHome: React.FC<ParticipantHomeProps> = ({
         </div>
       )}
 
-      {/* 2. 'WHY JOIN?' COMMUNITY HIGHLIGHTS (SHOWN IN BOTH GUEST & PARTICIPANT VIEW) */}
-      <WhyJoinCommunitySection
-        onRegisterClick={() => (!isAuthenticated ? openAuthModal('register') : onNavigateTab('events'))}
-        showCta={!isAuthenticated}
-      />
-
-      {/* 3. NEXT UPCOMING EVENT SHOWCASE (AFTER WHY TO JOIN) */}
+      {/* 2. NEXT UPCOMING EVENT SHOWCASE */}
       {nextEvent && (
         <div className="relative overflow-hidden rounded-2xl bg-[#151E4D] border border-[#283677] p-5 sm:p-6 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">

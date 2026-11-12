@@ -282,6 +282,8 @@ export interface NotificationItem {
   type: NotificationType;
   timestamp: string;
   read: boolean;
+  userId?: string;
+  registrationId?: string;
   recipientEmail?: string;
   eventId?: string;
   deliveryStatus?: 'Sent' | 'Delivered' | 'Failed';

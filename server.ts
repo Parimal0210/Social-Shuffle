@@ -28,7 +28,13 @@ import {
 import {
   generateRegistrationEmailHtml,
   generateEventReminderEmailHtml,
-  generateCustomBroadcastEmailHtml
+  generateCustomBroadcastEmailHtml,
+  generateWelcomeEmailHtml,
+  generateVolunteerConfirmationEmailHtml,
+  generateVolunteerAdminAlertEmailHtml,
+  generateReportAdminAlertEmailHtml,
+  generateReportAckEmailHtml,
+  generateFeedbackAdminAlertEmailHtml
   // generateEventWhatsAppNotification // Temporarily commented out
 } from './src/services/notificationEmailService';
 
@@ -453,6 +459,23 @@ async function startServer() {
 
     console.log(`[Auth DB] Registered new participant with credentials: ${newParticipant.name} (${newParticipant.email})`);
 
+    // Dispatch official Welcome Email to new participant
+    if (newParticipant.email) {
+      try {
+        const welcomeHtml = generateWelcomeEmailHtml(newParticipant.name, newParticipant.email);
+        sendOutboundEmail({
+          to: newParticipant.email,
+          subject: `🎲 Welcome to Social Shuffle Pune, ${newParticipant.name}!`,
+          html: welcomeHtml,
+          text: `Welcome to Social Shuffle Pune, ${newParticipant.name}! We're thrilled to have you in our board game community.`
+        }).then(mailRes => {
+          console.log(`[Welcome Mail] Sent to ${newParticipant.email}:`, mailRes.success ? 'Delivered' : mailRes.error);
+        }).catch(err => console.warn('[Welcome Mail Error]', err));
+      } catch (e) {
+        console.warn('[Welcome Mail Template Error]', e);
+      }
+    }
+
     return res.status(201).json({
       success: true,
       message: `Registration successful! Welcome to Social Shuffle, ${newParticipant.name}!`,
@@ -607,6 +630,23 @@ async function startServer() {
       registeredAt: nowIso
     });
     saveGoogleUsers();
+
+    // Dispatch official Welcome Email to Google signup participant
+    if (cleanEmail) {
+      try {
+        const welcomeHtml = generateWelcomeEmailHtml(cleanName, cleanEmail);
+        sendOutboundEmail({
+          to: cleanEmail,
+          subject: `🎲 Welcome to Social Shuffle Pune, ${cleanName}!`,
+          html: welcomeHtml,
+          text: `Welcome to Social Shuffle Pune, ${cleanName}! We're thrilled to have you in our board game community.`
+        }).then(mailRes => {
+          console.log(`[Welcome Mail (Google)] Sent to ${cleanEmail}:`, mailRes.success ? 'Delivered' : mailRes.error);
+        }).catch(err => console.warn('[Welcome Mail (Google) Error]', err));
+      } catch (e) {
+        console.warn('[Welcome Mail Template Error]', e);
+      }
+    }
 
     res.json({
       success: true,
@@ -1170,6 +1210,23 @@ async function startServer() {
       });
     }
 
+    // Automatically dispatch entry pass email for walk-in attendee
+    if (email) {
+      try {
+        const emailHtml = generateRegistrationEmailHtml(newReg as any, ev);
+        sendOutboundEmail({
+          to: email,
+          subject: `🎲 VIP Entry Pass (Walk-in Confirmed): ${ev?.title || 'Social Shuffle Pune'}!`,
+          html: emailHtml,
+          text: `Your walk-in registration for ${ev?.title || 'Social Shuffle'} is confirmed. Token: ${newReg.id}`
+        }).then(mailRes => {
+          console.log(`[Walk-in Mail] Sent to ${email}:`, mailRes.success ? 'Delivered' : mailRes.error);
+        }).catch(err => console.warn('[Walk-in Mail Error]', err));
+      } catch (err) {
+        console.warn('[Walk-in Mail Template Error]', err);
+      }
+    }
+
     res.status(201).json(newReg);
   });
 
@@ -1232,6 +1289,20 @@ async function startServer() {
       createdAt: new Date().toISOString()
     };
     dbFeedback.insert(newFb);
+
+    // Alert admin Parimal with feedback details
+    try {
+      const fbHtml = generateFeedbackAdminAlertEmailHtml(newFb);
+      sendOutboundEmail({
+        to: 'parimalmshete@gmail.com',
+        subject: `⭐ New Community Review: ${newFb.rating || 5}/5 Stars from ${newFb.userName || 'Attendee'}`,
+        html: fbHtml,
+        text: `New feedback received from ${newFb.userName || 'Attendee'}: ${newFb.rating} stars. Comments: ${newFb.comment || 'N/A'}`
+      }).catch(err => console.warn('[Feedback Alert Error]', err));
+    } catch (err) {
+      console.warn('[Feedback Alert Template Error]', err);
+    }
+
     res.status(201).json(newFb);
   });
 
@@ -1248,6 +1319,35 @@ async function startServer() {
       createdAt: new Date().toISOString()
     };
     dbReports.insert(newRep);
+
+    // 1. Alert leadership Parimal immediately
+    try {
+      const alertHtml = generateReportAdminAlertEmailHtml(newRep);
+      sendOutboundEmail({
+        to: 'parimalmshete@gmail.com',
+        subject: `⚠️ [URGENT] Safety / Grievance Report: ${newRep.category || 'Incident'}`,
+        html: alertHtml,
+        text: `A safety / grievance report has been submitted by ${newRep.reporterName || 'Anonymous'}. Description: ${newRep.description || ''}`
+      }).catch(err => console.warn('[Report Alert Error]', err));
+    } catch (err) {
+      console.warn('[Report Alert Template Error]', err);
+    }
+
+    // 2. Acknowledge reporter if email provided
+    if (newRep.reporterEmail) {
+      try {
+        const ackHtml = generateReportAckEmailHtml(newRep);
+        sendOutboundEmail({
+          to: newRep.reporterEmail,
+          subject: `Social Shuffle: We have received your submission`,
+          html: ackHtml,
+          text: `Hello ${newRep.reporterName || 'Fellow Shuffler'}, thank you for contacting Social Shuffle leadership. We are reviewing your submission.`
+        }).catch(err => console.warn('[Report Ack Error]', err));
+      } catch (err) {
+        console.warn('[Report Ack Template Error]', err);
+      }
+    }
+
     res.status(201).json(newRep);
   });
 
@@ -1274,6 +1374,35 @@ async function startServer() {
       submittedAt: new Date().toISOString()
     };
     dbVolunteers.insert(newVol);
+
+    // 1. Send confirmation to volunteer
+    if (newVol.email) {
+      try {
+        const confHtml = generateVolunteerConfirmationEmailHtml(newVol);
+        sendOutboundEmail({
+          to: newVol.email,
+          subject: `🎲 Thank You for Applying to Volunteer at Social Shuffle, ${newVol.name}!`,
+          html: confHtml,
+          text: `Hello ${newVol.name}, we received your volunteer application for Social Shuffle Pune. We will contact you shortly!`
+        }).catch(err => console.warn('[Volunteer Conf Mail Error]', err));
+      } catch (err) {
+        console.warn('[Volunteer Conf Mail Template Error]', err);
+      }
+    }
+
+    // 2. Alert admin Parimal
+    try {
+      const alertHtml = generateVolunteerAdminAlertEmailHtml(newVol);
+      sendOutboundEmail({
+        to: 'parimalmshete@gmail.com',
+        subject: `🙋‍♂️ New Volunteer Application: ${newVol.name} (${newVol.preferredArea || 'Pune'})`,
+        html: alertHtml,
+        text: `New volunteer application received from ${newVol.name} (${newVol.email}, ${newVol.phone}).`
+      }).catch(err => console.warn('[Volunteer Admin Alert Error]', err));
+    } catch (err) {
+      console.warn('[Volunteer Admin Alert Template Error]', err);
+    }
+
     res.status(201).json(newVol);
   });
 
@@ -1319,6 +1448,11 @@ async function startServer() {
       dbNotifications.update(n.id, { read: true });
     });
     res.json({ success: true });
+  });
+
+  app.delete('/api/notifications/:id', (req, res) => {
+    dbNotifications.remove(req.params.id);
+    res.json({ success: true, id: req.params.id });
   });
 
   app.post('/api/notifications/community-announcement', (req, res) => {
@@ -1482,9 +1616,15 @@ async function startServer() {
 
   // Send Registration Confirmation Pass via Real Email
   app.post('/api/notifications/registration-confirmation/:id', async (req, res) => {
-    const reg = dbRegistrations.getById(req.params.id);
+    let reg = dbRegistrations.getById(req.params.id);
+    if (!reg && req.body && req.body.registration) {
+      reg = req.body.registration;
+      try {
+        dbRegistrations.insert(reg);
+      } catch {}
+    }
     if (!reg) return res.status(404).json({ success: false, message: 'Registration not found' });
-    const ev = dbEvents.getById(reg.eventId);
+    const ev = dbEvents.getById(reg.eventId) || req.body?.event;
 
     let emailRes: any = { success: false };
     if (reg.participantEmail) {
@@ -1496,30 +1636,18 @@ async function startServer() {
           html: emailHtml,
           text: `Your entry pass for ${ev?.title || 'Social Shuffle'} is confirmed. Token: ${reg.qrCodeToken || reg.id}`
         });
+        console.log(`[Registration Confirmation Email] Dispatched to ${reg.participantEmail}:`, emailRes.success ? 'Delivered' : emailRes.error);
       } catch (err: any) {
         console.warn('[Confirmation Mail Error]', err?.message);
+        emailRes = { success: false, error: err?.message };
       }
     }
-
-    /*
-    // WhatsApp notification temporarily commented out
-    let waRes: any = null;
-    if (reg.participantPhone) {
-      try {
-        const waText = generateEventWhatsAppNotification(reg as any, ev, 'Your Social Shuffle pass is confirmed! Show this check-in token at the door.');
-        waRes = await dispatchOutboundWhatsApp({
-          toPhone: reg.participantPhone,
-          messageText: waText
-        });
-      } catch (err: any) {
-        console.warn('[Confirmation WhatsApp Error]', err?.message);
-      }
-    }
-    */
 
     res.json({
-      success: true,
-      message: `Entry pass dispatched to ${reg.participantEmail}`,
+      success: emailRes.success,
+      message: emailRes.success
+        ? `Entry pass dispatched to ${reg.participantEmail}`
+        : `Email delivery status: ${emailRes.error || 'Failed'}`,
       emailResult: emailRes,
       whatsappResult: null
     });

@@ -495,7 +495,7 @@ export const AdminAnalytics: React.FC = () => {
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#4AB4A4] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4AB4A4] animate-ping" />
-            <span>Live real-time sessions</span>
+            <span>Live active shufflers</span>
           </div>
         </div>
 
@@ -1407,7 +1407,7 @@ export const AdminAnalytics: React.FC = () => {
                   • <strong>Spike Window:</strong> Peak table pressure occurs at <strong>4:45 PM</strong> (Wave 2 arrivals). Pre-assigning tables at registration speeds seating by 65%.
                 </p>
                 <p>
-                  • <strong>Revenue Forecast:</strong> At ₹350 ticket pricing, an 80-capacity session generates ₹28,000 gross per Sunday edition.
+                  • <strong>Revenue Forecast:</strong> At ₹350 ticket pricing, an 80-capacity meetup generates ₹28,000 gross per Sunday edition.
                 </p>
               </div>
             </div>
@@ -1606,7 +1606,7 @@ export const AdminAnalytics: React.FC = () => {
                   • High Community Repeat Retention ({repeatRetention}%):
                 </span>
                 <p>
-                  {returningCount} verified shufflers have attended multiple sessions. Our WhatsApp community and player persona badges create strong stickiness.
+                  {returningCount} verified shufflers have attended multiple meetups. Our WhatsApp community and player persona badges create strong stickiness.
                 </p>
               </div>
 
@@ -1615,7 +1615,7 @@ export const AdminAnalytics: React.FC = () => {
                   • Game Category Leadership ({topGameCategory}):
                 </span>
                 <p>
-                  With {topCategoryPlays} sessions, party games and quick deception titles (Coup, Flip 7, Just One) drive fast table rotations and maximum laughter.
+                  With {topCategoryPlays} meetup games, party games and quick deception titles (Coup, Flip 7, Just One) drive fast table rotations and maximum laughter.
                 </p>
               </div>
             </div>
@@ -1739,7 +1739,7 @@ export const AdminAnalytics: React.FC = () => {
               <Dices className="w-4 h-4 text-[#4AB4A4]" />
               <h3 className="text-sm font-heading font-bold text-[#F8FAFC]">Most Popular Games at Meetups</h3>
             </div>
-            <span className="text-xs text-[#94A3B8]">{totalGamesPlayed} sessions tagged</span>
+            <span className="text-xs text-[#94A3B8]">{totalGamesPlayed} game tables tagged</span>
           </div>
 
           <div className="space-y-2.5">

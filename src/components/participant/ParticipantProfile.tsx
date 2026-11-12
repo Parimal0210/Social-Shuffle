@@ -774,51 +774,6 @@ export const ParticipantProfile: React.FC = () => {
         )}
       </div>
 
-      {/* 5. Shuffler Account & Authentication Card */}
-      <div className="p-6 rounded-2xl bg-[#1C1B18] border border-[#36332D] shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2 font-heading">
-              <ShieldCheck className="w-5 h-5 text-[#35C8A8]" />
-              <span>Participant Account & Authentication</span>
-            </h3>
-            <p className="text-xs text-[#A8A29E] mt-0.5">
-              Logged in as <span className="text-white font-semibold">{currentUser?.name || currentParticipant.name}</span> ({currentUser?.email || currentParticipant.email})
-            </p>
-          </div>
-
-          <span className="self-start sm:self-center text-xs font-semibold text-[#35C8A8]">
-            Verified Participant
-          </span>
-        </div>
-
-        <div className="pt-2 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => openAuthModal('register')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#24221E] hover:bg-[#2C2A25] border border-[#36332D] text-xs font-semibold text-[#F5F2EB] transition-colors"
-          >
-            <UserPlus className="w-4 h-4 text-[#35C8A8]" />
-            <span>Register Another Participant</span>
-          </button>
-
-          <button
-            onClick={() => openAuthModal('login')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#24221E] hover:bg-[#2C2A25] border border-[#36332D] text-xs font-semibold text-[#F5F2EB] transition-colors"
-          >
-            <LogIn className="w-4 h-4 text-[#FF6036]" />
-            <span>Switch / Sign In</span>
-          </button>
-
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-semibold text-rose-400 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </div>
-
       {/* Log Attended Games Modal */}
       {activeLoggingReg && (
         <LogAttendedGamesModal

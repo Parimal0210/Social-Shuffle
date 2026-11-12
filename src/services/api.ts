@@ -698,6 +698,21 @@ class ApiService {
     }
   }
 
+  async dismissNotification(id: string): Promise<boolean> {
+    try {
+      const res = await this.fetchWithTimeout(`/notifications/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        this.invalidateCache('/notifications');
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   async sendEventEmailBroadcast(req: EventEmailBroadcastRequest): Promise<{ success: boolean; sentCount?: number; message?: string } | null> {
     try {
       const res = await this.fetchWithTimeout('/notifications/event-broadcast', {
@@ -745,10 +760,11 @@ class ApiService {
     }
   }
 
-  async sendRegistrationConfirmationEmail(registrationId: string): Promise<boolean> {
+  async sendRegistrationConfirmationEmail(registrationId: string, registrationData?: Registration, eventData?: ShuffleEvent): Promise<boolean> {
     try {
       const res = await this.fetchWithTimeout(`/notifications/registration-confirmation/${registrationId}`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({ registration: registrationData, event: eventData })
       });
       if (res.ok) {
         this.invalidateCache('/notifications', '/registrations');

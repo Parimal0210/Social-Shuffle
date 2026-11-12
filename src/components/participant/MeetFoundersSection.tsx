@@ -43,18 +43,18 @@ const FOUNDERS: FounderData[] = [
   {
     id: 'parimal',
     name: 'Parimal',
-    role: 'Co-Founder & Community Architect',
-    badge: 'Game Curator & Table Host',
+    role: 'Co-founder and Chaos Specialist',
+    badge: 'Co-founder & Chaos Specialist',
     badgeColor: 'bg-[#FF751F] text-white',
     image: parimalImg,
     tagline: 'Turning screen time into game night across Pune since day one.',
     quote:
       'I started Social Shuffle because Pune needed an authentic third place—somewhere cozy to unplug your phone on a Sunday afternoon, roll tactile wooden dice, and meet kindred spirits with zero social friction.',
     passions:
-      'Heavy Euro strategy games, designing inclusive community spaces where solo attendees feel like regulars, and fostering deep social chemistry through tabletop play.',
+      'Creating platform for tabletop game where attendees feel like regulars, and fostering deep social chemistry through tabletop play.',
     hobbies:
-      'Pour-over single-origin coffee brewing, Sinhagad & Western Ghats trekking, vintage sci-fi novels, and hunting for rare indie tabletop games.',
-    favoriteGames: ['Catan: Cities & Knights', 'Avalon', 'Dune: Imperium', 'Terraforming Mars'],
+      'Cricket, F1, travelling, meeting like-minded people',
+    favoriteGames: ['Shasn', 'Catan', '7 Wonders', 'Saboteur'],
     area: 'Koregaon Park & Baner',
     tableFocus: 'Hosts Heavy Strategy & Casual Gateway tables',
     stats: '120+ game titles taught'
@@ -260,21 +260,9 @@ export const MeetFoundersSection: React.FC<MeetFoundersSectionProps> = ({
                 </div>
 
                 {/* Footer of Content Card */}
-                <div className="pt-4 border-t border-[#283677]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2 text-[#CBD5E1]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Always hosting in-person at Sunday meetups</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={!isAuthenticated ? onRegisterClick : onExploreEvents}
-                    className="inline-flex items-center gap-1.5 font-bold hover:underline"
-                    style={{ color: accentColor }}
-                  >
-                    <span>Say hello to {founder.name} this Sunday</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                <div className="pt-4 border-t border-[#283677]/60 flex items-center gap-2 text-xs text-[#CBD5E1]">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Always hosting in-person at Sunday meetups</span>
                 </div>
               </div>
             </div>

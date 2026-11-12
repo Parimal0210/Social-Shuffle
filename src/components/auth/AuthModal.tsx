@@ -189,8 +189,12 @@ export const AuthModal: React.FC = () => {
   // by ALL details (Name, Email, Phone) combined with the database admins table
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail.trim() && !loginPhone.trim()) {
-      setError('Please enter your email address or mobile phone number');
+    if (!loginEmail.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+    if (!loginPassword) {
+      setError('Please enter your password');
       return;
     }
 
@@ -199,10 +203,8 @@ export const AuthModal: React.FC = () => {
     setError(null);
 
     const res = await login({
-      emailOrPhone: loginEmail.trim() || loginPhone.trim(),
+      emailOrPhone: loginEmail.trim(),
       email: loginEmail.trim(),
-      phone: loginPhone.trim(),
-      name: loginName.trim(),
       password: loginPassword
     });
 
@@ -534,56 +536,22 @@ export const AuthModal: React.FC = () => {
             </div>
           )}
 
-          {/* UNIFIED SIGN IN FORM: Regular login with automated admin identification by all combined details */}
+          {/* UNIFIED SIGN IN FORM: Ask only email and password */}
           {activeTab === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5">
               {/* Email Address */}
               <div>
                 <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                  Email Address or Username <span className="text-[#FF751F]">*</span>
+                  Email Address <span className="text-[#FF751F]">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
-                    type="text"
+                    type="email"
                     required
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
-                    placeholder="e.g. yourname@example.com or username"
-                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Full Name */}
-              <div>
-                <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
-                  <input
-                    type="text"
-                    value={loginName}
-                    onChange={e => setLoginName(e.target.value)}
-                    placeholder="e.g. Rahul Kulkarni or Parimal Shete"
-                    className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Mobile Phone Number */}
-              <div>
-                <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                  Mobile Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
-                  <input
-                    type="tel"
-                    value={loginPhone}
-                    onChange={e => setLoginPhone(e.target.value)}
-                    placeholder="e.g. +91 98220 12345"
+                    placeholder="e.g. yourname@example.com"
                     className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>
@@ -592,15 +560,16 @@ export const AuthModal: React.FC = () => {
               {/* Password */}
               <div>
                 <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                  Password
+                  Password <span className="text-[#FF751F]">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
                   <input
                     type="password"
+                    required
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
-                    placeholder="Enter password"
+                    placeholder="Enter your password"
                     className="w-full bg-[#1A255C] border border-[#283677] focus:border-[#FF751F] focus:ring-1 focus:ring-[#FF751F] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-[#64748B] outline-none transition-all"
                   />
                 </div>

@@ -137,7 +137,7 @@ export function calculateParticipantBadges(
         unit: 'Deduction games'
       },
       contributingItems: bluffingGames.names,
-      hint: 'Join a table of The Resistance: Avalon or Coup at your next session.'
+      hint: 'Join a table of The Resistance: Avalon or Coup at your next meetup.'
     },
     {
       id: 'badge-party-dynamo',

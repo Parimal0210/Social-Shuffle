@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import {
   UserRole,
@@ -196,10 +196,12 @@ interface AppContextType {
   // Notifications
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  dismissNotification: (id: string) => void;
   sendEventBroadcast: (request: EventEmailBroadcastRequest) => Promise<DualPushNotificationResult & { sentCount?: number }>;
   sendEventReminder: (eventId: string, note?: string) => Promise<boolean>;
   sendRegistrationConfirmationEmail: (registrationId: string) => Promise<boolean>;
   sendCommunityAnnouncement: (title: string, message: string) => Promise<boolean>;
+  refreshLiveData: () => Promise<void>;
 
   // Reset database
   resetDatabase: () => void;
@@ -455,17 +457,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.removeItem(`${STORAGE_KEY}_last_active_at`);
         localStorage.setItem(`${STORAGE_KEY}_logged_out`, 'true');
         setRoleState('participant');
-        setNotifications(prev => [
-          {
-            id: `notif-expired-${now}`,
-            title: 'Session Expired ⏱️',
-            message: 'You were automatically logged out after 30 days of inactivity. Please sign in again.',
-            type: 'system',
-            timestamp: 'Just now',
-            read: false
-          },
-          ...prev
-        ]);
       }
     }, 60000);
 
@@ -501,9 +492,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           // Filter out any legacy dummy mock participants from earlier test runs
           const cleaned = parsed.filter(p => !['p-rahul', 'p-tanvi', 'p-rohan', 'p-ananya', 'p-vikram', 'p-priya'].includes(p.id));
+          // Always ensure INITIAL_PARTICIPANTS (including Varad) are included if missing
+          const existingIds = new Set(cleaned.map(p => p.id));
+          const existingEmails = new Set(cleaned.map(p => p.email?.toLowerCase()));
+          for (const initP of INITIAL_PARTICIPANTS) {
+            if (!existingIds.has(initP.id) && !existingEmails.has(initP.email?.toLowerCase())) {
+              cleaned.unshift(initP);
+            }
+          }
           return cleaned;
         }
       } catch {}
@@ -584,11 +583,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.filter(n => !['notif-1', 'notif-2', 'notif-3'].includes(n.id));
+          return parsed.filter(n =>
+            !['notif-1', 'notif-2', 'notif-3'].includes(n.id) &&
+            !n.id.toLowerCase().includes('expired') &&
+            !n.title?.toLowerCase().includes('session expired') &&
+            !n.message?.toLowerCase().includes('session expired')
+          );
         }
       } catch {}
     }
-    return INITIAL_NOTIFICATIONS;
+    return INITIAL_NOTIFICATIONS.filter(n => !n.title?.toLowerCase().includes('session expired'));
   });
 
   const [communityStats, setCommunityStats] = useState<CommunityStats>(() => {
@@ -847,72 +851,99 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     checkBackendConnection();
   };
 
-  // On mount: check health and pull live data from MySQL if available
+  // Guaranteed DB Sync: Pull live data from database on mount & focus
+  const refreshLiveData = useCallback(async () => {
+    try {
+      const [
+        beEvents,
+        beGames,
+        beParticipants,
+        beRegistrations,
+        beAdmins,
+        beFeedback,
+        beReports,
+        beVolunteers,
+        beAuditLogs,
+        beNotifications,
+        beStats
+      ] = await Promise.all([
+        api.getEvents().catch(() => null),
+        api.getGames().catch(() => null),
+        api.getParticipants().catch(() => null),
+        api.getRegistrations().catch(() => null),
+        api.getAdmins().catch(() => null),
+        api.getFeedback().catch(() => null),
+        api.getReports().catch(() => null),
+        api.getVolunteers().catch(() => null),
+        api.getAuditLogs().catch(() => null),
+        api.getNotifications().catch(() => null),
+        api.getCommunityStats().catch(() => null)
+      ]);
+
+      if (beEvents && beEvents.length > 0) {
+        setEvents(beEvents);
+        localStorage.setItem(`${STORAGE_KEY}_events`, JSON.stringify(beEvents));
+      }
+      if (beGames && beGames.length > 0) {
+        setGames(beGames);
+        localStorage.setItem(`${STORAGE_KEY}_games`, JSON.stringify(beGames));
+      }
+      if (beParticipants && beParticipants.length > 0) {
+        setParticipants(beParticipants);
+        localStorage.setItem(`${STORAGE_KEY}_participants`, JSON.stringify(beParticipants));
+      }
+      if (beRegistrations && beRegistrations.length > 0) {
+        setRegistrations(beRegistrations);
+        localStorage.setItem(`${STORAGE_KEY}_registrations`, JSON.stringify(beRegistrations));
+      }
+      if (beAdmins && beAdmins.length > 0) {
+        setAdminsList(beAdmins);
+        localStorage.setItem(`${STORAGE_KEY}_admins`, JSON.stringify(beAdmins));
+      }
+      if (beFeedback && beFeedback.length > 0) {
+        setFeedbackList(beFeedback);
+        localStorage.setItem(`${STORAGE_KEY}_feedback`, JSON.stringify(beFeedback));
+      }
+      if (beReports && beReports.length > 0) {
+        setReportsList(beReports);
+        localStorage.setItem(`${STORAGE_KEY}_reports`, JSON.stringify(beReports));
+      }
+      if (beVolunteers && beVolunteers.length > 0) {
+        setVolunteersList(beVolunteers);
+        localStorage.setItem(`${STORAGE_KEY}_volunteers`, JSON.stringify(beVolunteers));
+      }
+      if (beAuditLogs && beAuditLogs.length > 0) {
+        setAuditLogs(beAuditLogs);
+        localStorage.setItem(`${STORAGE_KEY}_audit`, JSON.stringify(beAuditLogs));
+      }
+      if (beNotifications && beNotifications.length > 0) {
+        const filteredNotifs = beNotifications.filter(n =>
+          !n.id.toLowerCase().includes('expired') &&
+          !n.title?.toLowerCase().includes('session expired') &&
+          !n.message?.toLowerCase().includes('session expired')
+        );
+        setNotifications(filteredNotifs);
+        localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(filteredNotifs));
+      }
+      if (beStats && beStats.membersCount) {
+        setCommunityStats(beStats);
+        localStorage.setItem(`${STORAGE_KEY}_community_stats`, JSON.stringify(beStats));
+      }
+      setBackendStatus('connected');
+    } catch (err) {
+      console.warn('[AppContext] Error pulling live database data:', err);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
-    (async () => {
-      try {
-        const health = await api.checkHealth();
-        if (active) {
-          if (health && health.status === 'UP') {
-            setBackendStatus('connected');
-            const [
-              beEvents,
-              beGames,
-              beParticipants,
-              beRegistrations,
-              beAdmins,
-              beFeedback,
-              beReports,
-              beVolunteers,
-              beAuditLogs,
-              beNotifications,
-              beStats
-            ] = await Promise.all([
-              api.getEvents(),
-              api.getGames(),
-              api.getParticipants(),
-              api.getRegistrations(),
-              api.getAdmins(),
-              api.getFeedback(),
-              api.getReports(),
-              api.getVolunteers(),
-              api.getAuditLogs(),
-              api.getNotifications(),
-              api.getCommunityStats()
-            ]);
-
-            if (active) {
-              if (beEvents && beEvents.length > 0) setEvents(beEvents);
-              if (beGames && beGames.length > 0) setGames(beGames);
-              if (beParticipants && beParticipants.length > 0) setParticipants(beParticipants);
-              if (beRegistrations && beRegistrations.length > 0) setRegistrations(beRegistrations);
-              if (beAdmins && beAdmins.length > 0) {
-                setAdminsList(beAdmins);
-                localStorage.setItem(`${STORAGE_KEY}_admins`, JSON.stringify(beAdmins));
-              }
-              if (beFeedback && beFeedback.length > 0) setFeedbackList(beFeedback);
-              if (beReports && beReports.length > 0) setReportsList(beReports);
-              if (beVolunteers && beVolunteers.length > 0) setVolunteersList(beVolunteers);
-              if (beAuditLogs && beAuditLogs.length > 0) setAuditLogs(beAuditLogs);
-              if (beNotifications && beNotifications.length > 0) setNotifications(beNotifications);
-              if (beStats && beStats.membersCount) {
-                setCommunityStats(beStats);
-                localStorage.setItem(`${STORAGE_KEY}_community_stats`, JSON.stringify(beStats));
-              }
-            }
-          } else {
-            setBackendStatus('offline');
-          }
-        }
-      } catch {
-        if (active) setBackendStatus('offline');
-      }
-    })();
+    if (active) {
+      refreshLiveData();
+    }
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshLiveData]);
 
   // Guaranteed DB Sync for Community Stats: Always fetch fresh data from database on mount & focus
   useEffect(() => {
@@ -1254,7 +1285,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const welcomeNotif: NotificationItem = {
       id: `notif-welcome-${Date.now()}`,
       title: `Welcome to Social Shuffle, ${data.name}! 🎲`,
-      message: 'Your Shuffler profile is ready. Session stays active for 30 days of inactivity.',
+      message: 'Your Shuffler profile is ready! Welcome to Social Shuffle Pune.',
       type: 'system',
       timestamp: 'Just now',
       read: false
@@ -1768,6 +1799,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       // ignore in test environments
     }
+
+    // Immediately sync new registration to backend database & dispatch real email pass with QR code
+    api.createRegistration(newRegistration).catch(err => {
+      console.warn('[AppContext] Database registration sync failed:', err);
+    });
+    api.sendRegistrationConfirmationEmail(newRegistration.id, newRegistration, event).catch(err => {
+      console.warn('[AppContext] Email pass dispatch failed:', err);
+    });
 
     return {
       success: true,
@@ -2690,6 +2729,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_notifications`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem(
+            `${STORAGE_KEY}_notifications`,
+            JSON.stringify(parsed.filter((n: any) => n.id !== id))
+          );
+        }
+      }
+    } catch {}
+    api.dismissNotification(id).catch(() => {});
+  };
+
   const sendEventBroadcast = async (request: EventEmailBroadcastRequest): Promise<DualPushNotificationResult & { sentCount?: number }> => {
     const event = events.find(e => e.id === request.eventId);
     if (!event) {
@@ -2773,10 +2829,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!reg) return false;
     const event = events.find(e => e.id === reg.eventId);
 
-    // Trigger real outbound email pass and WhatsApp notification via backend API
+    // Trigger real outbound email pass via backend API with full registration and event details
     try {
-      api.sendRegistrationConfirmationEmail(registrationId).catch(() => {});
-    } catch {}
+      await api.sendRegistrationConfirmationEmail(registrationId, reg, event);
+    } catch (err) {
+      console.warn('[AppContext] Resend email pass failed:', err);
+    }
 
     const emailHtml = generateRegistrationEmailHtml(reg, event);
     triggerBrowserPushNotification(
@@ -2967,10 +3025,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         markNotificationRead,
         markAllNotificationsRead,
+        dismissNotification,
         sendEventBroadcast,
         sendEventReminder,
         sendRegistrationConfirmationEmail,
         sendCommunityAnnouncement,
+        refreshLiveData,
         resetDatabase,
 
         // Real-Time Analytics & Navigation Telemetry

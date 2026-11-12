@@ -130,7 +130,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#4AB4A4] flex items-center gap-1 font-heading">
               <span className="w-1.5 h-1.5 rounded-full bg-[#4AB4A4] animate-pulse"></span>
-              Super Admin Session
+              Super Admin Account
             </span>
             <span className="text-[9px] font-mono text-[#94A3B8]">
               {currentUser?.id || 'u-admin-parimal'}

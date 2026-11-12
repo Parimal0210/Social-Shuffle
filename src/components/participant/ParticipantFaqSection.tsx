@@ -46,7 +46,7 @@ const FAQ_ITEMS: FaqItem[] = [
     question: 'Can I join at any time during the event?',
     shortAnswer: 'Yes, drop in whenever your schedule allows!',
     detailedAnswer:
-      'Our Sunday sessions run from 3:00 PM to 8:00 PM. While arriving around 3:00 PM gives you the first pick of tables and long-form strategy games, games rotate continuously throughout the evening. If you arrive at 4:30 PM or 5:30 PM, a fresh game table opens up within 10 to 15 minutes.',
+      'Our Sunday meetups run from 3:00 PM to 8:00 PM. While arriving around 3:00 PM gives you the first pick of tables and long-form strategy games, games rotate continuously throughout the evening. If you arrive at 4:30 PM or 5:30 PM, a fresh game table opens up within 10 to 15 minutes.',
     category: 'schedule'
   },
   {
@@ -86,7 +86,7 @@ const FAQ_ITEMS: FaqItem[] = [
     question: 'Are food and beverages available at the venues?',
     shortAnswer: 'Yes! Hosted at Pune’s finest cafes with delicious food menus.',
     detailedAnswer:
-      'All Social Shuffle editions take place at premium partner cafes across Koregaon Park, Kalyani Nagar, and Baner. You can order directly from the cafe’s artisan coffee bar, iced teas, smoothies, woodfired pizzas, and finger foods throughout the game session.',
+      'All Social Shuffle editions take place at premium partner cafes across Koregaon Park, Kalyani Nagar, and Baner. You can order directly from the cafe’s artisan coffee bar, iced teas, smoothies, woodfired pizzas, and finger foods throughout the meetup.',
     category: 'etiquette'
   }
 ];
@@ -129,7 +129,7 @@ export const ParticipantFaqSection: React.FC<ParticipantFaqSectionProps> = ({
     if (faq.id === 'timing' && communityStats?.heroSchedule) {
       return {
         ...faq,
-        detailedAnswer: `Our Sunday sessions run from ${communityStats.heroSchedule}. While arriving early gives you the first pick of tables and long-form strategy games, games rotate continuously throughout the evening. If you arrive later, a fresh game table opens up within 10 to 15 minutes.`
+        detailedAnswer: `Our Sunday meetups run from ${communityStats.heroSchedule}. While arriving early gives you the first pick of tables and long-form strategy games, games rotate continuously throughout the evening. If you arrive later, a fresh game table opens up within 10 to 15 minutes.`
       };
     }
     return faq;

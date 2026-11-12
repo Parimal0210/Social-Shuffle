@@ -164,7 +164,7 @@ export const AdminEvents: React.FC<AdminEventsProps> = ({
         <div>
           <h2 className="text-xl font-heading font-bold text-white tracking-tight">Events & Meetups Manager</h2>
           <p className="text-xs text-[#94A3B8] mt-0.5">
-            Manage upcoming, active, and past Social Shuffle sessions across Pune
+            Manage upcoming, active, and past Social Shuffle meetups across Pune
           </p>
         </div>
 

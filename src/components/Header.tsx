@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Shield,
   User,
@@ -36,14 +36,127 @@ export const Header: React.FC = () => {
     openAuthModal,
     notifications,
     markNotificationRead,
-    markAllNotificationsRead
+    markAllNotificationsRead,
+    dismissNotification,
+    events,
+    registrations
   } = useApp();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [viewingEmailNotif, setViewingEmailNotif] = useState<NotificationItem | null>(null);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const pulseRef = useRef<HTMLDivElement>(null);
+
+  // Social Shuffle Pulse: Automatically collapse on outside click, focus lost, or Escape
+  useEffect(() => {
+    if (!showNotifMenu) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (pulseRef.current && !pulseRef.current.contains(e.target as Node)) {
+        setShowNotifMenu(false);
+      }
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      if (pulseRef.current && !pulseRef.current.contains(e.relatedTarget as Node)) {
+        setShowNotifMenu(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowNotifMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    document.addEventListener('focusout', handleFocusOut);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('focusout', handleFocusOut);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showNotifMenu]);
+
+  // Filter notifications for Social Shuffle Pulse:
+  // 1. Remove session expired notifications completely
+  // 2. Remove notifications for events that are completed
+  // 3. Show registration notifications ONLY if current user registered for that event
+  const userPulseNotifications = notifications.filter(n => {
+    // 1. Suppress Session Expired
+    const isExpired =
+      n.id.toLowerCase().includes('expired') ||
+      n.title?.toLowerCase().includes('session expired') ||
+      n.message?.toLowerCase().includes('session expired') ||
+      n.message?.toLowerCase().includes('logged out after 30 days');
+    if (isExpired) return false;
+
+    // 2. Remove after event is completed
+    if (n.eventId) {
+      const ev = events.find(e => e.id === n.eventId);
+      if (ev && (ev.status === 'completed' || new Date(ev.date).getTime() < Date.now() - 24 * 3600 * 1000)) {
+        return false;
+      }
+    }
+    const matchingCompletedEvent = events.find(e =>
+      e.status === 'completed' &&
+      (n.title?.toLowerCase().includes(e.title.toLowerCase()) || n.message?.toLowerCase().includes(e.title.toLowerCase()))
+    );
+    if (matchingCompletedEvent) {
+      return false;
+    }
+
+    // 3. Registered notification: show ONLY if that participant has registered for that event
+    const isRegistrationNotif =
+      n.type === 'registration' ||
+      Boolean(n.registrationId) ||
+      n.id.toLowerCase().includes('registration') ||
+      n.title?.toLowerCase().includes('registered for') ||
+      n.title?.toLowerCase().includes('registration confirmed');
+
+    if (isRegistrationNotif) {
+      const userEmail = (currentUser?.email || currentParticipant?.email || '').toLowerCase().trim();
+      const userId = currentUser?.id || '';
+      const participantId = currentUser?.participantId || currentParticipant?.id || '';
+
+      if (!userEmail && !userId && !participantId) {
+        return false;
+      }
+
+      const matchesEmail = Boolean(n.recipientEmail && userEmail && n.recipientEmail.toLowerCase().trim() === userEmail);
+      const matchesUserId = Boolean(n.userId && (n.userId === userId || n.userId === participantId || n.userId.toLowerCase() === userEmail));
+      
+      let matchesUserReg = false;
+      if (n.registrationId) {
+        matchesUserReg = registrations.some(r =>
+          r.id === n.registrationId && (
+            (userEmail && r.participantEmail.toLowerCase().trim() === userEmail) ||
+            (participantId && r.participantId === participantId)
+          )
+        );
+      } else if (n.eventId) {
+        matchesUserReg = registrations.some(r =>
+          r.eventId === n.eventId && (
+            (userEmail && r.participantEmail.toLowerCase().trim() === userEmail) ||
+            (participantId && r.participantId === participantId)
+          )
+        );
+      }
+
+      if (!matchesEmail && !matchesUserId && !matchesUserReg) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const unreadCount = userPulseNotifications.filter(n => !n.read).length;
 
   return (
     <header className="sticky top-0 z-40 bg-[#10173E]/95 backdrop-blur-md border-b border-[#202B61] px-3.5 sm:px-6 py-2.5">
@@ -57,7 +170,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Social Shuffle Pulse Notifications: Shown ONLY to logged-in participants and admins */}
           {isAuthenticated && (
-            <div className="relative">
+            <div ref={pulseRef} className="relative">
               <button
                 id="btn-notifications"
                 onClick={() => setShowNotifMenu(!showNotifMenu)}
@@ -79,36 +192,62 @@ export const Header: React.FC = () => {
                       <Sparkles className="w-4 h-4 text-[#FFD230]" />
                       <span className="text-xs font-bold text-white uppercase tracking-wider font-heading">Social Shuffle Pulse</span>
                     </div>
-                    {unreadCount > 0 && (
-                      <span className="text-[10px] text-[#4AB4A4] font-bold px-2 py-0.5 rounded-md bg-[#4AB4A4]/10 border border-[#4AB4A4]/30">
-                        {unreadCount} New
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <>
+                          <span className="text-[10px] text-[#4AB4A4] font-bold px-2 py-0.5 rounded-md bg-[#4AB4A4]/10 border border-[#4AB4A4]/30">
+                            {unreadCount} New
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => markAllNotificationsRead()}
+                            className="text-[10px] text-[#94A3B8] hover:text-white underline"
+                          >
+                            Mark all read
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="max-h-80 overflow-y-auto space-y-2">
-                    {notifications.length === 0 ? (
+                    {userPulseNotifications.length === 0 ? (
                       <div className="p-4 text-center text-xs text-[#94A3B8]">
                         No notifications yet.
                       </div>
                     ) : (
-                      notifications.map(n => (
+                      userPulseNotifications.map(n => (
                         <div
                           key={n.id}
-                          className={`p-3 rounded-xl text-left border ${
+                          onClick={() => markNotificationRead(n.id)}
+                          className={`p-3 rounded-xl text-left border transition-all cursor-pointer relative group ${
                             n.read
                               ? 'bg-[#181715] border-[#202B61] text-[#94A3B8]'
                               : 'bg-[#252320] border-[#4AB4A4]/30 text-[#F8FAFC]'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 font-heading">
+                            <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 font-heading pr-2">
                               {n.type === 'event' && <Calendar className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />}
                               {n.type === 'registration' && <Sparkles className="w-3.5 h-3.5 text-[#FFD230] shrink-0" />}
                               {n.type === 'community' && <Users className="w-3.5 h-3.5 text-[#9440DD] shrink-0" />}
                               <span>{n.title}</span>
                             </h4>
-                            <span className="text-[10px] text-[#64748B] whitespace-nowrap">{n.timestamp}</span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[10px] text-[#64748B] whitespace-nowrap">{n.timestamp}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  dismissNotification(n.id);
+                                }}
+                                className="p-1 rounded-md text-[#64748B] hover:text-[#EF4444] hover:bg-white/10 transition-colors"
+                                title="Close notification"
+                                aria-label="Close notification"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-[11px] text-[#94A3B8] mt-1 leading-relaxed">{n.message}</p>
                           {n.emailHtml && (
