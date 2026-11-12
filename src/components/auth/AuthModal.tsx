@@ -100,13 +100,44 @@ export const AuthModal: React.FC = () => {
     };
   }, [regStep, otpTimer]);
 
-  // Keep activeTab in sync with context
+  // Keep activeTab in sync with context and reset form to completely blank every time
   useEffect(() => {
-    setActiveTab(authModalMode);
-    setError(null);
-    setRegStep('form');
-    setOtpDigits(['', '', '', '', '', '']);
+    if (showAuthModal) {
+      setActiveTab(authModalMode);
+      setError(null);
+      setLoading(false);
+      setLoadingMessage('');
+      setRegStep('form');
+      setOtpDigits(['', '', '', '', '', '']);
+      setOtpTimer(60);
+      setIsEmailVerified(false);
+      setUnregisteredAccountNotice(null);
+
+      // Reset all sign-in and registration fields so the window opens 100% blank every time
+      setLoginEmail('');
+      setLoginPassword('');
+      setLoginName('');
+      setLoginPhone('');
+      setRegName('');
+      setRegEmail('');
+      setRegPhone('');
+      setRegPassword('');
+      setRegBio('');
+      setRegArea('Koregaon Park');
+    }
   }, [authModalMode, showAuthModal]);
+
+  // Collapse on Escape key
+  useEffect(() => {
+    if (!showAuthModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeAuthModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAuthModal, closeAuthModal]);
 
   if (!showAuthModal) return null;
 
@@ -406,9 +437,12 @@ export const AuthModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+    <div
+      onClick={closeAuthModal}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200 cursor-pointer"
+    >
       <div
-        className="w-full sm:max-w-md bg-[#151E4D] border border-[#283677] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="w-full sm:max-w-md bg-[#151E4D] border border-[#283677] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] cursor-default"
         onClick={e => e.stopPropagation()}
       >
         {/* Top Header */}

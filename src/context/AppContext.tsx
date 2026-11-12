@@ -2722,11 +2722,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const markNotificationRead = (id: string) => {
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    setNotifications(prev => {
+      const updated = prev.map(n => (n.id === id ? { ...n, read: true } : n));
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    api.markNotificationRead(id).catch(() => {});
   };
 
   const markAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_notifications`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    api.markAllNotificationsRead().catch(() => {});
   };
 
   const dismissNotification = (id: string) => {

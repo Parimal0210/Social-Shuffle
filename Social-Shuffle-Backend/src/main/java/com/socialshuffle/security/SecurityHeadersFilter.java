@@ -20,8 +20,6 @@ public class SecurityHeadersFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-        // 1. Anti-Clickjacking / Anti-Phishing: Prevent malicious sites from embedding the app in an invisible iframe
-        httpResponse.setHeader("X-Frame-Options", "SAMEORIGIN");
 
         // 2. MIME type sniffing prevention
         httpResponse.setHeader("X-Content-Type-Options", "nosniff");
@@ -35,8 +33,18 @@ public class SecurityHeadersFilter implements Filter {
         // 5. Restrict device hardware permissions
         httpResponse.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
 
-        // 6. Content Security Policy for API layer
-        httpResponse.setHeader("Content-Security-Policy", "default-src 'self'; frame-ancestors 'self'");
+        // 6. Cross-Origin Resource Sharing (CORS) Headers
+        String origin = httpRequest.getHeader("Origin");
+        if (origin != null && !origin.isEmpty()) {
+            httpResponse.setHeader("Access-Control-Allow-Origin", origin);
+            httpResponse.setHeader("Access-Control-Allow-Credentials", "true");
+        } else {
+            httpResponse.setHeader("Access-Control-Allow-Origin", "*");
+        }
+        httpResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD");
+        httpResponse.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Range, X-CSRF-Token, Cache-Control, Pragma, If-Modified-Since, X-Api-Key");
+        httpResponse.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Content-Disposition, X-Total-Count, ETag");
+        httpResponse.setHeader("Access-Control-Max-Age", "86400");
 
         // Handle pre-flight OPTIONS request cleanly
         if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {

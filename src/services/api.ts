@@ -41,8 +41,8 @@ export const DEFAULT_API_URL =
 export function getStoredApiUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_API_URL;
   const stored = localStorage.getItem(API_STORAGE_KEY);
-  if (stored && !stored.includes('onrender.com')) {
-    return stored;
+  if (stored && stored.trim().length > 0) {
+    return stored.trim().replace(/\/+$/, '');
   }
   return DEFAULT_API_URL;
 }
@@ -72,9 +72,18 @@ export interface BackendHealthResponse {
 }
 
 class ApiService {
-  private timeoutMs = 3000;
+  private timeoutMs = 4000;
   private cache = new Map<string, { data: any; expiry: number }>();
   private inFlight = new Map<string, Promise<any>>();
+
+  public buildUrl(endpoint: string): string {
+    const baseUrl = getStoredApiUrl().replace(/\/+$/, '');
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    if (baseUrl.endsWith('/api') && cleanEndpoint.startsWith('/api/')) {
+      return `${baseUrl.slice(0, -4)}${cleanEndpoint}`;
+    }
+    return `${baseUrl}${cleanEndpoint}`;
+  }
 
   /**
    * Invalidates specific cache entries by endpoint prefix or completely clears cache if no prefix passed.
@@ -128,8 +137,7 @@ class ApiService {
   }
 
   private async fetchWithTimeout(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    const baseUrl = getStoredApiUrl();
-    const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const url = this.buildUrl(endpoint);
 
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -137,6 +145,8 @@ class ApiService {
     try {
       const response = await fetch(url, {
         ...options,
+        mode: 'cors',
+        credentials: options.credentials || 'include',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
@@ -795,7 +805,7 @@ class ApiService {
   // --- Backend 10-Level Badge System ---
   async getBadgeLevels(): Promise<BadgeLevelDefinition[]> {
     try {
-      const res = await fetch('/api/badges/levels');
+      const res = await this.fetchWithTimeout('/badges/levels');
       if (res.ok) {
         const json = await res.json();
         if (json.levels) return json.levels;
@@ -812,9 +822,8 @@ class ApiService {
     eventsAttendedCount: number;
   }): Promise<BadgeCalculationResult> {
     try {
-      const res = await fetch('/api/badges/calculate', {
+      const res = await this.fetchWithTimeout('/badges/calculate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params)
       });
       if (res.ok) {
@@ -830,7 +839,7 @@ class ApiService {
   // --- Backend Google Multi-Account & Registration Verification ---
   async getGoogleDeviceAccounts(): Promise<{ accounts: any[]; registeredEmails: string[] }> {
     try {
-      const res = await fetch('/api/auth/google/device-accounts');
+      const res = await this.fetchWithTimeout('/auth/google/device-accounts');
       if (res.ok) {
         return await res.json();
       }
@@ -848,9 +857,8 @@ class ApiService {
     area?: string;
   }): Promise<{ accounts: any[]; registeredEmails: string[] }> {
     try {
-      const res = await fetch('/api/auth/google/device-accounts', {
+      const res = await this.fetchWithTimeout('/auth/google/device-accounts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(account)
       });
       if (res.ok) {
@@ -872,9 +880,8 @@ class ApiService {
     googleId?: string;
   }): Promise<{ success: boolean; message: string; user?: any; participant?: any }> {
     try {
-      const res = await fetch('/api/auth/google/signup', {
+      const res = await this.fetchWithTimeout('/auth/google/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile)
       });
       const data = await res.json();
@@ -892,9 +899,8 @@ class ApiService {
     participant?: any;
   }> {
     try {
-      const res = await fetch('/api/auth/google/login', {
+      const res = await this.fetchWithTimeout('/auth/google/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
       const data = await res.json();
@@ -912,9 +918,8 @@ class ApiService {
     expiresInSeconds?: number;
   }> {
     try {
-      const res = await fetch('/api/auth/otp/send', {
+      const res = await this.fetchWithTimeout('/auth/otp/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name })
       });
       const data = await res.json();
@@ -931,9 +936,8 @@ class ApiService {
     email?: string;
   }> {
     try {
-      const res = await fetch('/api/auth/otp/verify', {
+      const res = await this.fetchWithTimeout('/auth/otp/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp })
       });
       const data = await res.json();
@@ -945,7 +949,7 @@ class ApiService {
 
   async checkOtpStatus(email: string): Promise<{ success: boolean; verified: boolean }> {
     try {
-      const res = await fetch(`/api/auth/otp/status?email=${encodeURIComponent(email)}`);
+      const res = await this.fetchWithTimeout(`/auth/otp/status?email=${encodeURIComponent(email)}`);
       if (res.ok) {
         return await res.json();
       }
@@ -958,7 +962,7 @@ class ApiService {
   // --- Database Admins Table Verification ---
   async getAdmins(): Promise<any[]> {
     try {
-      const res = await fetch('/api/admins');
+      const res = await this.fetchWithTimeout('/admins');
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json)) return json;
@@ -970,7 +974,7 @@ class ApiService {
 
   async checkAdmin(emailOrPhone: string): Promise<{ isAdmin: boolean; admin?: any }> {
     try {
-      const res = await fetch(`/api/admins/check?email=${encodeURIComponent(emailOrPhone)}`);
+      const res = await this.fetchWithTimeout(`/admins/check?email=${encodeURIComponent(emailOrPhone)}`);
       if (res.ok) {
         return await res.json();
       }
@@ -981,8 +985,8 @@ class ApiService {
   // --- Identify Current Logged In Individual ---
   async identifyCurrentUser(identifier?: string): Promise<{ success: boolean; user?: any; participant?: any; role?: string; isAdmin?: boolean }> {
     try {
-      const url = identifier ? `/api/auth/me?email=${encodeURIComponent(identifier)}` : '/api/auth/me';
-      const res = await fetch(url);
+      const url = identifier ? `/auth/me?email=${encodeURIComponent(identifier)}` : '/auth/me';
+      const res = await this.fetchWithTimeout(url);
       if (res.ok) {
         return await res.json();
       }
@@ -993,7 +997,7 @@ class ApiService {
   // --- Real Outbound Email & WhatsApp Communications ---
   async getCommunicationsConfig(): Promise<any> {
     try {
-      const res = await fetch('/api/communications/config');
+      const res = await this.fetchWithTimeout('/communications/config');
       if (res.ok) return await res.json();
     } catch {}
     return null;
@@ -1001,9 +1005,8 @@ class ApiService {
 
   async updateCommunicationsConfig(config: any): Promise<{ success: boolean; message?: string }> {
     try {
-      const res = await fetch('/api/communications/config', {
+      const res = await this.fetchWithTimeout('/communications/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       });
       if (res.ok) return await res.json();
@@ -1013,9 +1016,8 @@ class ApiService {
 
   async testSendEmail(toEmail: string, subject?: string, message?: string): Promise<any> {
     try {
-      const res = await fetch('/api/communications/test-email', {
+      const res = await this.fetchWithTimeout('/communications/test-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toEmail, subject, message })
       });
       if (res.ok) return await res.json();
@@ -1027,9 +1029,8 @@ class ApiService {
 
   async testSendWhatsApp(toPhone: string, messageText?: string): Promise<any> {
     try {
-      const res = await fetch('/api/communications/test-whatsapp', {
+      const res = await this.fetchWithTimeout('/communications/test-whatsapp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toPhone, messageText })
       });
       if (res.ok) return await res.json();

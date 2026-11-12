@@ -14,7 +14,8 @@ import {
   Users,
   X,
   Globe,
-  ShieldCheck
+  ShieldCheck,
+  Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
@@ -47,6 +48,7 @@ export const Header: React.FC = () => {
   const [viewingEmailNotif, setViewingEmailNotif] = useState<NotificationItem | null>(null);
 
   const pulseRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Social Shuffle Pulse: Automatically collapse on outside click, focus lost, or Escape
   useEffect(() => {
@@ -82,6 +84,55 @@ export const Header: React.FC = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showNotifMenu]);
+
+  // User Profile Menu: Automatically collapse on outside click, focus lost, or Escape
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.relatedTarget as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    document.addEventListener('focusout', handleFocusOut);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('focusout', handleFocusOut);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showUserMenu]);
+
+  // Email Notification Modal: Collapse on Escape
+  useEffect(() => {
+    if (!viewingEmailNotif) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setViewingEmailNotif(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [viewingEmailNotif]);
 
   // Filter notifications for Social Shuffle Pulse:
   // 1. Remove session expired notifications completely
@@ -222,9 +273,10 @@ export const Header: React.FC = () => {
                           onClick={() => markNotificationRead(n.id)}
                           className={`p-3 rounded-xl text-left border transition-all cursor-pointer relative group ${
                             n.read
-                              ? 'bg-[#181715] border-[#202B61] text-[#94A3B8]'
-                              : 'bg-[#252320] border-[#4AB4A4]/30 text-[#F8FAFC]'
+                              ? 'bg-[#181715] border-[#202B61] text-[#94A3B8] opacity-80'
+                              : 'bg-[#252320] border-[#4AB4A4]/50 text-[#F8FAFC] shadow-sm'
                           }`}
+                          title="Click to mark as read"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 font-heading pr-2">
@@ -234,6 +286,16 @@ export const Header: React.FC = () => {
                               <span>{n.title}</span>
                             </h4>
                             <div className="flex items-center gap-1.5 shrink-0">
+                              {!n.read ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#4AB4A4]/20 text-[#4AB4A4] border border-[#4AB4A4]/30 animate-pulse">
+                                  New
+                                </span>
+                              ) : (
+                                <span className="text-[9px] text-[#64748B] flex items-center gap-0.5">
+                                  <Check className="w-3 h-3 text-[#4AB4A4]" />
+                                  Read
+                                </span>
+                              )}
                               <span className="text-[10px] text-[#64748B] whitespace-nowrap">{n.timestamp}</span>
                               <button
                                 type="button"
@@ -251,10 +313,18 @@ export const Header: React.FC = () => {
                           </div>
                           <p className="text-[11px] text-[#94A3B8] mt-1 leading-relaxed">{n.message}</p>
                           {n.emailHtml && (
-                            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#4AB4A4] pt-1.5 border-t border-white/5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markNotificationRead(n.id);
+                                setViewingEmailNotif(n);
+                              }}
+                              className="mt-2 flex items-center gap-1.5 text-[10px] text-[#4AB4A4] hover:text-[#2EB899] pt-1.5 border-t border-white/5 w-full text-left"
+                            >
                               <Mail className="w-3.5 h-3.5 text-[#4AB4A4] shrink-0" />
-                              <span>Pass confirmation & QR delivered to your registered email</span>
-                            </div>
+                              <span className="underline">View Pass / Delivered Email Details</span>
+                            </button>
                           )}
                         </div>
                       ))
@@ -267,7 +337,7 @@ export const Header: React.FC = () => {
 
           {/* User Profile / Auth State Menu */}
           {isAuthenticated ? (
-            <div className="relative">
+            <div ref={userMenuRef} className="relative">
               <button
                 id="btn-user-switch"
                 onClick={() => setShowUserMenu(!showUserMenu)}
@@ -434,8 +504,14 @@ export const Header: React.FC = () => {
 
       {/* Email Pass / Notification Viewer Modal */}
       {viewingEmailNotif && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl bg-[#151E4D] border border-[#283677] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div
+          onClick={() => setViewingEmailNotif(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-150 cursor-pointer"
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-2xl bg-[#151E4D] border border-[#283677] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+          >
             <div className="p-4 bg-[#182255] border-b border-[#202B61] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-[#4AB4A4]/15 text-[#4AB4A4]">

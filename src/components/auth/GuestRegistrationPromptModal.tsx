@@ -31,6 +31,18 @@ export const GuestRegistrationPromptModal: React.FC<GuestRegistrationPromptModal
 }) => {
   const { openAuthModal, communityStats } = useApp();
 
+  // Collapse on Escape
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleRegister = () => {
@@ -44,8 +56,14 @@ export const GuestRegistrationPromptModal: React.FC<GuestRegistrationPromptModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-[#151E4D] border border-[#283677] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-5">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="bg-[#151E4D] border border-[#283677] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-5 cursor-default"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}

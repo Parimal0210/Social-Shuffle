@@ -58,12 +58,10 @@ declare global {
 }
 
 // Official Google OAuth 2.0 Client ID provisioned for this project in Google Cloud Console
-// Hardcoded Client ID commented out:
-// '13280287385-p4ts02igubi7r9cvd2dnkbf5t4d4gbpi.apps.googleusercontent.com'
 export const DEFAULT_GOOGLE_CLIENT_ID =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GOOGLE_CLIENT_ID)
     ? import.meta.env.VITE_GOOGLE_CLIENT_ID
-    : '';
+    : '13280287385-p4ts02igubi7r9cvd2dnkbf5t4d4gbpi.apps.googleusercontent.com';
 
 /**
  * Ensures Google Identity Services client script is loaded on the page.

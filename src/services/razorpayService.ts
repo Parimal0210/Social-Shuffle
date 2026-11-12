@@ -1,3 +1,5 @@
+import { getStoredApiUrl } from './api';
+
 /**
  * Razorpay Payment Gateway Integration Service
  * Social Shuffle Pune — Board Game Meetups
@@ -89,12 +91,24 @@ export const loadRazorpayScript = (): Promise<boolean> => {
   });
 };
 
+const resolvePaymentUrl = (endpoint: string): string => {
+  const base = getStoredApiUrl().replace(/\/+$/, '');
+  const clean = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (base.endsWith('/api') && clean.startsWith('/api/')) {
+    return `${base.slice(0, -4)}${clean}`;
+  }
+  return `${base}${clean}`;
+};
+
 /**
  * Retrieves the active Razorpay configuration
  */
 export const fetchRazorpayConfig = async (): Promise<RazorpayConfig> => {
   try {
-    const res = await fetch('/api/payments/razorpay/config');
+    const res = await fetch(resolvePaymentUrl('/payments/razorpay/config'), {
+      mode: 'cors',
+      credentials: 'include'
+    });
     if (res.ok) {
       const data = await res.json();
       return {
@@ -128,8 +142,10 @@ export const createRazorpayOrder = async (
   req: RazorpayOrderRequest
 ): Promise<RazorpayOrderResponse> => {
   try {
-    const res = await fetch('/api/payments/razorpay/create-order', {
+    const res = await fetch(resolvePaymentUrl('/payments/razorpay/create-order'), {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req)
     });
@@ -167,8 +183,10 @@ export const verifyRazorpayPayment = async (data: {
   registrationId?: string;
 }): Promise<{ success: boolean; message: string }> => {
   try {
-    const res = await fetch('/api/payments/razorpay/verify-payment', {
+    const res = await fetch(resolvePaymentUrl('/payments/razorpay/verify-payment'), {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
